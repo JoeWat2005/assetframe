@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import LemonScript from "@/components/LemonScript";
 import Motion from "@/components/Motion";
 import ConsentAnalytics from "@/components/ConsentAnalytics";
 import { Analytics } from "@vercel/analytics/next";
@@ -61,7 +60,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
-          <LemonScript />
           <Motion />
           <Analytics />
           <SpeedInsights />

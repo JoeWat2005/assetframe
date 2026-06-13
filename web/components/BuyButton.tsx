@@ -1,11 +1,9 @@
 "use client";
-import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { SITE } from "@/site.config";
 
-// Opens the Lemon Squeezy checkout as an embedded overlay. Degrades gracefully to
-// the hosted checkout if Lemon.js hasn't loaded. Re-inits on mount so it works
-// after client-side navigation.
+// Full-page hosted Lemon Squeezy checkout (no embedded overlay), so the
+// post-purchase redirect fires reliably and we don't load Lemon.js on every page.
 export default function BuyButton({
   children,
   className = "",
@@ -16,10 +14,6 @@ export default function BuyButton({
   full?: boolean;
 }) {
   const { user } = useUser();
-
-  useEffect(() => {
-    (window as unknown as { createLemonSqueezy?: () => void }).createLemonSqueezy?.();
-  }, []);
 
   // Don't let an already-subscribed user start a second checkout (double-billing).
   const subscribed = (user?.publicMetadata as { subscribed?: boolean } | undefined)?.subscribed === true;
@@ -42,9 +36,7 @@ export default function BuyButton({
   let href = base;
   try {
     const u = new URL(base);
-    u.searchParams.set("embed", "1");
-    // Pass the Clerk user id so the webhook can grant Pro to exactly this account
-    // (not every account that happens to share the payer's email).
+    // Pass the Clerk user id so the webhook grants Pro to exactly this account.
     if (user?.id) u.searchParams.set("checkout[custom][user_id]", user.id);
     href = u.toString();
   } catch {
@@ -54,7 +46,7 @@ export default function BuyButton({
   return (
     <a
       href={href}
-      className={`lemonsqueezy-button inline-flex items-center justify-center rounded-lg bg-[#9a6700] px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90 ${
+      className={`inline-flex items-center justify-center rounded-lg bg-[#9a6700] px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90 ${
         full ? "w-full" : ""
       } ${className}`}
     >
