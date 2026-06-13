@@ -15,6 +15,8 @@
       "windowEnd": "2026-06-14 01:00",
       "n": 6,
       "nManual": 1,
+      "hits": 0,
+      "scored": false,
       "predictions": [
         {
           "id": "P1",
@@ -69,6 +71,8 @@
       "windowEnd": "2026-06-14 01:30",
       "n": 6,
       "nManual": 1,
+      "hits": 0,
+      "scored": false,
       "predictions": [
         {
           "id": "P1",
@@ -123,6 +127,8 @@
       "windowEnd": "2026-06-14 02:00",
       "n": 6,
       "nManual": 1,
+      "hits": 0,
+      "scored": false,
       "predictions": [
         {
           "id": "P1",
@@ -177,6 +183,8 @@
       "windowEnd": "2026-06-15 20:00",
       "n": 6,
       "nManual": 1,
+      "hits": 0,
+      "scored": false,
       "predictions": [
         {
           "id": "P1",

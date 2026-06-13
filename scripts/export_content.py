@@ -60,9 +60,13 @@ def load_catalog(reports_dir, include_dev):
 
 def load_track_record(ledger_csv, pred_dir, scored_ids):
     scored, calib = [], None
+    hits_by_id = {}
     if ledger_csv.exists() and ledger_csv.stat().st_size > 0:
         rows = list(csv.DictReader(ledger_csv.open(encoding="utf-8")))
         for r in rows:
+            rid = r.get("report_id", "")
+            if rid:
+                hits_by_id[rid] = int(r.get("hits", 0) or 0)
             scored.append({
                 "reportId": r.get("report_id", ""),
                 "instrument": r.get("instrument", ""), "view": r.get("view", ""),
@@ -87,8 +91,7 @@ def load_track_record(ledger_csv, pred_dir, scored_ids):
             p = json.loads(pf.read_text(encoding="utf-8"))
         except Exception:
             continue
-        if p.get("report_id") in scored_ids:
-            continue
+        # Keep scored reports in the list too — their tracker flips from 0/n to hits/n.
         preds = p.get("predictions", [])
         sub = [{
             "id": x.get("id", ""),
@@ -98,11 +101,13 @@ def load_track_record(ledger_csv, pred_dir, scored_ids):
             # Force bool-or-null so this matches sync-db's coercion (DB == JSON fallback).
             "expect": x.get("expect") if isinstance(x.get("expect"), bool) else None,
         } for x in preds]
+        rid = p.get("report_id", pf.stem)
         open_calls.append({
-            "reportId": p.get("report_id", pf.stem), "instrument": p.get("instrument", ""),
+            "reportId": rid, "instrument": p.get("instrument", ""),
             "symbol": p.get("symbol", ""), "view": p.get("view", ""),
             "confidence": p.get("confidence", ""), "windowEnd": p.get("window_end_utc", ""),
             "n": len(preds), "nManual": sum(1 for x in preds if x.get("type") == "manual"),
+            "hits": hits_by_id.get(rid, 0), "scored": rid in scored_ids,
             "predictions": sub,
         })
     open_calls.sort(key=lambda c: c["windowEnd"])

@@ -81,7 +81,7 @@ export default function OpenCallsBrowser({
   const clearAll = () => { setQ(""); setAsset("all"); setDate("all"); };
 
   if (open.length === 0) {
-    return <p className="text-sm text-muted-foreground">No open calls right now — the next edition opens the next set.</p>;
+    return <p className="text-sm text-muted-foreground">No prediction calls yet — the next edition opens the next set.</p>;
   }
 
   return (
@@ -101,8 +101,8 @@ export default function OpenCallsBrowser({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {filtered.length} open call{filtered.length === 1 ? "" : "s"}
-        {active ? " match your filters" : ""} · click a row to see its predictions
+        {filtered.length} call{filtered.length === 1 ? "" : "s"}
+        {active ? " match your filters" : ""} · the badge shows predictions that came true (hits/total)
       </p>
 
       <div className="overflow-hidden rounded-xl border border-line bg-white">
@@ -112,6 +112,8 @@ export default function OpenCallsBrowser({
           filtered.map((c) => {
             const isOpen = expanded.has(c.reportId);
             const panelId = `call-${c.reportId}`;
+            const won = c.scored && c.hits * 2 > c.n; // strict majority → counts to the streak
+            const trackColor = !c.scored ? "#9a6700" : won ? "#1a7f37" : "#57606a";
             return (
               <div key={c.reportId} className="border-b border-line last:border-0">
                 <button
@@ -129,13 +131,20 @@ export default function OpenCallsBrowser({
                   </div>
                   <div className="hidden shrink-0 text-right sm:block">
                     <div className="text-xs text-muted-foreground">
-                      Conf. {c.confidence} · {c.n} call{c.n === 1 ? "" : "s"}{c.nManual ? ` (+${c.nManual} manual)` : ""}
+                      Conf. {c.confidence} · {c.n} prediction{c.n === 1 ? "" : "s"}{c.nManual ? ` (+${c.nManual} manual)` : ""}
                     </div>
-                    <div className="text-xs text-muted-foreground">scores after {c.windowEnd} UTC</div>
+                    <div className="text-xs text-muted-foreground">
+                      {c.scored ? "window closed" : "scores after"} {c.windowEnd} UTC
+                    </div>
                   </div>
-                  <Badge style={{ backgroundColor: "#9a6700" }} className="shrink-0 border-transparent text-white">
-                    Pending
-                  </Badge>
+                  <div className="flex shrink-0 flex-col items-center gap-0.5">
+                    <Badge style={{ backgroundColor: trackColor }} className="border-transparent font-mono tabular-nums text-white">
+                      {c.hits}/{c.n}
+                    </Badge>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {c.scored ? (won ? "Majority" : "Scored") : "Pending"}
+                    </span>
+                  </div>
                 </button>
 
                 {isOpen && (

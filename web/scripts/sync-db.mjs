@@ -66,9 +66,10 @@ await sql.query("DELETE FROM open_calls"); // cascades to open_call_predictions
 let predCount = 0;
 for (const c of track.open || []) {
   await sql.query(
-    `INSERT INTO open_calls (report_id, instrument, symbol, view, confidence, window_end, n, n_manual)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-    [c.reportId, c.instrument, c.symbol, c.view, String(c.confidence), c.windowEnd, c.n || 0, c.nManual || 0]
+    `INSERT INTO open_calls (report_id, instrument, symbol, view, confidence, window_end, n, n_manual, hits, scored)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [c.reportId, c.instrument, c.symbol, c.view, String(c.confidence), c.windowEnd, c.n || 0, c.nManual || 0,
+     c.hits || 0, !!c.scored]
   );
   const preds = c.predictions || [];
   for (let i = 0; i < preds.length; i++) {

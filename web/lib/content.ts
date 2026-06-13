@@ -17,6 +17,7 @@ export type SubCall = {
 export type OpenCall = {
   reportId: string; instrument: string; symbol: string; view: string;
   confidence: string | number; windowEnd: string; n: number; nManual: number;
+  hits: number; scored: boolean; // tracker: hits/n, scored flips true after the engine reruns
   predictions: SubCall[];
 };
 export type ScoredRow = {
@@ -35,13 +36,16 @@ export type TrackRecord = {
   calibration: Record<string, { hitRate: number | null; n: number }> | null;
 };
 
-// Longest and current run of "accurate" scored reports (hit rate >= 50%), in
-// chronological order. Used for the public accuracy teaser on the homepage.
-function streaks(scored: ScoredRow[]): { longestStreak: number; currentStreak: number } {
+// Longest and current run of scored calls where a strict majority of the call's
+// predictions came true (hits*2 > n), in window order. Powers the homepage streak.
+function streaks(calls: OpenCall[]): { longestStreak: number; currentStreak: number } {
+  const done = calls
+    .filter((c) => c.scored)
+    .sort((a, b) => a.windowEnd.localeCompare(b.windowEnd));
   let longest = 0, run = 0;
-  for (const r of scored) {
-    const hr = Number(r.hitRate);
-    if (!Number.isNaN(hr) && hr >= 50) { run += 1; longest = Math.max(longest, run); }
+  for (const c of done) {
+    const won = c.hits * 2 > (Number(c.n) || 0);
+    if (won) { run += 1; longest = Math.max(longest, run); }
     else run = 0;
   }
   return { longestStreak: longest, currentStreak: run };
@@ -113,7 +117,7 @@ export async function getTrackRecord(): Promise<TrackRecord> {
     try {
       const openRows = (await sql.query(
         `SELECT oc.report_id, oc.instrument, oc.symbol, oc.view, oc.confidence,
-                oc.window_end, oc.n, oc.n_manual,
+                oc.window_end, oc.n, oc.n_manual, oc.hits, oc.scored,
                 coalesce(
                   json_agg(
                     json_build_object('id', p.pred_id, 'type', p.type, 'text', p.text,
@@ -125,7 +129,7 @@ export async function getTrackRecord(): Promise<TrackRecord> {
          FROM open_calls oc
          LEFT JOIN open_call_predictions p ON p.report_id = oc.report_id
          GROUP BY oc.report_id, oc.instrument, oc.symbol, oc.view, oc.confidence,
-                  oc.window_end, oc.n, oc.n_manual
+                  oc.window_end, oc.n, oc.n_manual, oc.hits, oc.scored
          ORDER BY oc.window_end`
       )) as Row[];
       const scoredRows = (await sql.query(
@@ -139,6 +143,7 @@ export async function getTrackRecord(): Promise<TrackRecord> {
         reportId: s(r.report_id), instrument: s(r.instrument), symbol: s(r.symbol),
         view: s(r.view), confidence: s(r.confidence), windowEnd: s(r.window_end),
         n: Number(r.n) || 0, nManual: Number(r.n_manual) || 0,
+        hits: Number(r.hits) || 0, scored: Boolean(r.scored),
         predictions: Array.isArray(r.predictions) ? (r.predictions as SubCall[]) : [],
       }));
       const scored: ScoredRow[] = scoredRows.map((r) => ({
@@ -152,7 +157,7 @@ export async function getTrackRecord(): Promise<TrackRecord> {
         stats: {
           reportsScored: scored.length, openCalls: open.length, predictionsGraded: graded,
           hitRate: graded ? Math.round((1000 * hits) / graded) / 10 : null,
-          ...streaks(scored),
+          ...streaks(open),
         },
         open, scored, calibration: computeCalibration(scoredRows),
       };
@@ -164,7 +169,7 @@ export async function getTrackRecord(): Promise<TrackRecord> {
     stats: { reportsScored: 0, openCalls: 0, predictionsGraded: 0, hitRate: null, longestStreak: 0, currentStreak: 0 },
     open: [], scored: [], calibration: null,
   });
-  return { ...fallback, stats: { ...fallback.stats, ...streaks(fallback.scored || []) } };
+  return { ...fallback, stats: { ...fallback.stats, ...streaks(fallback.open || []) } };
 }
 
 function computeCalibration(rows: Row[]): TrackRecord["calibration"] {

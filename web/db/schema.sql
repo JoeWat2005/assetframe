@@ -38,10 +38,14 @@ create table if not exists open_calls (
   confidence  text,
   window_end  text,
   n           int,
-  n_manual    int
+  n_manual    int,
+  hits        int default 0,         -- predictions confirmed true (0 while pending)
+  scored      boolean default false  -- flips true once the engine scores the window
 );
 -- Drop the earlier denormalised jsonb column in favour of the child table below.
 alter table open_calls drop column if exists predictions;
+alter table open_calls add column if not exists hits int default 0;
+alter table open_calls add column if not exists scored boolean default false;
 
 -- Individual predictions (sub-calls P1..Pn) for each open call — one row per
 -- prediction, linked back to its parent open_calls row.

@@ -79,8 +79,8 @@ export default async function TrackRecordPage() {
           <Link href="/how-it-works" className="font-semibold text-navy underline underline-offset-2">How it works →</Link>
         </div>
 
-        <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Open calls</h2>
-        <p className="mb-3 text-sm text-muted-foreground">Published now, graded when the window closes. Filter by asset or date, then open one to see every prediction it registered.</p>
+        <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Prediction calls</h2>
+        <p className="mb-3 text-sm text-muted-foreground">Each call registers its predictions before the window. The badge tracks how many came true (hits/total) once the engine scores it — a majority feeds the homepage streak. Filter by asset or date, then open one to see every prediction.</p>
         <OpenCallsBrowser open={tr.open} assetClass={assetByTicker} />
 
         <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Scored results</h2>
