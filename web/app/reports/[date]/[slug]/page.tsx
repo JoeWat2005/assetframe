@@ -9,15 +9,15 @@ import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic"; // reads auth for the Pro section
 
-export function generateStaticParams() {
-  return getCatalog().map((e) => ({ date: e.date, slug: e.slug }));
+export async function generateStaticParams() {
+  return (await getCatalog()).map((e) => ({ date: e.date, slug: e.slug }));
 }
 
 export async function generateMetadata(
   { params }: { params: Promise<{ date: string; slug: string }> }
 ): Promise<Metadata> {
   const { date, slug } = await params;
-  const e = getEdition(date, slug);
+  const e = await getEdition(date, slug);
   return { title: e ? `${e.instrument} — ${e.reportDate}` : "Report" };
 }
 
@@ -25,7 +25,7 @@ export default async function ReaderPage(
   { params }: { params: Promise<{ date: string; slug: string }> }
 ) {
   const { date, slug } = await params;
-  const e = getEdition(date, slug);
+  const e = await getEdition(date, slug);
   if (!e) notFound();
 
   const ent = await getEntitlement();

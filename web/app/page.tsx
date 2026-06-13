@@ -5,9 +5,9 @@ import { getTrackRecord } from "@/lib/content";
 import { Badge, Btn, Section } from "@/components/ui";
 import { SITE } from "@/site.config";
 
-export default function Home() {
-  const catalog = getCatalog().slice(0, 6);
-  const tr = getTrackRecord();
+export default async function Home() {
+  const catalog = (await getCatalog()).slice(0, 6);
+  const tr = await getTrackRecord();
 
   return (
     <>

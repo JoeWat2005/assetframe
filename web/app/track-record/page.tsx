@@ -34,7 +34,7 @@ export default async function TrackRecordPage() {
     );
   }
 
-  const tr = getTrackRecord();
+  const tr = await getTrackRecord();
   const stat = (n: React.ReactNode, l: string) => (
     <div className="rounded-xl border border-line bg-white p-4">
       <div className="text-3xl font-extrabold text-navy">{n}</div>

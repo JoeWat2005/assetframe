@@ -5,8 +5,8 @@ import ReportsBrowser from "@/components/ReportsBrowser";
 
 export const metadata: Metadata = { title: "Reports" };
 
-export default function ReportsPage() {
-  const editions = getCatalog();
+export default async function ReportsPage() {
+  const editions = await getCatalog();
   return (
     <>
       <Hero title="Reports" tag="Free Snapshots open instantly. Pro reports unlock with a subscription." />

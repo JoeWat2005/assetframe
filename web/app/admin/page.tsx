@@ -13,8 +13,8 @@ export default async function AdminPage() {
   if (!ent.signedIn) redirect("/sign-in");
   if (!ent.admin) redirect("/account"); // non-admins never see this
 
-  const catalog = getCatalog();
-  const tr = getTrackRecord();
+  const catalog = await getCatalog();
+  const tr = await getTrackRecord();
 
   // Member stats from Clerk (first page; fine for an MVP dashboard).
   let totalMembers = 0;

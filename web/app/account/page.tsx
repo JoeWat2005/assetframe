@@ -13,7 +13,7 @@ export default async function AccountPage() {
   const ent = await getEntitlement();
   if (!ent.signedIn) redirect("/sign-in");
 
-  const catalog = getCatalog();
+  const catalog = await getCatalog();
 
   return (
     <>

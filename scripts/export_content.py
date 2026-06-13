@@ -64,8 +64,10 @@ def load_track_record(ledger_csv, pred_dir, scored_ids):
         rows = list(csv.DictReader(ledger_csv.open(encoding="utf-8")))
         for r in rows:
             scored.append({
+                "reportId": r.get("report_id", ""),
                 "instrument": r.get("instrument", ""), "view": r.get("view", ""),
                 "confidence": r.get("confidence", ""), "results": r.get("results", ""),
+                "hits": r.get("hits", ""), "misses": r.get("misses", ""),
                 "hitRate": r.get("hit_rate_pct", ""), "windowEnd": r.get("window_end_utc", ""),
             })
         if len(rows) >= 10:
