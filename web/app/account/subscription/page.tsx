@@ -19,9 +19,12 @@ export const metadata: Metadata = { title: "Subscription" };
 // LS dates look like "2026-07-13T09:00:00.000000Z" — show the date part only.
 const fmtDate = (iso?: string) => (iso ? iso.slice(0, 10) : null);
 
-export default async function SubscriptionPage() {
+export default async function SubscriptionPage({
+  searchParams,
+}: { searchParams: Promise<{ welcome?: string }> }) {
   const ent = await getEntitlement();
   if (!ent.signedIn) redirect("/sign-in");
+  const { welcome } = await searchParams;
 
   const cancelling = ent.subStatus === "cancelled";
   const renews = fmtDate(ent.renewsAt);
@@ -34,6 +37,12 @@ export default async function SubscriptionPage() {
     <>
       <Hero title="Subscription" tag="Manage your AssetFrame Pro plan and billing." />
       <div className="mx-auto max-w-2xl px-5 py-8">
+        {welcome === "1" && (
+          <div className="mb-4 rounded-xl border border-[#acdfb9] bg-[#eaffef] p-4 text-sm text-[#1a7f37]">
+            <b>Welcome to AssetFrame Pro!</b> Your payment went through. If a Pro report still looks
+            locked, give it a few seconds and refresh — access activates as soon as the payment confirms.
+          </div>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">

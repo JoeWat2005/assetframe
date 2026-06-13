@@ -117,6 +117,7 @@ export default async function TrackRecordPage() {
           <>
             <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Calibration</h2>
             <p className="mb-3 text-sm text-muted-foreground">Does stated confidence track realised hit rate? It should.</p>
+            <div className="overflow-x-auto">
             <table className="w-full max-w-md overflow-hidden rounded-xl border border-line bg-white text-sm">
               <thead className="bg-tile text-navy"><tr><th className="p-3 text-left">Stated confidence</th><th className="p-3 text-left">Realised</th><th className="p-3 text-left">Reports</th></tr></thead>
               <tbody>
@@ -127,6 +128,7 @@ export default async function TrackRecordPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </>
         )}
       </div>

@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     "for each instrument, with every call scored against the tape afterwards. Not personal advice.",
   metadataBase: new URL(SITE.url),
   openGraph: { title: SITE.brand, description: SITE.tagline, type: "website" },
+  twitter: { card: "summary_large_image", title: SITE.brand, description: SITE.tagline },
   robots: { index: true, follow: true },
 };
 

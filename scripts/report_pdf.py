@@ -764,7 +764,7 @@ def build_html_twin(p, respath):
     exec_rows = "".join(f'<div class="kv"><span class="k">{e(str(k))}</span><span class="v">{e(str(v))}</span></div>'
                         for k, v in p.get("exec", []))
     sections = "".join(f'<section><h2>{e(s["heading"])}</h2>{s["html"]}</section>' for s in p.get("sections", []))
-    return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>{e(p["title"])}</title><style>
+    return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(p["title"])}</title><style>
 @page {{ size: A4; margin: 13mm; }} * {{ box-sizing: border-box; }}
 body {{ font-family: Arial, sans-serif; color: #24292f; font-size: 10.2px; line-height: 1.45; margin: 0 auto; max-width: 760px; padding: 12px; }}
 h1 {{ font-size: 20px; margin: 0; }} .sub {{ color: #57606a; font-size: 11px; margin: 2px 0 8px; }}
@@ -778,6 +778,7 @@ ul {{ margin: 2px 0 2px 16px; padding: 0; }} li {{ margin: 1.5px 0; }}
 table {{ border-collapse: collapse; width: 100%; margin: 3px 0; }} th, td {{ border: 1px solid #d8dee4; padding: 3px 7px; text-align: left; vertical-align: top; }} th {{ background: #f6f8fa; }}
 .disc {{ border-top: 1.5px solid #d8dee4; margin-top: 11px; padding-top: 6px; font-size: 8.6px; color: #57606a; }}
 b.up {{ color: #1a7f37; }} b.dn {{ color: #cf222e; }}
+@media screen and (max-width: 640px) {{ body {{ font-size: 14px; padding: 16px; max-width: 100%; }} table {{ display: block; overflow-x: auto; }} }}
 </style></head><body>
 {brand_html}<h1>{e(p["title"])}</h1><div class="sub">{e(p.get("subtitle", ""))} &middot; {e(p.get("datetime", ""))}</div>
 <div class="chips"><span style="background:{act_col}">{e(p.get("action", ""))}</span><span style="background:{risk_col}">Risk: {e(p.get("risk", ""))}</span></div>

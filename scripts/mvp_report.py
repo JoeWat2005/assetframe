@@ -1160,8 +1160,9 @@ def _html_head(p, tier):
     e = lambda s: str(s).replace("&", "&amp;").replace("<", "&lt;")
     risk_css = {"low": "#1a7f37", "medium": "#9a6700", "high": "#bc4c00", "very high": "#cf222e"}
     st_css = {"buy": "#1a7f37", "sell": "#cf222e", "wait": "#9a6700", "stand aside": "#57606a", "neutral": "#0969da"}
-    return (f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{e(p["title"])} - {BRAND} {tier}</title>'
-            f'<style>{_CSS}</style></head><body>'
+    return (f'<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+            f'<title>{e(p["title"])} - {BRAND} {tier}</title>'
+            f'<style>{_CSS}@media screen and (max-width:640px){{body{{font-size:14px;padding:16px;max-width:100%}}table{{display:block;overflow-x:auto}}}}</style></head><body>'
             f'<div class="brandbar"><img src="data:image/png;base64,{_logo_b64()}" alt="AssetFrame">'
             f'<span class="tier">ASSETFRAME {tier.upper()}</span></div>'
             f'<div class="tagline">{TAGLINE}</div>'
