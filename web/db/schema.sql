@@ -38,10 +38,25 @@ create table if not exists open_calls (
   confidence  text,
   window_end  text,
   n           int,
-  n_manual    int,
-  predictions jsonb default '[]'::jsonb   -- the individual sub-calls for this open call
+  n_manual    int
 );
-alter table open_calls add column if not exists predictions jsonb default '[]'::jsonb;
+-- Drop the earlier denormalised jsonb column in favour of the child table below.
+alter table open_calls drop column if exists predictions;
+
+-- Individual predictions (sub-calls P1..Pn) for each open call — one row per
+-- prediction, linked back to its parent open_calls row.
+create table if not exists open_call_predictions (
+  id         bigserial primary key,
+  report_id  text not null references open_calls(report_id) on delete cascade,
+  seq        int,                 -- order within the report (1..n)
+  pred_id    text,                -- "P1".."Pn"
+  type       text,                -- close_above, range_inside, manual, …
+  text       text,                -- human-readable prediction
+  manual     boolean default false,
+  expect     boolean,             -- what we predict (null for manual/NT calls)
+  unique (report_id, pred_id)
+);
+create index if not exists ocp_report_idx on open_call_predictions (report_id);
 
 -- Scored results: the append-only outcome ledger (one row per scored report).
 create table if not exists scored_results (

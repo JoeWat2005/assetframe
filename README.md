@@ -25,7 +25,7 @@ GENERATION PLANE  (Python engine, run via /mvp in Claude Code)
             publish.py → Cloudflare R2 (files)   ·   sync-db → Neon Postgres (catalog + scored results)
 
 DISTRIBUTION PLANE  (Next.js app in web/, hosted on Vercel)
-  Reports browser · member-only track record · gated Pro downloads · account + billing · admin
+  Reports browser · Pro-gated track record · gated Pro downloads · account + billing · admin
   Clerk (auth/entitlements) · Lemon Squeezy (merchant-of-record subscriptions) · Vercel Analytics + Speed Insights
 ```
 
@@ -39,6 +39,8 @@ DISTRIBUTION PLANE  (Next.js app in web/, hosted on Vercel)
 | Auth + entitlements | **Clerk** | Subscription/admin live in `publicMetadata`, set by the Lemon Squeezy webhook |
 | Subscriptions | **Lemon Squeezy** | MoR (handles VAT); webhook drives access, API powers in-app cancellation |
 | Analytics | **Vercel Analytics + Speed Insights** | Privacy-friendly; surfaced on the admin page |
+| Schema migrations | **node-pg-migrate** | Versioned, reversible SQL migrations in `web/migrations` |
+| Frontend | **shadcn/ui + Tailwind v4 + GSAP** | Navy-themed components; scroll/load motion, reduced-motion aware |
 
 ## How a run works (generation)
 
@@ -53,13 +55,13 @@ DISTRIBUTION PLANE  (Next.js app in web/, hosted on Vercel)
 ## The website (distribution)
 
 - **Reports** (`/reports`) — search, asset-class / status / period filters and sort, modern card grid. Snapshots open instantly; Pro is gated.
-- **Track record** (`/track-record`) — member-only open calls, scored results and calibration, read from the ledger.
+- **Track record** (`/track-record`) — **Pro-only**: open calls (searchable; expand any call to see its individual predictions), scored results and calibration. Free/signed-out visitors see the public accuracy headline and an upgrade prompt.
 - **Reader** (`/reports/<date>/<slug>`) — Snapshot links for all; Pro downloads stream from R2 via `/api/pro/...` only for entitled users.
-- **Account & subscription** (`/account`, `/account/subscription`) — plan status, billing portal and in-app cancellation (Lemon Squeezy API, with portal fallback).
+- **Account & subscription** (`/account`, `/account/subscription`) — plan status, billing portal and one-click cancellation (Lemon Squeezy API, with a universal customer-portal fallback).
 - **Admin** (`/admin`) — member/edition glance and links to the Vercel Analytics & Speed Insights dashboards (admins only).
-- **Homepage** — hero, live countdown to the next edition, latest editions and the scored-track-record stats.
+- **Homepage** — hero with a live countdown to the next edition, latest editions, and a public accuracy scorecard (hit rate + longest streak) teasing the Pro track record.
 
-Public listing pages use **ISR** (`revalidate`) so they're served from a cached static render and refreshed in the background — fast for readers, light on the database.
+Public listing pages use **ISR** (`revalidate`) so they're served from a cached static render and refreshed in the background — fast for readers, light on the database. A small GSAP layer adds load/scroll motion (reduced-motion aware).
 
 ## Develop & run
 
@@ -88,7 +90,9 @@ npm install
 npm run dev        # http://localhost:3000
 npm test           # vitest unit tests (filtering/sorting)
 npm run build      # production build
-npm run sync-db    # load content/*.json into Neon
+npm run migrate:up # apply DB migrations (node-pg-migrate)
+npm run sync-db    # load content/*.json into Neon (after migrating)
+npm run db:setup   # migrate, then sync — the usual publish step
 ```
 
 Secrets live in `web/.env.local` (gitignored) and in Vercel project settings — never in the repo. Required keys: `DATABASE_URL` (Neon), Clerk publishable/secret keys, R2 credentials, `LEMONSQUEEZY_WEBHOOK_SECRET`, `LEMONSQUEEZY_API_KEY` (for in-app cancel), and the public `NEXT_PUBLIC_*` settings (site URL, checkout URL, price, analytics URL). See **GO-LIVE.md** for the full runbook.
@@ -104,8 +108,11 @@ web/                         Next.js app (the live product)
   app/                       routes: /, /reports, /track-record, /account, /admin, /api/*
   components/                UI (shadcn/ui in components/ui) + ReportsBrowser, Countdown, …
   lib/                       content (DB), entitlements, search, db, lemonsqueezy
-  db/schema.sql              Neon schema (editions, open_calls, scored_results)
-  scripts/sync-db.mjs        loads content JSON into Neon
+  components/Motion.tsx      GSAP load/scroll reveals (reduced-motion aware)
+  migrations/                versioned DB migrations (node-pg-migrate; authoritative)
+  db/schema.sql              consolidated schema snapshot (editions, open_calls,
+                             open_call_predictions, scored_results)
+  scripts/sync-db.mjs        loads content JSON into Neon (data only)
 scripts/                     Python engine (intraday, sessions, mvp_report, report_pdf,
                              score_report, export_content, publish)
 data/                        candles / analysis / payloads / predictions (per run)

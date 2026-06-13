@@ -18,7 +18,10 @@ export default function TermsPage() {
     <>
       <Hero title="Terms & Conditions" tag="The agreement for using AssetFrame." />
       <div className="mx-auto max-w-3xl px-5 py-8">
-        <p className="text-sm text-muted">Last updated: June 2026. Please read these terms carefully. By using {SITE.brand} you agree to them.</p>
+        <p className="text-sm text-muted">
+          Last updated: June 2026. Please read these terms carefully. By using {SITE.brand} (the website at{" "}
+          <a className="text-navy underline" href={SITE.url}>{SITE.url.replace(/^https?:\/\//, "")}</a>) you agree to them.
+        </p>
 
         <Clause n="1" title="What AssetFrame is — and is not">
           <p>{SITE.brand} publishes <b>general market research and decision-support analysis</b> on financial instruments. It is information and education only.</p>

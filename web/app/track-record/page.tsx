@@ -1,56 +1,71 @@
 import type { Metadata } from "next";
-import { SignInButton } from "@clerk/nextjs";
+import Link from "next/link";
 import { getTrackRecord } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { Hero, Note } from "@/components/ui";
 import OpenCallsBrowser from "@/components/OpenCallsBrowser";
+import BuyButton from "@/components/BuyButton";
+import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Track record" };
 
+const stat = (n: React.ReactNode, l: string) => (
+  <div className="rounded-xl border border-line bg-white p-4">
+    <div className="text-3xl font-extrabold text-navy">{n}</div>
+    <div className="mt-1 text-[13px] text-muted">{l}</div>
+  </div>
+);
+
 export default async function TrackRecordPage() {
   const ent = await getEntitlement();
+  const tr = await getTrackRecord();
 
-  if (!ent.signedIn) {
+  // The full record is a Pro benefit. Free / signed-out visitors see the public
+  // headline accuracy (same numbers as the homepage) and an upgrade prompt.
+  if (!ent.subscribed) {
     return (
       <>
-        <Hero title="Track record" tag="Scored after the fact — for registered members." />
+        <Hero title="Track record" tag="Scored after the fact — the full record is part of AssetFrame Pro." />
         <div className="mx-auto max-w-3xl px-5 py-10">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {stat(tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`, "Hit rate")}
+            {stat(tr.stats.longestStreak, "Longest streak")}
+            {stat(tr.stats.reportsScored, "Reports scored")}
+            {stat(tr.stats.predictionsGraded, "Predictions graded")}
+          </div>
+
           <Note>
-            The full track record — every open call, scored result and calibration figure — is visible
-            to registered members. It&apos;s free to create an account.
+            The headline accuracy above is public. The full record — every open call, each scored
+            result, the per-prediction detail and the calibration table — is for AssetFrame Pro
+            subscribers. Every call is still published before its outcome and graded against the tape.
           </Note>
-          <SignInButton mode="modal">
-            <button className="rounded-lg bg-navy px-5 py-2.5 font-bold text-white hover:bg-navy-700">
-              Sign in to view the track record
-            </button>
-          </SignInButton>
-          <p className="mt-6 text-sm text-muted">
-            Why gate it? So the record is tied to real readers, not anonymous scrapers — and so you
-            can be notified as open calls resolve. Every prediction is still published before its
-            outcome and graded against the tape.
-          </p>
+
+          {ent.signedIn ? (
+            <BuyButton>Subscribe {SITE.proPrice} to see the full record</BuyButton>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              <Link href="/sign-in" className="rounded-lg bg-navy px-5 py-2.5 font-bold text-white hover:bg-navy-700">
+                Sign in
+              </Link>
+              <Link href="/pricing" className="rounded-lg border border-navy px-5 py-2.5 font-bold text-navy hover:bg-tile">
+                See pricing
+              </Link>
+            </div>
+          )}
         </div>
       </>
     );
   }
-
-  const tr = await getTrackRecord();
-  const stat = (n: React.ReactNode, l: string) => (
-    <div className="rounded-xl border border-line bg-white p-4">
-      <div className="text-3xl font-extrabold text-navy">{n}</div>
-      <div className="mt-1 text-[13px] text-muted">{l}</div>
-    </div>
-  );
 
   return (
     <>
       <Hero title="Track record" tag="The scored-after-the-fact promise, made mechanical." />
       <div className="mx-auto max-w-5xl px-5 py-8">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stat(tr.stats.reportsScored, "Reports scored")}
-          {stat(tr.stats.openCalls, "Open calls")}
           {stat(tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`, "Hit rate (graded)")}
+          {stat(tr.stats.longestStreak, "Longest streak")}
+          {stat(tr.stats.reportsScored, "Reports scored")}
           {stat(tr.stats.predictionsGraded, "Predictions graded")}
         </div>
 

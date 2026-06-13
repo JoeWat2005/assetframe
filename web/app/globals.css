@@ -17,6 +17,11 @@
 html { scroll-behavior: smooth; }
 body { background: var(--color-bg); color: var(--color-ink); }
 
+/* GSAP reveal pre-hide — only active when JS is on and motion isn't reduced
+   (html.gsap-on is set before paint). Motion.tsx animates these to visible. */
+.gsap-on [data-animate="up"] { opacity: 0; }
+.gsap-on [data-animate="hero"] > * { opacity: 0; }
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);

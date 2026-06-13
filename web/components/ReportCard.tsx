@@ -26,7 +26,7 @@ export default function ReportCard({ e }: { e: Edition }) {
   const sc = STATUS[(e.status || "").trim().toLowerCase()] ?? "#57606a";
   const rc = RISK[(e.risk || "").trim().toLowerCase()] ?? "#57606a";
   return (
-    <Card className="flex flex-col transition-shadow hover:shadow-md">
+    <Card data-animate="up" className="flex flex-col transition-shadow hover:shadow-md">
       <CardHeader>
         <CardTitle className="text-lg">{e.instrument}</CardTitle>
         <CardDescription>

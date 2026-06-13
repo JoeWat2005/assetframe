@@ -34,18 +34,10 @@ const sql = neon(url);
 const readJson = (f) => JSON.parse(readFileSync(path.join(web, "content", f), "utf-8"));
 const toInt = (v) => (v === "" || v == null || Number.isNaN(Number(v)) ? null : parseInt(v, 10));
 
-// 1. schema (idempotent). Strip line comments first so a ';' inside a comment
-// can't break the naive split on statement boundaries.
-const schema = readFileSync(path.join(web, "db", "schema.sql"), "utf-8")
-  .split("\n")
-  .map((l) => { const i = l.indexOf("--"); return i >= 0 ? l.slice(0, i) : l; })
-  .join("\n");
-for (const stmt of schema.split(";").map((s) => s.trim()).filter(Boolean)) {
-  await sql.query(stmt);
-}
-console.log("schema applied");
+// Schema is owned by node-pg-migrate (web/migrations). Run `npm run migrate:up`
+// first, or `npm run db:setup` to migrate then sync. This script only syncs DATA.
 
-// 2. editions (upsert)
+// 1. editions (upsert)
 const catalog = readJson("catalog.json");
 for (const e of catalog) {
   const id = `${e.date}/${e.slug}`;
@@ -68,16 +60,30 @@ for (const e of catalog) {
 }
 console.log(`editions: ${catalog.length}`);
 
-// 3. track record (snapshot — replace both tables)
+// 2. track record (snapshot — replace open_calls + predictions + scored_results)
 const track = readJson("track-record.json");
-await sql.query("DELETE FROM open_calls");
+await sql.query("DELETE FROM open_calls"); // cascades to open_call_predictions
+let predCount = 0;
 for (const c of track.open || []) {
   await sql.query(
-    `INSERT INTO open_calls (report_id, instrument, symbol, view, confidence, window_end, n, n_manual, predictions)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
-    [c.reportId, c.instrument, c.symbol, c.view, String(c.confidence), c.windowEnd, c.n || 0, c.nManual || 0,
-     JSON.stringify(c.predictions || [])]
+    `INSERT INTO open_calls (report_id, instrument, symbol, view, confidence, window_end, n, n_manual)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [c.reportId, c.instrument, c.symbol, c.view, String(c.confidence), c.windowEnd, c.n || 0, c.nManual || 0]
   );
+  const preds = c.predictions || [];
+  for (let i = 0; i < preds.length; i++) {
+    const p = preds[i];
+    await sql.query(
+      `INSERT INTO open_call_predictions (report_id, seq, pred_id, type, text, manual, expect)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT (report_id, pred_id) DO UPDATE SET
+         seq=excluded.seq, type=excluded.type, text=excluded.text,
+         manual=excluded.manual, expect=excluded.expect`,
+      [c.reportId, i + 1, p.id || `P${i + 1}`, p.type || "", p.text || "",
+       !!p.manual, typeof p.expect === "boolean" ? p.expect : null]
+    );
+    predCount++;
+  }
 }
 await sql.query("DELETE FROM scored_results");
 for (const r of track.scored || []) {
@@ -88,5 +94,5 @@ for (const r of track.scored || []) {
      toInt(r.hits), toInt(r.misses), String(r.hitRate), r.windowEnd]
   );
 }
-console.log(`open_calls: ${(track.open || []).length}, scored_results: ${(track.scored || []).length}`);
+console.log(`open_calls: ${(track.open || []).length} (${predCount} predictions), scored_results: ${(track.scored || []).length}`);
 console.log("done — synced to Neon");

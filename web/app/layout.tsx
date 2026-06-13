@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LemonScript from "@/components/LemonScript";
+import Motion from "@/components/Motion";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SITE } from "@/site.config";
@@ -49,11 +50,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <ClerkProvider appearance={clerkAppearance}>
       <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
         <body className="flex min-h-full flex-col bg-bg">
-
+          <script
+            dangerouslySetInnerHTML={{
+              __html:
+                "try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('gsap-on')}}catch(e){}",
+            }}
+          />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
           <LemonScript />
+          <Motion />
           <Analytics />
           <SpeedInsights />
         </body>

@@ -17,16 +17,24 @@ export default async function Home() {
   const tr = await getTrackRecord();
 
   const stats: [React.ReactNode, string][] = [
-    [tr.stats.reportsScored, "Reports scored"],
-    [tr.stats.openCalls, "Open calls"],
     [tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`, "Hit rate"],
+    [tr.stats.longestStreak, "Longest streak"],
+    [tr.stats.reportsScored, "Reports scored"],
     [tr.stats.predictionsGraded, "Predictions graded"],
   ];
 
   return (
     <>
-      <section className="bg-navy text-white">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-5 sm:py-20">
+      <section className="relative overflow-hidden bg-navy text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(55rem 28rem at 12% -10%, rgba(127,176,255,0.16), transparent 60%), radial-gradient(48rem 30rem at 100% 0%, rgba(20,58,100,0.55), transparent 55%)",
+          }}
+        />
+        <div className="relative mx-auto max-w-5xl px-4 py-14 sm:px-5 sm:py-20" data-animate="hero">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
             <ShieldCheck className="size-3.5" />
             Published before the move · graded against the tape
@@ -86,10 +94,10 @@ export default async function Home() {
         </div>
       </Section>
 
-      <Section title="Scored, not cherry-picked" lead="The accountability the rest of the industry skips.">
+      <Section title="How accurate are we?" lead="Every call is published before the outcome and graded against the tape. Here's the running scorecard.">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map(([n, l]) => (
-            <Card key={l}>
+            <Card key={l} data-animate="up">
               <CardContent>
                 <div className="text-3xl font-extrabold text-navy">{n}</div>
                 <div className="mt-1 text-[13px] text-muted-foreground">{l}</div>
@@ -97,13 +105,21 @@ export default async function Home() {
             </Card>
           ))}
         </div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Every Pro report registers falsifiable predictions before the window opens; we grade them
-          against the tape afterwards and publish the append-only ledger.{" "}
-          <Link className="font-semibold text-navy underline underline-offset-2" href="/track-record">
-            See it →
-          </Link>
-        </p>
+        {tr.stats.reportsScored === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            No reports scored yet — the first results post as the current open calls close. Predictions
+            are registered before each window opens and graded against the tape afterwards.
+          </p>
+        ) : (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {tr.stats.currentStreak > 0 ? `Currently on a ${tr.stats.currentStreak}-report accurate streak. ` : ""}
+            Every prediction is registered before its window and graded after — the full append-only
+            record is part of Pro.{" "}
+            <Link className="font-semibold text-navy underline underline-offset-2" href="/track-record">
+              See the full record →
+            </Link>
+          </p>
+        )}
       </Section>
 
       <p className="mx-auto mt-10 max-w-5xl px-4 text-xs text-muted-foreground sm:px-5">
