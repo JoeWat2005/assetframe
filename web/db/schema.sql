@@ -38,8 +38,10 @@ create table if not exists open_calls (
   confidence  text,
   window_end  text,
   n           int,
-  n_manual    int
+  n_manual    int,
+  predictions jsonb default '[]'::jsonb   -- the individual sub-calls for this open call
 );
+alter table open_calls add column if not exists predictions jsonb default '[]'::jsonb;
 
 -- Scored results: the append-only outcome ledger (one row per scored report).
 create table if not exists scored_results (

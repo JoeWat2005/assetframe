@@ -11,9 +11,13 @@ export type Edition = {
   freeHtml: string; freePdf: string; preview: string; hasPro: boolean;
 };
 
+export type SubCall = {
+  id: string; type: string; text: string; manual: boolean; expect?: boolean | null;
+};
 export type OpenCall = {
   reportId: string; instrument: string; symbol: string; view: string;
   confidence: string | number; windowEnd: string; n: number; nManual: number;
+  predictions: SubCall[];
 };
 export type ScoredRow = {
   instrument: string; view: string; confidence: string | number;
@@ -90,7 +94,7 @@ export async function getTrackRecord(): Promise<TrackRecord> {
   if (sql) {
     try {
       const openRows = (await sql.query(
-        `SELECT report_id, instrument, symbol, view, confidence, window_end, n, n_manual
+        `SELECT report_id, instrument, symbol, view, confidence, window_end, n, n_manual, predictions
          FROM open_calls ORDER BY window_end`
       )) as Row[];
       const scoredRows = (await sql.query(
@@ -102,6 +106,7 @@ export async function getTrackRecord(): Promise<TrackRecord> {
         reportId: s(r.report_id), instrument: s(r.instrument), symbol: s(r.symbol),
         view: s(r.view), confidence: s(r.confidence), windowEnd: s(r.window_end),
         n: Number(r.n) || 0, nManual: Number(r.n_manual) || 0,
+        predictions: Array.isArray(r.predictions) ? (r.predictions as SubCall[]) : [],
       }));
       const scored: ScoredRow[] = scoredRows.map((r) => ({
         instrument: s(r.instrument), view: s(r.view), confidence: s(r.confidence),

@@ -22,9 +22,31 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#0b2545",
+    colorText: "#24292f",
+    colorTextSecondary: "#57606a",
+    borderRadius: "0.625rem",
+    fontFamily: "var(--font-sans)",
+  },
+  layout: {
+    logoImageUrl: "/logo.png",
+    logoLinkUrl: "/",
+    logoPlacement: "inside" as const,
+    socialButtonsVariant: "blockButton" as const,
+  },
+  elements: {
+    card: "shadow-xl ring-1 ring-black/5",
+    headerTitle: "text-navy",
+    formButtonPrimary: "bg-navy hover:bg-navy-700 text-white normal-case",
+    footerActionLink: "text-navy hover:text-navy-700",
+  },
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={clerkAppearance}>
       <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
         <body className="flex min-h-full flex-col bg-bg">
 

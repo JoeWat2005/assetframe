@@ -73,9 +73,10 @@ const track = readJson("track-record.json");
 await sql.query("DELETE FROM open_calls");
 for (const c of track.open || []) {
   await sql.query(
-    `INSERT INTO open_calls (report_id, instrument, symbol, view, confidence, window_end, n, n_manual)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-    [c.reportId, c.instrument, c.symbol, c.view, String(c.confidence), c.windowEnd, c.n || 0, c.nManual || 0]
+    `INSERT INTO open_calls (report_id, instrument, symbol, view, confidence, window_end, n, n_manual, predictions)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
+    [c.reportId, c.instrument, c.symbol, c.view, String(c.confidence), c.windowEnd, c.n || 0, c.nManual || 0,
+     JSON.stringify(c.predictions || [])]
   );
 }
 await sql.query("DELETE FROM scored_results");

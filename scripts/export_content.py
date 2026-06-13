@@ -90,11 +90,19 @@ def load_track_record(ledger_csv, pred_dir, scored_ids):
         if p.get("report_id") in scored_ids:
             continue
         preds = p.get("predictions", [])
+        sub = [{
+            "id": x.get("id", ""),
+            "type": x.get("type", ""),
+            "text": x.get("text") or x.get("note") or "",
+            "manual": x.get("type") == "manual",
+            "expect": x.get("expect"),
+        } for x in preds]
         open_calls.append({
             "reportId": p.get("report_id", pf.stem), "instrument": p.get("instrument", ""),
             "symbol": p.get("symbol", ""), "view": p.get("view", ""),
             "confidence": p.get("confidence", ""), "windowEnd": p.get("window_end_utc", ""),
             "n": len(preds), "nManual": sum(1 for x in preds if x.get("type") == "manual"),
+            "predictions": sub,
         })
     open_calls.sort(key=lambda c: c["windowEnd"])
     return scored, open_calls, calib

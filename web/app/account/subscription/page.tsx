@@ -27,6 +27,8 @@ export default async function SubscriptionPage() {
   const renews = fmtDate(ent.renewsAt);
   const ends = fmtDate(ent.endsAt);
   const canCancelInApp = ent.subscribed && !!ent.subscriptionId && !!process.env.LEMONSQUEEZY_API_KEY;
+  // Per-subscription portal if the webhook captured it, else the universal email magic-link.
+  const portalUrl = ent.portalUrl || SITE.lemonPortalUrl;
 
   return (
     <>
@@ -68,9 +70,9 @@ export default async function SubscriptionPage() {
           </CardContent>
           <CardFooter className="flex flex-wrap gap-2">
             {!ent.subscribed && <BuyButton>Subscribe {SITE.proPrice}</BuyButton>}
-            {ent.portalUrl && (
+            {ent.subscribed && (
               <Button asChild variant="outline">
-                <a href={ent.portalUrl} target="_blank" rel="noopener noreferrer">
+                <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                   Billing portal
                   <ExternalLink data-icon="inline-end" />
                 </a>
@@ -91,18 +93,13 @@ export default async function SubscriptionPage() {
             </p>
             {canCancelInApp ? (
               <CancelSubscription onCancel={cancelMySubscription} />
-            ) : ent.portalUrl ? (
+            ) : (
               <Button asChild variant="destructive" className="w-fit">
-                <a href={ent.portalUrl} target="_blank" rel="noopener noreferrer">
+                <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                   Cancel in billing portal
                   <ExternalLink data-icon="inline-end" />
                 </a>
               </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                To cancel, reply to your Lemon Squeezy receipt email or contact{" "}
-                <a className="underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.
-              </p>
             )}
           </>
         )}

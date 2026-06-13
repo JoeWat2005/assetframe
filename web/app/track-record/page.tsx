@@ -3,6 +3,7 @@ import { SignInButton } from "@clerk/nextjs";
 import { getTrackRecord } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { Hero, Note } from "@/components/ui";
+import OpenCallsBrowser from "@/components/OpenCallsBrowser";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Track record" };
@@ -61,32 +62,8 @@ export default async function TrackRecordPage() {
         </Note>
 
         <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Open calls</h2>
-        <p className="mb-3 text-sm text-muted">Published now, graded when the window closes.</p>
-        <div className="overflow-x-auto">
-          <table className="w-full overflow-hidden rounded-xl border border-line bg-white text-sm">
-            <thead className="bg-tile text-navy">
-              <tr>
-                <th className="p-3 text-left">Instrument</th><th className="p-3 text-left">View</th>
-                <th className="p-3 text-left">Conf.</th><th className="p-3 text-left">Calls</th>
-                <th className="p-3 text-left">Scores after</th><th className="p-3 text-left">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tr.open.length === 0 ? (
-                <tr><td className="p-3 text-muted" colSpan={6}>No open calls right now.</td></tr>
-              ) : tr.open.map((c) => (
-                <tr key={c.reportId} className="border-t border-line">
-                  <td className="p-3"><b>{c.instrument}</b><div className="text-xs text-muted">{c.symbol}</div></td>
-                  <td className="p-3">{c.view}</td>
-                  <td className="p-3">{c.confidence}</td>
-                  <td className="p-3">{c.n}{c.nManual ? ` (+${c.nManual} manual)` : ""}</td>
-                  <td className="p-3">{c.windowEnd} UTC</td>
-                  <td className="p-3"><span className="rounded-full bg-[#fff4d6] px-2.5 py-0.5 text-[11px] font-bold text-[#9a6700]">Pending</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="mb-3 text-sm text-muted">Published now, graded when the window closes. Search, then open one to see every prediction it registered.</p>
+        <OpenCallsBrowser open={tr.open} />
 
         <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Scored results</h2>
         {tr.scored.length === 0 ? (

@@ -14,7 +14,51 @@
       "confidence": 47,
       "windowEnd": "2026-06-14 01:00",
       "n": 6,
-      "nManual": 1
+      "nManual": 1,
+      "predictions": [
+        {
+          "id": "P1",
+          "type": "close_above",
+          "text": "Window settles below PP 1,668.0 (the laggard stays heavy)",
+          "manual": false,
+          "expect": false
+        },
+        {
+          "id": "P2",
+          "type": "range_inside",
+          "text": "Window stays inside the outer bands 1,582.3 - 1,748.3 (own 84.2% base rate)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P3",
+          "type": "touches",
+          "text": "S1 1,646.2 is NOT touched (own touch base rate 40.0%)",
+          "manual": false,
+          "expect": false
+        },
+        {
+          "id": "P4",
+          "type": "no_close_below",
+          "text": "No hourly close below the inner-band floor 1,623.8",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P5",
+          "type": "no_close_above_after_touch",
+          "text": "First touch of R1 1,685.7 does not close an hour above R2 1,707.6 (NT if untouched)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P6",
+          "type": "manual",
+          "text": "If US + Iran confirm a SIGNED deal before Sun 2026-06-14 01:00 UTC, ETH prints an hourly close above PP 1668.0 within 6 hours of the announcement (catch-up bid). Resolve via announcement timestamp + chart; NT if no confirmed signing in-window.",
+          "manual": true,
+          "expect": null
+        }
+      ]
     },
     {
       "reportId": "AF-20260613-ETH-2",
@@ -24,7 +68,51 @@
       "confidence": 47,
       "windowEnd": "2026-06-14 01:30",
       "n": 6,
-      "nManual": 1
+      "nManual": 1,
+      "predictions": [
+        {
+          "id": "P1",
+          "type": "close_above",
+          "text": "Window settles below PP 1,668.0 (the laggard stays heavy)",
+          "manual": false,
+          "expect": false
+        },
+        {
+          "id": "P2",
+          "type": "range_inside",
+          "text": "Window stays inside the outer bands 1,582.3 - 1,748.3 (own 84.2% base rate)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P3",
+          "type": "touches",
+          "text": "S1 1,646.2 is not touched (own touch base rate 40.0%)",
+          "manual": false,
+          "expect": false
+        },
+        {
+          "id": "P4",
+          "type": "no_close_below",
+          "text": "No hourly close below the inner-band floor 1,623.8",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P5",
+          "type": "no_close_above_after_touch",
+          "text": "First touch of R1 1,685.7 does not close an hour above R2 1,707.6 (NT if untouched)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P6",
+          "type": "manual",
+          "text": "If US + Iran confirm a signed deal before Sun 2026-06-14 01:30 UTC, ETH prints an hourly close above PP 1668.0 within 6 hours of the announcement (catch-up bid). Resolve via announcement timestamp + chart; NT if no confirmed signing in-window.",
+          "manual": true,
+          "expect": null
+        }
+      ]
     },
     {
       "reportId": "AF-20260613-SOL",
@@ -34,7 +122,51 @@
       "confidence": 51,
       "windowEnd": "2026-06-14 02:00",
       "n": 6,
-      "nManual": 1
+      "nManual": 1,
+      "predictions": [
+        {
+          "id": "P1",
+          "type": "close_above",
+          "text": "Window settles above PP 67.07 (the squeeze tape holds)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P2",
+          "type": "range_inside",
+          "text": "Window stays inside the outer bands 63.21 - 70.31 (own 83.3% base rate)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P3",
+          "type": "touches",
+          "text": "R1 68.29 is not touched (own touch base rate 40.0%)",
+          "manual": false,
+          "expect": false
+        },
+        {
+          "id": "P4",
+          "type": "no_close_below",
+          "text": "No hourly close below the long-zone floor 66.30",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P5",
+          "type": "no_close_above_after_touch",
+          "text": "First touch of R1 68.29 does not close an hour above R2 69.96 (NT if untouched)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P6",
+          "type": "manual",
+          "text": "If US + Iran confirm a signed deal before Sun 2026-06-14 02:00 UTC, SOL prints an hourly close above R1 68.29 within 6 hours of the announcement (high-beta leads the catch-up). Resolve via announcement timestamp + chart; NT if no confirmed signing in-window.",
+          "manual": true,
+          "expect": null
+        }
+      ]
     },
     {
       "reportId": "AF-20260613-AAPL",
@@ -44,7 +176,51 @@
       "confidence": 54,
       "windowEnd": "2026-06-15 20:00",
       "n": 6,
-      "nManual": 1
+      "nManual": 1,
+      "predictions": [
+        {
+          "id": "P1",
+          "type": "close_above",
+          "text": "Monday settles below PP 292.63 (the de-rating persists)",
+          "manual": false,
+          "expect": false
+        },
+        {
+          "id": "P2",
+          "type": "range_inside",
+          "text": "Monday stays inside the outer bands 283.81 - 298.45 (own 90.8% base rate)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P3",
+          "type": "touches",
+          "text": "R1 295.65 is not touched (own touch base rate 43.3%)",
+          "manual": false,
+          "expect": false
+        },
+        {
+          "id": "P4",
+          "type": "no_close_below",
+          "text": "No hourly close below the long-zone floor 287.38",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P5",
+          "type": "no_close_above_after_touch",
+          "text": "First touch of R1 does not close an hour above R2 300.15 (NT if untouched)",
+          "manual": false,
+          "expect": true
+        },
+        {
+          "id": "P6",
+          "type": "manual",
+          "text": "If a mutually confirmed signed US-Iran deal is announced before Monday's 13:30 UTC open, AAPL's opening print is above Friday's 291.13 close. Resolve via news timestamp + Monday open; NT if no signed deal pre-open.",
+          "manual": true,
+          "expect": null
+        }
+      ]
     }
   ],
   "scored": [],
