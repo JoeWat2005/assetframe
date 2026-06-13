@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { clerkClient } from "@clerk/nextjs/server";
 import { sql } from "./db";
 import { getCatalog } from "./content";
@@ -31,7 +32,7 @@ function last30Days(): string[] {
 type Row = Record<string, unknown>;
 const SCAN_CAP = 500; // plenty for an MVP; avoids unbounded Clerk paging
 
-export async function getAdminStats(): Promise<AdminStats> {
+async function _getAdminStats(): Promise<AdminStats> {
   const days = last30Days();
   const signupMap = new Map<string, number>(days.map((d) => [d, 0]));
   const recent: AdminStats["recent"] = [];
@@ -110,3 +111,6 @@ export async function getAdminStats(): Promise<AdminStats> {
     recent,
   };
 }
+
+// Cached so rapid admin reloads don't re-scan Clerk + re-query downloads each time.
+export const getAdminStats = unstable_cache(_getAdminStats, ["admin-stats"], { revalidate: 120, tags: ["content"] });

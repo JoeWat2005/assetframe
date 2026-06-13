@@ -1,6 +1,7 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
+import { unstable_cache } from "next/cache";
 import { sql } from "./db";
 
 export type Edition = {
@@ -82,7 +83,8 @@ const EDITION_COLS = `id, report_date::text AS report_date, slug, instrument, ti
   free_html_key, free_pdf_key, preview_key`;
 
 // ------------------------------------------------------------------ public API (DB-first)
-export async function getCatalog(): Promise<Edition[]> {
+// Wrapped in unstable_cache below so reloads serve from Next's Data Cache (no re-query).
+async function _getCatalog(): Promise<Edition[]> {
   if (sql) {
     try {
       const rows = await sql.query(
@@ -112,7 +114,7 @@ export async function getEdition(date: string, slug: string): Promise<Edition | 
   return (await getCatalog()).find((e) => e.date === date && e.slug === slug);
 }
 
-export async function getTrackRecord(): Promise<TrackRecord> {
+async function _getTrackRecord(): Promise<TrackRecord> {
   if (sql) {
     try {
       const openRows = (await sql.query(
@@ -189,3 +191,9 @@ function computeCalibration(rows: Row[]): TrackRecord["calibration"] {
   }
   return out;
 }
+
+// Cached reads: the catalog and track record aren't user-specific, so serve them
+// from Next's Data Cache for `revalidate` seconds. Reloads (even on dynamic pages
+// like /account or /admin) reuse the cached result instead of re-querying Neon.
+export const getCatalog = unstable_cache(_getCatalog, ["catalog"], { revalidate: 300, tags: ["content"] });
+export const getTrackRecord = unstable_cache(_getTrackRecord, ["track-record"], { revalidate: 300, tags: ["content"] });

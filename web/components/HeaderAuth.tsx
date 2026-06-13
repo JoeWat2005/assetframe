@@ -4,23 +4,30 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
 export default function HeaderAuth() {
-  const { isSignedIn, isLoaded } = useUser();
-  if (!isLoaded) return <div className="h-8 w-20" aria-hidden />;
+  const { isSignedIn, isLoaded, user } = useUser();
+  if (!isLoaded) return <div className="h-8 w-28" aria-hidden />;
 
-  if (isSignedIn) {
-    return (
-      <>
-        <Link href="/account" className="text-sm font-semibold text-ink hover:text-navy">
-          Account
-        </Link>
-        <UserButton />
-      </>
-    );
-  }
-  // Route to the branded /sign-in page (AuthShell) rather than the plain modal.
+  const subscribed = (user?.publicMetadata as { subscribed?: boolean } | undefined)?.subscribed === true;
+
   return (
-    <Button asChild size="sm">
-      <Link href="/sign-in">Sign in</Link>
-    </Button>
+    <div className="flex items-center gap-2 sm:gap-3">
+      {!subscribed && (
+        <Button asChild size="sm">
+          <Link href="/pricing">Get Pro</Link>
+        </Button>
+      )}
+      {isSignedIn ? (
+        <>
+          <Link href="/account" className="text-sm font-semibold text-ink hover:text-navy">
+            Account
+          </Link>
+          <UserButton />
+        </>
+      ) : (
+        <Button asChild size="sm" variant="outline">
+          <Link href="/sign-in">Sign in</Link>
+        </Button>
+      )}
+    </div>
   );
 }
