@@ -5,7 +5,12 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Button } from "@/components/ui/button";
 
 const KEY = "af-cookie-consent";
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+// Defaults to the AssetFrame GA4 property in production so analytics works without
+// extra Vercel config (the Measurement ID is public — it ships in the page anyway).
+// Override anytime with NEXT_PUBLIC_GA_ID. Undefined in dev so localhost isn't tracked.
+const GA_ID =
+  process.env.NEXT_PUBLIC_GA_ID ||
+  (process.env.NODE_ENV === "production" ? "G-QK5EM4V2LJ" : undefined);
 
 // Loads Google Analytics ONLY after the visitor accepts (GA sets non-essential
 // cookies, so under UK/EU rules it must be consented to first). The banner is shown
