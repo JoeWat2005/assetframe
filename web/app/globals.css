@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #0b2545;
+  --color-navy-700: #143a64;
+  --color-ink: #24292f;
+  --color-muted: #57606a;
+  --color-line: #d8dee4;
+  --color-bg: #f6f8fa;
+  --color-tile: #eef2f8;
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--color-bg); color: var(--color-ink); }

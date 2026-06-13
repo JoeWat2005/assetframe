@@ -1,0 +1,52 @@
+{
+  "stats": {
+    "reportsScored": 0,
+    "openCalls": 4,
+    "predictionsGraded": 0,
+    "hitRate": null
+  },
+  "open": [
+    {
+      "reportId": "AF-20260613-ETH",
+      "instrument": "Ethereum / USD (aggregate spot)",
+      "symbol": "ETH-USD",
+      "view": "Bearish-lean (conditional, none active)",
+      "confidence": 47,
+      "windowEnd": "2026-06-14 01:00",
+      "n": 6,
+      "nManual": 1
+    },
+    {
+      "reportId": "AF-20260613-ETH-2",
+      "instrument": "Ethereum / USD (aggregate spot)",
+      "symbol": "ETH-USD",
+      "view": "Bearish-lean (conditional, none active)",
+      "confidence": 47,
+      "windowEnd": "2026-06-14 01:30",
+      "n": 6,
+      "nManual": 1
+    },
+    {
+      "reportId": "AF-20260613-SOL",
+      "instrument": "Solana / USD (aggregate spot)",
+      "symbol": "SOL-USD",
+      "view": "Constructive-lean intraday inside a deep bear regime (conditional, none active)",
+      "confidence": 51,
+      "windowEnd": "2026-06-14 02:00",
+      "n": 6,
+      "nManual": 1
+    },
+    {
+      "reportId": "AF-20260613-AAPL",
+      "instrument": "Apple Inc. (Nasdaq)",
+      "symbol": "AAPL",
+      "view": "Neutral - AI de-rating inside a long-term uptrend; conditional both ways",
+      "confidence": 54,
+      "windowEnd": "2026-06-15 20:00",
+      "n": 6,
+      "nManual": 1
+    }
+  ],
+  "scored": [],
+  "calibration": null
+}

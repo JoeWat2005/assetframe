@@ -1,0 +1,32 @@
+__pycache__/
+*.pyc
+
+# Working market data — regenerated every run
+data/candles/*
+!data/candles/.gitkeep
+data/analysis/*
+!data/analysis/.gitkeep
+data/payloads/*
+!data/payloads/.gitkeep
+
+# Registered predictions are per-machine working state; the scored results land
+# in the tracked ledger. Delete these two lines to version pending predictions.
+data/predictions/*
+!data/predictions/.gitkeep
+
+# Generated report output — delete these two lines if you want published reports versioned
+reports/*
+!reports/.gitkeep
+
+# Generated static site — rebuilt by scripts/build_site.py (deploy by running the build, not committing it)
+site/
+
+# Secrets — never commit, anywhere (belt-and-suspenders; web/.gitignore also covers this)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Node / Next build artifacts (the web app also has its own .gitignore)
+**/node_modules/
+web/.next/
+web/out/
