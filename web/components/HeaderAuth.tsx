@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
+import { useUser, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
 export default function HeaderAuth() {
@@ -17,9 +17,10 @@ export default function HeaderAuth() {
       </>
     );
   }
+  // Route to the branded /sign-in page (AuthShell) rather than the plain modal.
   return (
-    <SignInButton mode="modal">
-      <Button size="sm">Sign in</Button>
-    </SignInButton>
+    <Button asChild size="sm">
+      <Link href="/sign-in">Sign in</Link>
+    </Button>
   );
 }

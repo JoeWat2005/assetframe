@@ -22,6 +22,9 @@ export type OpenCall = {
 export type ScoredRow = {
   instrument: string; view: string; confidence: string | number;
   results: string; hitRate: string | number; windowEnd: string;
+  // Present in the JSON-fallback rows (written by export_content.py) and read by sync-db;
+  // not selected on the DB path. Optional so both shapes satisfy the type.
+  reportId?: string; hits?: string | number; misses?: string | number;
 };
 export type TrackRecord = {
   stats: {
@@ -126,8 +129,10 @@ export async function getTrackRecord(): Promise<TrackRecord> {
          ORDER BY oc.window_end`
       )) as Row[];
       const scoredRows = (await sql.query(
+        // Order by the serial id (insert order = ledger/CSV order) rather than
+        // scored_at (a now() stamp that re-sync rewrites), so streaks match the JSON path.
         `SELECT instrument, view, confidence, results, hits, misses, hit_rate, window_end
-         FROM scored_results ORDER BY scored_at`
+         FROM scored_results ORDER BY id`
       )) as Row[];
 
       const open: OpenCall[] = openRows.map((r) => ({
@@ -166,6 +171,9 @@ function computeCalibration(rows: Row[]): TrackRecord["calibration"] {
   if (rows.length < 10) return null;
   const buckets: Record<string, number[]> = { "<=60": [], "61-75": [], ">75": [] };
   for (const r of rows) {
+    // Skip empty strings explicitly — Number("") is 0, which would pollute the <=60 bucket
+    // (the Python/JSON path skips these, so this keeps both calibrations identical).
+    if (r.confidence === "" || r.hit_rate === "" || r.confidence == null || r.hit_rate == null) continue;
     const c = Number(r.confidence), hr = Number(r.hit_rate);
     if (Number.isNaN(c) || Number.isNaN(hr)) continue;
     (c <= 60 ? buckets["<=60"] : c <= 75 ? buckets["61-75"] : buckets[">75"]).push(hr);

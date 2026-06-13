@@ -6,7 +6,6 @@ import ReportCard from "@/components/ReportCard";
 import Countdown from "@/components/Countdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SITE } from "@/site.config";
 
 // Publishing model: editions change only when a new one is published, so serve a
 // cached static render and revalidate in the background. Fast for everyone, light on the DB.
@@ -46,8 +45,7 @@ export default async function Home() {
           <p className="mt-5 max-w-2xl text-lg text-[#c9d6e8]">
             Pre-session research on the instruments that matter — a free one-page Snapshot for
             everyone, and a full Pro report with conditional setups, a price ladder and a scored
-            outcome ledger. Every call is published <b className="text-white">before</b> the outcome
-            and graded against the tape afterwards. General market research, not personal advice.
+            outcome ledger.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Button asChild className="h-11 bg-white px-6 text-base text-navy shadow-sm hover:bg-white/90">
@@ -94,7 +92,7 @@ export default async function Home() {
         </div>
       </Section>
 
-      <Section title="How accurate are we?" lead="Every call is published before the outcome and graded against the tape. Here's the running scorecard.">
+      <Section title="How accurate are we?" lead="Don't take our word for it — here's the running scorecard.">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map(([n, l]) => (
             <Card key={l} data-animate="up">
@@ -107,8 +105,7 @@ export default async function Home() {
         </div>
         {tr.stats.reportsScored === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
-            No reports scored yet — the first results post as the current open calls close. Predictions
-            are registered before each window opens and graded against the tape afterwards.
+            No reports scored yet — the first results post as the current open calls close.
           </p>
         ) : (
           <p className="mt-4 text-sm text-muted-foreground">
@@ -122,10 +119,7 @@ export default async function Home() {
         )}
       </Section>
 
-      <p className="mx-auto mt-10 max-w-5xl px-4 text-xs text-muted-foreground sm:px-5">
-        {SITE.disclaimer}
-      </p>
-      <div className="h-10" />
+      <div className="h-12" />
     </>
   );
 }

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   }
 
   let event: {
-    meta?: { event_name?: string };
+    meta?: { event_name?: string; custom_data?: { user_id?: string } };
     data?: {
       id?: string | number;
       attributes?: {
@@ -44,9 +44,11 @@ export async function POST(req: NextRequest) {
   const eventName = event.meta?.event_name ?? "";
   const attrs = event.data?.attributes ?? {};
   const email = attrs.user_email?.toLowerCase();
+  const userId = event.meta?.custom_data?.user_id; // Clerk id passed at checkout
   const subscribed = subscriptionStateFromEvent(eventName, attrs.status);
 
-  if (!email || subscribed === null) {
+  // Need a way to find the account (id preferred, email fallback) and a real state.
+  if (subscribed === null || (!email && !userId)) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
@@ -62,13 +64,27 @@ export async function POST(req: NextRequest) {
 
   try {
     const cc = await clerkClient();
+
+    // Prefer the exact Clerk user id from checkout custom_data (one account, no
+    // email fan-out). Fall back to email lookup only if the id doesn't resolve.
+    if (userId) {
+      const u = await cc.users.getUser(userId).catch(() => null);
+      if (u) {
+        await cc.users.updateUserMetadata(u.id, {
+          publicMetadata: { ...u.publicMetadata, ...patch },
+        });
+        return NextResponse.json({ ok: true, updated: 1, by: "user_id", subscribed });
+      }
+    }
+
+    if (!email) return NextResponse.json({ ok: true, ignored: true, reason: "no-match" });
     const { data: users } = await cc.users.getUserList({ emailAddress: [email] });
     for (const u of users) {
       await cc.users.updateUserMetadata(u.id, {
         publicMetadata: { ...u.publicMetadata, ...patch },
       });
     }
-    return NextResponse.json({ ok: true, updated: users.length, subscribed });
+    return NextResponse.json({ ok: true, updated: users.length, by: "email", subscribed });
   } catch {
     // Don't leak internals; signal a retry to Lemon Squeezy.
     return new NextResponse("Update failed", { status: 500 });

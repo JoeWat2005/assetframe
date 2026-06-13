@@ -94,12 +94,10 @@ export default async function SubscriptionPage() {
             {canCancelInApp ? (
               <CancelSubscription onCancel={cancelMySubscription} />
             ) : (
-              <Button asChild variant="destructive" className="w-fit">
-                <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                  Cancel in billing portal
-                  <ExternalLink data-icon="inline-end" />
-                </a>
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                Open the <b>Billing portal</b> above to cancel — your access continues to the end of the
+                current billing period.
+              </p>
             )}
           </>
         )}

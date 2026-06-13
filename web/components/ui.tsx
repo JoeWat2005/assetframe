@@ -50,7 +50,7 @@ export function Section({ title, lead, children }: { title: string; lead?: strin
     <section className="mx-auto max-w-5xl px-4 sm:px-5">
       <div data-animate="up">
         <h2 className="mt-10 mb-1 text-2xl font-bold text-navy">{title}</h2>
-        {lead && <p className="mb-4 text-sm text-muted">{lead}</p>}
+        {lead && <p className="mb-4 text-sm text-muted-foreground">{lead}</p>}
       </div>
       {children}
     </section>

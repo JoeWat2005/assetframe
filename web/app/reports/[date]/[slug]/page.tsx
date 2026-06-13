@@ -32,20 +32,20 @@ export default async function ReaderPage(
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
-      <Link href="/reports" className="text-sm text-muted hover:text-navy">← All reports</Link>
+      <Link href="/reports" className="text-sm text-muted-foreground hover:text-navy">← All reports</Link>
       <h1 className="mt-2 text-3xl font-bold">{e.instrument}</h1>
-      <div className="text-sm font-semibold text-muted">{e.ticker} · {e.assetClass}</div>
+      <div className="text-sm font-semibold text-muted-foreground">{e.ticker} · {e.assetClass}</div>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {e.status && <Badge label={e.status} kind="status" />}
         {e.risk && <Badge label={e.risk} kind="risk" />}
       </div>
       <p className="mt-3 text-[15px]">{e.bias}</p>
-      <p className="mt-1 text-sm text-muted">Edition {e.reportDate} · prediction window to {e.windowEnd}</p>
-      {e.catalystStatus && <p className="mt-1 text-sm text-muted"><b>Catalyst:</b> {e.catalystStatus}</p>}
+      <p className="mt-1 text-sm text-muted-foreground">Edition {e.reportDate} · prediction window to {e.windowEnd}</p>
+      {e.catalystStatus && <p className="mt-1 text-sm text-muted-foreground"><b>Catalyst:</b> {e.catalystStatus}</p>}
 
       <div className="mt-6 rounded-xl border border-line bg-white p-5">
         <div className="text-lg font-bold">Free Snapshot</div>
-        <p className="mt-1 text-sm text-muted">The one-page read: status, risk, broad range, one chart and the thesis.</p>
+        <p className="mt-1 text-sm text-muted-foreground">The one-page read: status, risk, broad range, one chart and the thesis.</p>
         <div className="mt-3 flex gap-2">
           <Btn href={e.freeHtml} variant="primary" external sm>Read Snapshot</Btn>
           <Btn href={e.freePdf} external sm>Download PDF</Btn>
@@ -54,7 +54,7 @@ export default async function ReaderPage(
 
       <div className="mt-4 rounded-xl border border-[#e6c88a] bg-[#fffdf5] p-5">
         <div className="text-lg font-bold text-[#9a6700]">Pro report</div>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           Conditional long & short setups, the price ladder, sentiment, risk math, the trade-quality
           scorecard, the outcome ledger and the full source audit.
         </p>

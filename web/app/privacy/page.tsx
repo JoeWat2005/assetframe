@@ -18,7 +18,7 @@ export default function PrivacyPage() {
     <>
       <Hero title="Privacy Policy" tag="What we collect and why." />
       <div className="mx-auto max-w-3xl px-5 py-8">
-        <p className="text-sm text-muted">Last updated: June 2026.</p>
+        <p className="text-sm text-muted-foreground">Last updated: June 2026.</p>
 
         <Clause title="Who we are">
           <p>{SITE.brand} is the data controller for personal data processed through this site. Contact: <a className="text-navy underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.</p>
@@ -44,7 +44,7 @@ export default function PrivacyPage() {
           <p>We keep account data while your account is active and as required by law, then delete it. Access to paid content is protected by authentication and short-lived signed links; we apply reasonable technical and organisational security measures.</p>
         </Clause>
 
-        <p className="mt-8 rounded-lg bg-tile p-4 text-xs text-muted">
+        <p className="mt-8 rounded-lg bg-tile p-4 text-xs text-muted-foreground">
           Template policy — confirm the processor list and retention periods with your solicitor before launch.
         </p>
       </div>

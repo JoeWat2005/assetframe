@@ -26,7 +26,7 @@ export default async function AccountPage() {
         {!ent.subscribed && (
           <div className="mb-6 rounded-xl border border-[#e6c88a] bg-[#fffdf5] p-5">
             <div className="text-lg font-bold text-[#9a6700]">Upgrade to Pro</div>
-            <p className="mt-1 text-sm text-muted">Unlock conditional setups, the price ladder, risk math and the full ledger on every edition.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Unlock conditional setups, the price ladder, risk math and the full ledger on every edition.</p>
             <div className="mt-3">
               <BuyButton>Subscribe {SITE.proPrice}</BuyButton>
             </div>
@@ -34,17 +34,17 @@ export default async function AccountPage() {
         )}
 
         <h2 className="mb-1 text-xl font-bold text-navy">Pro reports</h2>
-        <p className="mb-3 text-sm text-muted">
+        <p className="mb-3 text-sm text-muted-foreground">
           {ent.subscribed ? "Open any edition's Pro report." : "Subscribe to open these."}
         </p>
         <div className="overflow-hidden rounded-xl border border-line bg-white">
           {catalog.length === 0 ? (
-            <p className="p-4 text-sm text-muted">No editions yet.</p>
+            <p className="p-4 text-sm text-muted-foreground">No editions yet.</p>
           ) : catalog.map((e) => (
             <div key={`${e.date}/${e.slug}`} className="flex items-center justify-between border-b border-line p-3 last:border-0">
               <div>
-                <b>{e.instrument}</b> <span className="text-[13px] text-muted">{e.ticker}</span>
-                <div className="text-xs text-muted">Edition {e.reportDate}</div>
+                <b>{e.instrument}</b> <span className="text-[13px] text-muted-foreground">{e.ticker}</span>
+                <div className="text-xs text-muted-foreground">Edition {e.reportDate}</div>
               </div>
               {ent.subscribed ? (
                 <div className="flex gap-2">
@@ -52,7 +52,7 @@ export default async function AccountPage() {
                   <Btn href={`/api/pro/${e.date}/${e.slug}/pro.pdf`} external sm>PDF</Btn>
                 </div>
               ) : (
-                <span className="text-xs text-muted">🔒 Pro</span>
+                <span className="text-xs text-muted-foreground">🔒 Pro</span>
               )}
             </div>
           ))}
@@ -60,7 +60,7 @@ export default async function AccountPage() {
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Btn href="/account/subscription" variant="primary">Manage subscription</Btn>
-          <span className="text-sm text-muted">
+          <span className="text-sm text-muted-foreground">
             {ent.subscribed ? "View your plan, billing and cancellation." : "View plans and upgrade."}
           </span>
         </div>

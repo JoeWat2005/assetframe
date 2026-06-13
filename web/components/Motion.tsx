@@ -5,21 +5,26 @@ import { usePathname } from "next/navigation";
 // Isolated GSAP motion layer (no Framer in this tree). Reveals elements tagged
 // data-animate="hero" (load-in, staggered) and data-animate="up" (scroll reveal).
 // Pre-hide is done in CSS scoped to html.gsap-on (set before paint by an inline
-// script in layout) so there's no flash; if GSAP fails or motion is reduced we
-// drop the class and everything is simply visible.
+// script in layout) so there's no flash. Robustness guarantees:
+//  - a MutationObserver reveals data-animate nodes that mount AFTER setup (e.g. the
+//    filtered results in ReportsBrowser), so client lists are never stranded hidden;
+//  - a watchdog removes gsap-on if GSAP is slow/fails, so content can't stay invisible;
+//  - reduced-motion is respected (and re-checked on change).
 export default function Motion() {
   const pathname = usePathname();
 
   useEffect(() => {
     const root = document.documentElement;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mql.matches) {
       root.classList.remove("gsap-on");
       return;
     }
 
     let cancelled = false;
     let ctx: { revert: () => void } | undefined;
+    let mo: MutationObserver | undefined;
+    const watchdog = window.setTimeout(() => root.classList.remove("gsap-on"), 1800);
 
     (async () => {
       try {
@@ -28,28 +33,42 @@ export default function Motion() {
           import("gsap/ScrollTrigger"),
         ]);
         if (cancelled) return;
+        window.clearTimeout(watchdog);
         gsap.registerPlugin(ScrollTrigger);
+
+        const reveal = (els: Element[]) =>
+          gsap.to(els, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out", stagger: 0.05, overwrite: true });
 
         ctx = gsap.context(() => {
           gsap.utils.toArray<HTMLElement>('[data-animate="hero"]').forEach((el) => {
             const kids = el.children;
             gsap.set(kids, { y: 16, opacity: 0 });
-            gsap.to(kids, {
-              y: 0, opacity: 1, duration: 0.7, ease: "power2.out", stagger: 0.08, delay: 0.05,
-            });
+            gsap.to(kids, { y: 0, opacity: 1, duration: 0.7, ease: "power2.out", stagger: 0.08, delay: 0.05 });
           });
 
           const ups = gsap.utils.toArray<HTMLElement>('[data-animate="up"]');
           gsap.set(ups, { y: 22, opacity: 0 });
           ScrollTrigger.batch(ups, {
-            start: "top 88%",
-            onEnter: (els) =>
-              gsap.to(els, {
-                y: 0, opacity: 1, duration: 0.6, ease: "power2.out", stagger: 0.08, overwrite: true,
-              }),
+            start: "top 90%",
+            onEnter: (els) => reveal(els as unknown as Element[]),
           });
           ScrollTrigger.refresh();
         });
+
+        // Catch data-animate nodes added after setup (filtered/sorted client lists,
+        // expanded panels) and reveal them so they can never be left at opacity:0.
+        mo = new MutationObserver((mutations) => {
+          const added: Element[] = [];
+          for (const m of mutations) {
+            for (const node of m.addedNodes) {
+              if (!(node instanceof HTMLElement)) continue;
+              if (node.matches("[data-animate]")) added.push(node);
+              node.querySelectorAll("[data-animate]").forEach((x) => added.push(x));
+            }
+          }
+          if (added.length) { gsap.set(added, { y: 16 }); reveal(added); }
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
       } catch {
         root.classList.remove("gsap-on"); // never leave content stuck hidden
       }
@@ -57,6 +76,8 @@ export default function Motion() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(watchdog);
+      mo?.disconnect();
       ctx?.revert();
     };
   }, [pathname]);

@@ -18,7 +18,7 @@ export default function TermsPage() {
     <>
       <Hero title="Terms & Conditions" tag="The agreement for using AssetFrame." />
       <div className="mx-auto max-w-3xl px-5 py-8">
-        <p className="text-sm text-muted">
+        <p className="text-sm text-muted-foreground">
           Last updated: June 2026. Please read these terms carefully. By using {SITE.brand} (the website at{" "}
           <a className="text-navy underline" href={SITE.url}>{SITE.url.replace(/^https?:\/\//, "")}</a>) you agree to them.
         </p>
@@ -61,7 +61,7 @@ export default function TermsPage() {
           <p>Questions about these terms: <a className="text-navy underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.</p>
         </Clause>
 
-        <p className="mt-8 rounded-lg bg-tile p-4 text-xs text-muted">
+        <p className="mt-8 rounded-lg bg-tile p-4 text-xs text-muted-foreground">
           This template reflects AssetFrame&apos;s market-research positioning. Have your own solicitor confirm
           it fits your final business structure and jurisdictions before launch.
         </p>

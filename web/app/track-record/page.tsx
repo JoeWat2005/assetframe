@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTrackRecord } from "@/lib/content";
+import { getCatalog, getTrackRecord } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { Hero, Note } from "@/components/ui";
 import OpenCallsBrowser from "@/components/OpenCallsBrowser";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Track record" };
 const stat = (n: React.ReactNode, l: string) => (
   <div className="rounded-xl border border-line bg-white p-4">
     <div className="text-3xl font-extrabold text-navy">{n}</div>
-    <div className="mt-1 text-[13px] text-muted">{l}</div>
+    <div className="mt-1 text-[13px] text-muted-foreground">{l}</div>
   </div>
 );
 
@@ -58,6 +58,11 @@ export default async function TrackRecordPage() {
     );
   }
 
+  // Map symbol → asset class (from the catalog) so open calls can be filtered by asset.
+  const catalog = await getCatalog();
+  const assetByTicker: Record<string, string> = {};
+  for (const e of catalog) if (e.ticker) assetByTicker[e.ticker] = e.assetClass;
+
   return (
     <>
       <Hero title="Track record" tag="The scored-after-the-fact promise, made mechanical." />
@@ -69,16 +74,14 @@ export default async function TrackRecordPage() {
           {stat(tr.stats.predictionsGraded, "Predictions graded")}
         </div>
 
-        <Note>
-          <b>How this works.</b> Every Pro report registers falsifiable predictions — exact levels, an
-          exact window — <b>before</b> the outcome is known. After the window closes the engine grades
-          each one against the price tape (Hit / Miss / No-trigger) and appends one row. The ledger is
-          append-only: nothing is removed, re-tuned or cherry-picked. Calibration appears once 10 reports are scored.
-        </Note>
+        <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-[#cdd9ea] bg-tile px-4 py-3 text-sm text-[#33415c]">
+          <span>Predictions are registered <b>before</b> each window, then graded Hit / Miss / No-trigger against the tape — append-only, never re-tuned.</span>
+          <Link href="/how-it-works" className="font-semibold text-navy underline underline-offset-2">How it works →</Link>
+        </div>
 
         <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Open calls</h2>
-        <p className="mb-3 text-sm text-muted">Published now, graded when the window closes. Search, then open one to see every prediction it registered.</p>
-        <OpenCallsBrowser open={tr.open} />
+        <p className="mb-3 text-sm text-muted-foreground">Published now, graded when the window closes. Filter by asset or date, then open one to see every prediction it registered.</p>
+        <OpenCallsBrowser open={tr.open} assetClass={assetByTicker} />
 
         <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Scored results</h2>
         {tr.scored.length === 0 ? (
@@ -97,7 +100,7 @@ export default async function TrackRecordPage() {
                 {tr.scored.map((r, i) => {
                   const good = Number(r.hitRate) >= 50;
                   return (
-                    <tr key={i} className="border-t border-line">
+                    <tr key={`${r.instrument}-${r.windowEnd}-${i}`} className="border-t border-line">
                       <td className="p-3"><b>{r.instrument}</b></td><td className="p-3">{r.view}</td>
                       <td className="p-3">{r.confidence}</td><td className="p-3">{r.results}</td>
                       <td className="p-3"><span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${good ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]"}`}>{r.hitRate}%</span></td>
@@ -113,7 +116,7 @@ export default async function TrackRecordPage() {
         {tr.calibration && (
           <>
             <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Calibration</h2>
-            <p className="mb-3 text-sm text-muted">Does stated confidence track realised hit rate? It should.</p>
+            <p className="mb-3 text-sm text-muted-foreground">Does stated confidence track realised hit rate? It should.</p>
             <table className="w-full max-w-md overflow-hidden rounded-xl border border-line bg-white text-sm">
               <thead className="bg-tile text-navy"><tr><th className="p-3 text-left">Stated confidence</th><th className="p-3 text-left">Realised</th><th className="p-3 text-left">Reports</th></tr></thead>
               <tbody>

@@ -95,7 +95,8 @@ def load_track_record(ledger_csv, pred_dir, scored_ids):
             "type": x.get("type", ""),
             "text": x.get("text") or x.get("note") or "",
             "manual": x.get("type") == "manual",
-            "expect": x.get("expect"),
+            # Force bool-or-null so this matches sync-db's coercion (DB == JSON fallback).
+            "expect": x.get("expect") if isinstance(x.get("expect"), bool) else None,
         } for x in preds]
         open_calls.append({
             "reportId": p.get("report_id", pf.stem), "instrument": p.get("instrument", ""),

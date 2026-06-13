@@ -15,7 +15,7 @@ export default async function ReportsPage() {
       <Hero title="Reports" tag="Free Snapshots open instantly. Pro reports unlock with a subscription." />
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-5">
         {editions.length === 0 ? (
-          <p className="text-sm text-muted">No editions published yet.</p>
+          <p className="text-sm text-muted-foreground">No editions published yet.</p>
         ) : (
           <ReportsBrowser editions={editions} />
         )}
