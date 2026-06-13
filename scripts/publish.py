@@ -29,6 +29,22 @@ REPORTS = ROOT / "reports"
 PRO_FILES = {"pro.html": "text/html; charset=utf-8", "pro.pdf": "application/pdf"}
 
 
+def _load_local_env():
+    """Populate missing R2_* vars from web/.env.local so `python scripts/publish.py`
+    works without exporting them by hand."""
+    envfile = ROOT / "web" / ".env.local"
+    if not envfile.exists():
+        return
+    for line in envfile.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        k, v = k.strip(), v.strip()
+        if k.startswith("R2_") and not os.environ.get(k):
+            os.environ[k] = v
+
+
 def discover(date_filter):
     items = []
     for meta in sorted(REPORTS.glob("*/*/metadata.json")):
@@ -61,6 +77,7 @@ def main():
             print(f"  {key}")
         return
 
+    _load_local_env()
     env = {k: os.environ.get(k, "") for k in
            ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
     missing = [k for k, v in env.items() if not v]
