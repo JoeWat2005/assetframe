@@ -58,6 +58,17 @@ create table if not exists open_call_predictions (
 );
 create index if not exists ocp_report_idx on open_call_predictions (report_id);
 
+-- Pro-download log (admin dashboard charts). One row per Pro file fetched via /api/pro.
+create table if not exists download_log (
+  id         bigserial primary key,
+  report_id  text,
+  kind       text,
+  user_id    text,
+  ts         timestamptz default now()
+);
+create index if not exists download_log_ts_idx     on download_log (ts);
+create index if not exists download_log_report_idx on download_log (report_id);
+
 -- Scored results: the append-only outcome ledger (one row per scored report).
 create table if not exists scored_results (
   id          bigserial primary key,

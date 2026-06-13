@@ -36,6 +36,10 @@ export default function PrivacyPage() {
           <p>We share data only with the processors that run the service — authentication (Clerk), payments (Lemon Squeezy), hosting (Vercel), storage/CDN (Cloudflare) and email — each under their own terms. We do not sell your personal data.</p>
         </Clause>
 
+        <Clause title="Cookies">
+          <p>We use only the cookies needed to run the site: authentication and session cookies set by Clerk when you sign in, which are strictly necessary and need no consent. Our default traffic measurement (Vercel) is cookieless. If we enable Google Analytics it loads <b>only after you accept</b> the cookie banner — choosing Reject means no analytics cookies are set.</p>
+        </Clause>
+
         <Clause title="Your rights">
           <p>Under UK GDPR you may access, correct, delete or port your data, and object to or restrict processing. Email us to exercise these rights. You may also complain to the Information Commissioner&apos;s Office (ICO).</p>
         </Clause>

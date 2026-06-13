@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LemonScript from "@/components/LemonScript";
 import Motion from "@/components/Motion";
+import ConsentAnalytics from "@/components/ConsentAnalytics";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SITE } from "@/site.config";
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Motion />
           <Analytics />
           <SpeedInsights />
+          <ConsentAnalytics />
         </body>
       </html>
     </ClerkProvider>

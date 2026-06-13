@@ -21,8 +21,9 @@ export const SITE = {
     weekdayUTC: 1, // 0=Sun … 6=Sat (used only when cadence === "weekly")
     label: "New editions publish daily at 06:00 UTC",
   },
-  // Where the admin "Analytics" card sends you. Set to your Vercel project's Analytics tab.
+  // Where the admin "Analytics" cards send you. Set these to your own dashboards.
   analyticsUrl: process.env.NEXT_PUBLIC_ANALYTICS_URL || "https://vercel.com/dashboard",
+  gaUrl: process.env.NEXT_PUBLIC_GA_URL || "https://analytics.google.com/",
   // Social links — fill in your handles (leave "" to hide an icon)
   socials: {
     x: "https://x.com/assetframe",

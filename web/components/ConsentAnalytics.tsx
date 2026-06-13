@@ -1,0 +1,62 @@
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Button } from "@/components/ui/button";
+
+const KEY = "af-cookie-consent";
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
+// Loads Google Analytics ONLY after the visitor accepts (GA sets non-essential
+// cookies, so under UK/EU rules it must be consented to first). The banner is shown
+// only when a GA id is configured — Clerk's auth cookies are strictly necessary and
+// need no consent, so with no GA there's nothing to ask about.
+export default function ConsentAnalytics() {
+  const [mounted, setMounted] = useState(false);
+  const [consent, setConsent] = useState<"granted" | "denied" | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const v = localStorage.getItem(KEY);
+      if (v === "granted" || v === "denied") setConsent(v);
+    } catch {
+      /* storage blocked — treat as undecided */
+    }
+  }, []);
+
+  const decide = (v: "granted" | "denied") => {
+    try { localStorage.setItem(KEY, v); } catch {}
+    setConsent(v);
+  };
+
+  return (
+    <>
+      {GA_ID && consent === "granted" && <GoogleAnalytics gaId={GA_ID} />}
+
+      {mounted && GA_ID && consent === null && (
+        <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4">
+          <div className="mx-auto flex max-w-3xl flex-col gap-3 rounded-xl border border-navy-700 bg-navy p-4 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-[#c9d6e8]">
+              We use cookies to keep you signed in and, with your consent, to measure traffic.{" "}
+              <Link href="/privacy" className="underline hover:text-white">Privacy policy</Link>.
+            </p>
+            <div className="flex shrink-0 gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => decide("denied")}
+                className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              >
+                Reject
+              </Button>
+              <Button size="sm" onClick={() => decide("granted")} className="bg-white text-navy hover:bg-white/90">
+                Accept
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
