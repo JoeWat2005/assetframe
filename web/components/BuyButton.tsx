@@ -36,8 +36,12 @@ export default function BuyButton({
   let href = base;
   try {
     const u = new URL(base);
-    // Pass the Clerk user id so the webhook grants Pro to exactly this account.
+    // Pass the Clerk user id (hint) AND prefill the checkout email with this account's
+    // email. The webhook only grants Pro to the account whose VERIFIED email matches the
+    // payer, so prefilling keeps the normal flow working while blocking user_id spoofing.
     if (user?.id) u.searchParams.set("checkout[custom][user_id]", user.id);
+    const pemail = user?.primaryEmailAddress?.emailAddress;
+    if (pemail) u.searchParams.set("checkout[email]", pemail);
     href = u.toString();
   } catch {
     /* keep base */
