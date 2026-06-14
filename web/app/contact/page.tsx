@@ -5,7 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SITE } from "@/site.config";
 
-export const metadata: Metadata = { title: "Contact" };
+export const metadata: Metadata = {
+  title: "Contact",
+  description: "Get in touch with AssetFrame.",
+  alternates: { canonical: "/contact" },
+};
 
 const SOCIAL_LABELS: Record<string, string> = { x: "X", linkedin: "LinkedIn", youtube: "YouTube", reddit: "Reddit", instagram: "Instagram" };
 

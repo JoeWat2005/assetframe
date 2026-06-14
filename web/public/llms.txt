@@ -1,0 +1,27 @@
+# AssetFrame
+
+> AssetFrame publishes next-session market-research reports on stocks, crypto, FX and commodities. Every call is published before the market moves and graded against the tape afterwards, so the track record is public and verifiable. AssetFrame is general market research and decision support — it is not regulated financial advice, not a personal recommendation, and it never places trades.
+
+## What it is
+- For each instrument we publish a free one-page **Snapshot** and a paid **Pro** report.
+- The Snapshot gives the directional read: status, risk rating, broad expected range, one annotated chart, and a short thesis.
+- Pro adds conditional long & short setups with risk:reward, the price ladder with key-level cards, a scenario matrix, an event-risk timeline, sentiment/positioning where sourced, a trade-quality scorecard, the full source audit, and the append-only outcome ledger.
+- Coverage: futures, FX, cryptocurrency and US single stocks; the published menu grows over time.
+
+## How accountability works
+- Every Pro report registers falsifiable predictions — exact price levels and an exact window — *before* the session.
+- After the window closes, the engine grades each prediction Hit / Miss / No-trigger against the price tape and appends a row that is never edited.
+- The running hit rate, streaks and calibration are published, so the track record can be checked rather than taken on trust.
+
+## Key pages
+- [Reports](https://assetframe.co.uk/reports) — the latest published editions.
+- [Track record](https://assetframe.co.uk/track-record) — every call, scored against the market.
+- [How it works](https://assetframe.co.uk/how-it-works) — published before the move, graded after.
+- [Pricing](https://assetframe.co.uk/pricing) — free Snapshot vs Pro (£9.99/month).
+- [FAQ](https://assetframe.co.uk/faq)
+- [About](https://assetframe.co.uk/about)
+- [Terms](https://assetframe.co.uk/terms) and [Privacy](https://assetframe.co.uk/privacy)
+
+## Important
+- Not investment advice, not a personal recommendation, not FCA-regulated advice. Markets are uncertain, you can lose money, and no outcome is guaranteed. Do your own research and consider an FCA-authorised adviser.
+- Contact: hello@assetframe.co.uk

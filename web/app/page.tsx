@@ -7,6 +7,7 @@ import Countdown from "@/components/Countdown";
 import HeroBackdrop from "@/components/HeroBackdrop";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SITE } from "@/site.config";
 
 // Publishing model: editions change only when a new one is published, so serve a
 // cached static render and revalidate in the background. Fast for everyone, light on the DB.
@@ -81,7 +82,10 @@ export default async function Home() {
       {/* slim next-edition strip — keeps the hero uncluttered */}
       <div className="border-b border-line bg-white">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
-          <span className="text-sm font-semibold text-ink">Next edition drops in</span>
+          <div>
+            <span className="text-sm font-semibold text-ink">Next edition drops in</span>
+            <span className="block text-xs text-muted-foreground">{SITE.publish.label}</span>
+          </div>
           <Countdown tone="light" showLabel={false} />
         </div>
       </div>

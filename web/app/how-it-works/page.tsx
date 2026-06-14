@@ -5,7 +5,12 @@ import { Hero } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "How it works" };
+export const metadata: Metadata = {
+  title: "How it works",
+  description:
+    "How AssetFrame works: every report registers falsifiable predictions before the session, then grades them Hit / Miss / No-trigger against the price tape in an append-only ledger.",
+  alternates: { canonical: "/how-it-works" },
+};
 
 const STEPS = [
   { icon: Database, title: "Generate", body: "The engine pulls warm-up-extended market data and computes indicators, pivots and level statistics. The analysis is authored into one canonical payload, then both reports render behind a strict QA gate." },

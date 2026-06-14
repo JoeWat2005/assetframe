@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/ui";
 import { SITE } from "@/site.config";
 
-export const metadata: Metadata = { title: "Terms & Conditions" };
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
+  description:
+    "AssetFrame Terms & Conditions — market research, not regulated advice; subscriptions, acceptable use, IP and liability.",
+  alternates: { canonical: "/terms" },
+};
 
 const UPDATED = "14 June 2026";
 

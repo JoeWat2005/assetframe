@@ -25,6 +25,31 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+// Sitewide structured data so search + AI engines recognise the entity and site.
+const orgJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE.url}/#organization`,
+      name: SITE.brand,
+      url: SITE.url,
+      logo: `${SITE.url}/logo.png`,
+      email: SITE.contactEmail,
+      description:
+        "AssetFrame publishes next-session market-research reports on stocks, crypto, FX and commodities, with every call graded against the market afterwards. Not regulated financial advice.",
+      sameAs: Object.values(SITE.socials).filter(Boolean),
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE.url}/#website`,
+      name: SITE.brand,
+      url: SITE.url,
+      publisher: { "@id": `${SITE.url}/#organization` },
+    },
+  ],
+};
+
 const clerkAppearance = {
   variables: {
     colorPrimary: "#0b2545",
@@ -94,6 +119,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               __html:
                 "try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('gsap-on')}}catch(e){}",
             }}
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
           />
           <AppFrame header={<Header />} footer={<Footer />}>{children}</AppFrame>
           <Motion />

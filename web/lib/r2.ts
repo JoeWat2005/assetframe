@@ -21,11 +21,9 @@ const client =
  * Credentials never leave the server; the client only ever sees a URL that expires
  * in two minutes. Returns null if R2 isn't configured yet (so the route can 503 cleanly).
  */
-export async function signedReportUrl(key: string): Promise<string | null> {
+export async function signedReportUrl(key: string, expiresIn = 120): Promise<string | null> {
   if (!client || !bucket) return null;
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
-    expiresIn: 120,
-  });
+  return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn });
 }
 
 export const r2Configured = Boolean(client && bucket);

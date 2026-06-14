@@ -3,7 +3,12 @@ import { getCatalog } from "@/lib/content";
 import { Hero } from "@/components/ui";
 import ReportsBrowser from "@/components/ReportsBrowser";
 
-export const metadata: Metadata = { title: "Reports" };
+export const metadata: Metadata = {
+  title: "Reports",
+  description:
+    "Browse AssetFrame's latest editions — a directional read and the key levels on stocks, crypto, FX and commodities, each graded against the market afterwards.",
+  alternates: { canonical: "/reports" },
+};
 
 // Catalog changes only when an edition is published — cache + background-revalidate.
 export const revalidate = 300;

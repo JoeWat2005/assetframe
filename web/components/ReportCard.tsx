@@ -25,10 +25,22 @@ function ColorBadge({ label, color }: { label: string; color: string }) {
 export default function ReportCard({ e }: { e: Edition }) {
   const sc = STATUS[(e.status || "").trim().toLowerCase()] ?? "#57606a";
   const rc = RISK[(e.risk || "").trim().toLowerCase()] ?? "#57606a";
+  const href = `/reports/${e.date}/${e.slug}`;
   // One clear entry point: the reader page. It gates the actual Snapshot/Pro files behind
-  // an account, so cards never expose report files directly.
+  // an account, so cards never expose report files directly. The preview is a public thumbnail.
   return (
-    <Card data-animate="up" className="flex flex-col transition-shadow hover:shadow-md">
+    <Card data-animate="up" className="flex flex-col overflow-hidden transition-shadow hover:shadow-md">
+      {e.preview && (
+        <Link href={href} aria-label={e.instrument} className="group block aspect-[16/9] overflow-hidden border-b border-line bg-tile">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={e.preview}
+            alt={`${e.instrument} report preview`}
+            loading="lazy"
+            className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
+          />
+        </Link>
+      )}
       <CardHeader>
         <CardTitle className="text-lg">{e.instrument}</CardTitle>
         <CardDescription>
@@ -50,7 +62,7 @@ export default function ReportCard({ e }: { e: Edition }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between gap-2">
         <Button asChild size="sm">
-          <Link href={`/reports/${e.date}/${e.slug}`}>
+          <Link href={href}>
             View report
             <ArrowRight data-icon="inline-end" />
           </Link>

@@ -5,7 +5,12 @@ import { Hero } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "About" };
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "About AssetFrame — accountable, next-session market research, published before the move and graded after. Not regulated financial advice.",
+  alternates: { canonical: "/about" },
+};
 
 const PRINCIPLES = [
   { icon: Crosshair, title: "Falsifiable", body: "Every Pro report logs exact levels and an exact window before the session. Vague takes can't be graded; ours can." },

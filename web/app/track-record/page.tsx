@@ -8,7 +8,12 @@ import BuyButton from "@/components/BuyButton";
 import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Track record" };
+export const metadata: Metadata = {
+  title: "Track record",
+  description:
+    "AssetFrame's public track record — every call registered before its window and graded against the tape: hit rate, streaks and calibration.",
+  alternates: { canonical: "/track-record" },
+};
 
 const stat = (n: React.ReactNode, l: string) => (
   <div className="rounded-xl border border-line bg-white p-4">

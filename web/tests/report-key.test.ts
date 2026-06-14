@@ -11,7 +11,7 @@ describe("classifyReportKey", () => {
   it("classifies well-formed free keys", () => {
     expect(classifyReportKey("2026-06-13/ETH/free.html")).toBe("free");
     expect(classifyReportKey("2026-06-13/AAPL/free.pdf")).toBe("free");
-    expect(classifyReportKey("2026-06-13/SOL/preview.png")).toBe("free");
+    expect(classifyReportKey("2026-06-13/SOL/preview.png")).toBe("public"); // public thumbnail tier
   });
 
   it("rejects path traversal", () => {

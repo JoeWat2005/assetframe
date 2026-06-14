@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/ui";
 import { SITE } from "@/site.config";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "AssetFrame Privacy Policy — what we collect, why, and your rights under UK GDPR.",
+  alternates: { canonical: "/privacy" },
+};
 
 const UPDATED = "14 June 2026";
 

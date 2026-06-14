@@ -3,7 +3,12 @@ import { Btn, Hero, Note } from "@/components/ui";
 import BuyButton from "@/components/BuyButton";
 import { SITE } from "@/site.config";
 
-export const metadata: Metadata = { title: "Pricing" };
+export const metadata: Metadata = {
+  title: "Pricing",
+  description:
+    "AssetFrame pricing — a free Snapshot on every edition, or Pro at £9.99/month for conditional setups, the price ladder, the scorecard and the full scored ledger. Cancel anytime.",
+  alternates: { canonical: "/pricing" },
+};
 
 const FREE = [
   "One-page Snapshot per edition", "Status, risk and broad expected range",
