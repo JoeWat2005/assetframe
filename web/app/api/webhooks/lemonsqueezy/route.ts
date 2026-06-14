@@ -137,15 +137,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
-      // A grant we couldn't bind (unverified email, or paid with a different email) — log it
-      // so it's observable/recoverable rather than a silent drop.
-      if (subscribed === true) {
-        await logAudit({
-          actor: "webhook", action: "grant_unresolved",
-          target: email ?? subscriptionId ?? "?",
-          detail: `${eventName} status=${attrs.status ?? ""} sub=${subscriptionId ?? ""}`,
-        });
-      }
+      // An event we couldn't bind to an account (unverified email, paid with a different
+      // email, or a pre-mapping subscription whose email later changed). Log BOTH grants and
+      // revokes so it's observable/recoverable in the activity log rather than silently
+      // dropped — unresolved REVOKES are the residual fail-open and matter most.
+      await logAudit({
+        actor: "webhook",
+        action: subscribed === true ? "grant_unresolved" : "revoke_unresolved",
+        target: email ?? subscriptionId ?? "?",
+        detail: `${eventName} status=${attrs.status ?? ""} sub=${subscriptionId ?? ""}`,
+      });
       return NextResponse.json({ ok: true, ignored: true, reason: "no-account" });
     }
 
