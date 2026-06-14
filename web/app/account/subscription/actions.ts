@@ -1,21 +1,18 @@
 "use server";
 import { currentUser, clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { cancelLemonSubscription, type CancelResult } from "@/lib/lemonsqueezy";
+import { cancelLemonSubscription, resumeLemonSubscription, type CancelResult } from "@/lib/lemonsqueezy";
 
-/**
- * Cancel the signed-in user's own subscription. Reads the Lemon Squeezy subscription
- * id from their Clerk metadata (set by the webhook), cancels via the LS API, and
- * optimistically marks the status cancelled — the webhook reconciles authoritatively.
- */
-export async function cancelMySubscription(): Promise<CancelResult> {
+// Apply a billing action to the signed-in user's OWN subscription only (id read from their
+// Clerk metadata — never from input), then optimistically mirror the new status. The webhook
+// reconciles authoritatively a moment later.
+async function applyToOwnSubscription(fn: (id: string) => Promise<CancelResult>): Promise<CancelResult> {
   const user = await currentUser();
   if (!user) return { ok: false, reason: "no-subscription" };
+  const subscriptionId = (user.publicMetadata as { subscriptionId?: string })?.subscriptionId;
+  if (!subscriptionId) return { ok: false, reason: "no-subscription" };
 
-  const meta = (user.publicMetadata || {}) as { subscriptionId?: string };
-  if (!meta.subscriptionId) return { ok: false, reason: "no-subscription" };
-
-  const result = await cancelLemonSubscription(meta.subscriptionId);
+  const result = await fn(subscriptionId);
   if (result.ok) {
     try {
       const cc = await clerkClient();
@@ -28,4 +25,12 @@ export async function cancelMySubscription(): Promise<CancelResult> {
     revalidatePath("/account/subscription");
   }
   return result;
+}
+
+export async function cancelMySubscription(): Promise<CancelResult> {
+  return applyToOwnSubscription(cancelLemonSubscription);
+}
+
+export async function resumeMySubscription(): Promise<CancelResult> {
+  return applyToOwnSubscription(resumeLemonSubscription);
 }

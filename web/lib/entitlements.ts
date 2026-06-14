@@ -6,8 +6,11 @@ export type Entitlement = {
   subscribed: boolean;
   admin: boolean;
   email?: string;
+  // Admins implicitly get Pro; "free" lets an admin preview the free tier without paying.
+  adminTier?: "pro" | "free";
   // Billing details mirrored from Lemon Squeezy by the webhook (all public-safe).
   subscriptionId?: string;
+  lsCustomerId?: string;
   portalUrl?: string;
   subStatus?: string;
   planName?: string;
@@ -32,15 +35,18 @@ export async function getEntitlement(): Promise<Entitlement> {
 
   const email = user.primaryEmailAddress?.emailAddress?.toLowerCase();
   const meta = (user.publicMetadata || {}) as {
-    subscribed?: boolean; role?: string; subscriptionId?: string; portalUrl?: string;
+    subscribed?: boolean; role?: string; adminTier?: "pro" | "free";
+    subscriptionId?: string; lsCustomerId?: string; portalUrl?: string;
     subStatus?: string; planName?: string; renewsAt?: string; endsAt?: string;
   };
   const admin = meta.role === "admin" || (!!email && ADMIN_EMAILS.includes(email));
-  const subscribed = meta.subscribed === true || admin;
+  // Admins get Pro for free, unless they've toggled their preview to the free tier.
+  const subscribed = meta.subscribed === true || (admin && meta.adminTier !== "free");
 
   return {
     signedIn: true, subscribed, admin, email,
-    subscriptionId: meta.subscriptionId, portalUrl: meta.portalUrl,
+    adminTier: meta.adminTier,
+    subscriptionId: meta.subscriptionId, lsCustomerId: meta.lsCustomerId, portalUrl: meta.portalUrl,
     subStatus: meta.subStatus, planName: meta.planName,
     renewsAt: meta.renewsAt || undefined, endsAt: meta.endsAt || undefined,
   };

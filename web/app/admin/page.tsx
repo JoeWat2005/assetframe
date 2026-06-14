@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, PoundSterling } from "lucide-react";
-import { getCatalog } from "@/lib/content";
+import { getAllEditions } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
 import { Hero, Note } from "@/components/ui";
@@ -12,6 +12,8 @@ import AdminActions from "./AdminActions";
 import MemberSearch from "./MemberSearch";
 import AdminLog from "./AdminLog";
 import ProToggle from "./ProToggle";
+import AdminTierToggle from "./AdminTierToggle";
+import EditionToggle from "./EditionToggle";
 import { getAuditLog } from "@/lib/audit";
 import { SITE } from "@/site.config";
 
@@ -23,7 +25,7 @@ export default async function AdminPage() {
   if (!ent.signedIn) redirect("/sign-in");
   if (!ent.admin) redirect("/account");
 
-  const [stats, catalog, auditLog] = await Promise.all([getAdminStats(), getCatalog(), getAuditLog()]);
+  const [stats, catalog, auditLog] = await Promise.all([getAdminStats(), getAllEditions(), getAuditLog()]);
   const titleById = new Map(catalog.map((e) => [`${e.date}/${e.slug}`, e.instrument]));
 
   const priceNum = parseFloat((SITE.proPrice.match(/[\d.]+/) || ["0"])[0]) || 0;
@@ -58,6 +60,17 @@ export default async function AdminPage() {
             </Card>
           ))}
         </div>
+
+        {/* Preview tier — admins get Pro free; switch to Free to see the non-subscriber view */}
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">Preview tier</CardTitle>
+            <CardDescription>You get Pro for free as an admin — switch to Free to see what non-subscribers see (your admin access is unaffected).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AdminTierToggle current={ent.adminTier === "free" ? "free" : "pro"} />
+          </CardContent>
+        </Card>
 
         {/* Charts */}
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -201,11 +214,17 @@ export default async function AdminPage() {
         </Note>
 
         <h2 className="mt-6 mb-1 text-xl font-bold text-navy">Editions</h2>
+        <p className="mb-2 text-sm text-muted-foreground">
+          Toggle an edition to <b>Hidden</b> to unpublish it from the public site, sitemap and reader — the files stay in R2 and it can be restored.
+        </p>
         <div className="overflow-hidden rounded-xl border border-line bg-white">
           {catalog.map((e) => (
-            <div key={`${e.date}/${e.slug}`} className="flex items-center justify-between border-b border-line p-3 text-sm last:border-0">
-              <span><b>{e.instrument}</b> <span className="text-muted-foreground">{e.ticker}</span></span>
-              <span className="text-muted-foreground">{e.reportDate} · {e.hasPro ? "Pro ✓" : "free only"}</span>
+            <div key={`${e.date}/${e.slug}`} className="flex items-center justify-between gap-3 border-b border-line p-3 text-sm last:border-0">
+              <span className="min-w-0 truncate">
+                <b>{e.instrument}</b> <span className="text-muted-foreground">{e.ticker}</span>
+                <span className="ml-2 whitespace-nowrap text-muted-foreground">{e.reportDate} · {e.hasPro ? "Pro ✓" : "free only"}</span>
+              </span>
+              <EditionToggle id={`${e.date}/${e.slug}`} hidden={e.hidden} />
             </div>
           ))}
         </div>

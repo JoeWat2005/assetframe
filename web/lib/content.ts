@@ -9,7 +9,7 @@ export type Edition = {
   assetClass: string; status: string; risk: string; bias: string;
   lastPrice: string; dataQuality: string | number; windowEnd: string;
   reportDate: string; catalystStatus: string;
-  freeHtml: string; freePdf: string; preview: string; hasPro: boolean;
+  freeHtml: string; freePdf: string; preview: string; hasPro: boolean; hidden: boolean;
 };
 
 export type SubCall = {
@@ -74,13 +74,13 @@ function rowToEdition(r: Row): Edition {
     lastPrice: "", dataQuality: r.data_quality == null ? "" : Number(r.data_quality),
     windowEnd: s(r.window_end), reportDate: date, catalystStatus: s(r.catalyst_status),
     freeHtml: s(r.free_html_key), freePdf: s(r.free_pdf_key), preview: s(r.preview_key),
-    hasPro: Boolean(r.has_pro),
+    hasPro: Boolean(r.has_pro), hidden: Boolean(r.hidden),
   };
 }
 
 const EDITION_COLS = `id, report_date::text AS report_date, slug, instrument, ticker,
   asset_class, status, risk, bias, data_quality, window_end, catalyst_status, has_pro,
-  free_html_key, free_pdf_key, preview_key`;
+  free_html_key, free_pdf_key, preview_key, coalesce(hidden, false) AS hidden`;
 
 // ------------------------------------------------------------------ public API (DB-first)
 // Wrapped in unstable_cache below so reloads serve from Next's Data Cache (no re-query).
@@ -88,7 +88,7 @@ async function _getCatalog(): Promise<Edition[]> {
   if (sql) {
     try {
       const rows = await sql.query(
-        `SELECT ${EDITION_COLS} FROM editions ORDER BY report_date DESC, slug DESC`
+        `SELECT ${EDITION_COLS} FROM editions WHERE coalesce(hidden, false) = false ORDER BY report_date DESC, slug DESC`
       );
       return (rows as Row[]).map(rowToEdition);
     } catch {
@@ -98,11 +98,27 @@ async function _getCatalog(): Promise<Edition[]> {
   return readJson<Edition[]>("catalog.json", []);
 }
 
+// Admin view: ALL editions, including hidden ones (with the hidden flag). Uncached so the
+// admin always sees the live state right after toggling.
+export async function getAllEditions(): Promise<Edition[]> {
+  if (sql) {
+    try {
+      const rows = await sql.query(
+        `SELECT ${EDITION_COLS} FROM editions ORDER BY report_date DESC, slug DESC`
+      );
+      return (rows as Row[]).map(rowToEdition);
+    } catch {
+      /* fall through */
+    }
+  }
+  return readJson<Edition[]>("catalog.json", []);
+}
+
 export async function getEdition(date: string, slug: string): Promise<Edition | undefined> {
   if (sql) {
     try {
       const rows = await sql.query(
-        `SELECT ${EDITION_COLS} FROM editions WHERE id = $1 LIMIT 1`,
+        `SELECT ${EDITION_COLS} FROM editions WHERE id = $1 AND coalesce(hidden, false) = false LIMIT 1`,
         [`${date}/${slug}`]
       );
       const r = (rows as Row[])[0];

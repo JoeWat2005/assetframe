@@ -96,3 +96,33 @@ export async function cancelLemonSubscription(subscriptionId: string): Promise<C
     return { ok: false, reason: "network" };
   }
 }
+
+/**
+ * Resume (un-cancel) a Lemon Squeezy subscription that was cancelled but hasn't expired
+ * yet — PATCH cancelled:false. Lets a user who cancelled during their period keep going.
+ */
+export async function resumeLemonSubscription(subscriptionId: string): Promise<CancelResult> {
+  const key = process.env.LEMONSQUEEZY_API_KEY;
+  if (!key) return { ok: false, reason: "no-api-key" };
+  if (!subscriptionId) return { ok: false, reason: "no-subscription" };
+  try {
+    const res = await fetch(`https://api.lemonsqueezy.com/v1/subscriptions/${subscriptionId}`, {
+      method: "PATCH",
+      headers: {
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        data: { type: "subscriptions", id: String(subscriptionId), attributes: { cancelled: false } },
+      }),
+    });
+    if (!res.ok) return { ok: false, reason: "http-error" };
+    const body = (await res.json().catch(() => null)) as
+      | { data?: { attributes?: { status?: string } } }
+      | null;
+    return { ok: true, status: body?.data?.attributes?.status ?? "active" };
+  } catch {
+    return { ok: false, reason: "network" };
+  }
+}

@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import BuyButton from "@/components/BuyButton";
 import CancelSubscription from "@/components/CancelSubscription";
-import { cancelMySubscription } from "./actions";
+import ResumeSubscription from "@/components/ResumeSubscription";
+import { cancelMySubscription, resumeMySubscription } from "./actions";
 import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
@@ -92,6 +93,23 @@ export default async function SubscriptionPage({
             </Button>
           </CardFooter>
         </Card>
+
+        {ent.subscribed && cancelling && (
+          <>
+            <Separator className="my-6" />
+            <h2 className="mb-1 text-base font-semibold">Changed your mind?</h2>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Your plan is set to end{ends ? ` on ${ends}` : ""}. Resume to keep Pro and let it renew as normal.
+            </p>
+            {canCancelInApp ? (
+              <ResumeSubscription onResume={resumeMySubscription} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Open the <b>Billing portal</b> above to resume your plan.
+              </p>
+            )}
+          </>
+        )}
 
         {ent.subscribed && !cancelling && (
           <>
