@@ -25,9 +25,10 @@ export default async function Home() {
 
   return (
     <>
-      <section className="relative isolate overflow-hidden bg-navy text-white">
+      <div className="flex min-h-[100dvh] flex-col">
+      <section className="relative isolate flex flex-1 items-center overflow-hidden bg-navy text-white">
         <HeroBackdrop />
-        <div className="relative z-10 mx-auto max-w-5xl px-4 py-20 sm:px-5 sm:py-24" data-animate="hero">
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-14 sm:px-5" data-animate="hero">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur">
             <ShieldCheck className="size-3.5 text-[#7fb0ff]" />
             Published before the move, graded after
@@ -63,6 +64,7 @@ export default async function Home() {
           <span className="text-sm font-semibold text-ink">Next edition drops in</span>
           <Countdown tone="light" showLabel={false} />
         </div>
+      </div>
       </div>
 
       <Section title="Latest editions" lead="Free Snapshots open in your browser. Pro reports unlock with a subscription.">

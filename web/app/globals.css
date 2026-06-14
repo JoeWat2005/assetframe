@@ -27,6 +27,11 @@ body { background: var(--color-bg); color: var(--color-ink); }
 .af-drift { animation: af-drift 48s linear infinite; will-change: transform; }
 @media (prefers-reduced-motion: reduce) { .af-drift { animation: none; } }
 
+/* Auth backdrop: a vertical market-ticker tape drifting upward. */
+@keyframes af-tape { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+.af-tape { animation: af-tape 34s linear infinite; will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .af-tape { animation: none; } }
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
