@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Lock, FileText, BookOpen } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import type { Edition } from "@/lib/content";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,8 @@ function ColorBadge({ label, color }: { label: string; color: string }) {
 export default function ReportCard({ e }: { e: Edition }) {
   const sc = STATUS[(e.status || "").trim().toLowerCase()] ?? "#57606a";
   const rc = RISK[(e.risk || "").trim().toLowerCase()] ?? "#57606a";
+  // One clear entry point: the reader page. It gates the actual Snapshot/Pro files behind
+  // an account, so cards never expose report files directly.
   return (
     <Card data-animate="up" className="flex flex-col transition-shadow hover:shadow-md">
       <CardHeader>
@@ -46,25 +48,18 @@ export default function ReportCard({ e }: { e: Edition }) {
           <p className="text-xs text-muted-foreground">Data quality {e.dataQuality}/10</p>
         )}
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-2">
+      <CardFooter className="flex items-center justify-between gap-2">
         <Button asChild size="sm">
-          <a href={e.freeHtml} target="_blank" rel="noopener noreferrer">
-            <BookOpen data-icon="inline-start" />
-            Snapshot
-          </a>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <a href={e.freePdf} target="_blank" rel="noopener noreferrer">
-            <FileText data-icon="inline-start" />
-            PDF
-          </a>
-        </Button>
-        <Button asChild size="sm" variant="outline">
           <Link href={`/reports/${e.date}/${e.slug}`}>
-            <Lock data-icon="inline-start" />
-            Pro
+            View report
+            <ArrowRight data-icon="inline-end" />
           </Link>
         </Button>
+        {e.hasPro && (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#9a6700]">
+            <Lock className="size-3.5" /> Pro available
+          </span>
+        )}
       </CardFooter>
     </Card>
   );

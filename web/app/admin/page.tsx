@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ExternalLink, BarChart3, Gauge, LineChart, Users, CreditCard, Percent, FileText, Download, PoundSterling } from "lucide-react";
+import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, PoundSterling } from "lucide-react";
 import { getCatalog } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
@@ -8,6 +8,8 @@ import { Hero, Note } from "@/components/ui";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendChart, ClassBars, SplitDonut } from "@/components/admin/Charts";
+import AdminActions from "./AdminActions";
+import ProToggle from "./ProToggle";
 import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
@@ -137,11 +139,9 @@ export default async function AdminPage() {
               ) : (
                 <div className="divide-y divide-line border-t border-line">
                   {stats.recent.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between px-6 py-2.5 text-sm">
+                    <div key={m.id} className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm">
                       <span className="truncate">{m.email}</span>
-                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${m.subscribed ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-tile text-muted-foreground"}`}>
-                        {m.subscribed ? "Pro" : "Free"}
-                      </span>
+                      <ProToggle email={m.email} subscribed={m.subscribed} />
                     </div>
                   ))}
                 </div>
@@ -149,6 +149,9 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Manage access */}
+        <AdminActions />
 
         {/* External dashboards */}
         <Card className="mt-4">
@@ -159,12 +162,7 @@ export default async function AdminPage() {
           <CardContent className="flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
               <a href={SITE.analyticsUrl} target="_blank" rel="noopener noreferrer">
-                <BarChart3 data-icon="inline-start" />Web Analytics<ExternalLink data-icon="inline-end" />
-              </a>
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <a href={SITE.analyticsUrl} target="_blank" rel="noopener noreferrer">
-                <Gauge data-icon="inline-start" />Speed Insights<ExternalLink data-icon="inline-end" />
+                <BarChart3 data-icon="inline-start" />Vercel — Analytics &amp; Speed<ExternalLink data-icon="inline-end" />
               </a>
             </Button>
             <Button asChild size="sm" variant="outline">

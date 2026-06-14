@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import RedirectCountdown from "@/components/RedirectCountdown";
 
 export const metadata = { title: "Page not found" };
 
@@ -28,8 +29,11 @@ export default function NotFound() {
           This page is off the tape.
         </h1>
         <p className="mx-auto mt-4 max-w-md text-[#c9d6e8]">
-          The link is broken, or the edition was unpublished. Here is where to head instead.
+          The link is broken, or the edition was unpublished. We&apos;ll take you back home — or pick a
+          destination below.
         </p>
+
+        <RedirectCountdown seconds={5} to="/" />
 
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Button asChild className="h-11 bg-white px-6 text-base text-navy shadow-sm hover:bg-white/90">

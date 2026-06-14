@@ -16,6 +16,7 @@ export default function SmoothNav() {
       if (!a) return;
       const href = a.getAttribute("href");
       if (!href || !href.startsWith("/") || a.getAttribute("target") === "_blank" || a.hasAttribute("download")) return;
+      if (a.closest('[role="dialog"]')) return; // inside an open menu/sheet: navigate normally (don't hijack)
       if (window.scrollY <= 0) return; // already at top: let Next navigate normally
 
       e.preventDefault();

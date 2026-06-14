@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 const HOME = process.env.NODE_ENV === "production" ? SITE.url : "/";
 
 const RESEARCH = [
-  { href: "/reports", label: "Reports", desc: "Browse the latest Snapshot + Pro editions.", icon: FileText },
+  { href: "/reports", label: "Reports", desc: "Browse the latest published editions.", icon: FileText },
   { href: "/track-record", label: "Track record", desc: "Every call, scored against the tape.", icon: LineChart },
   { href: "/how-it-works", label: "How it works", desc: "Published before the move, graded after.", icon: BookOpen },
 ];
@@ -26,7 +26,7 @@ const COMPANY = [
   { href: "/faq", label: "FAQ", desc: "Common questions, answered.", icon: HelpCircle },
   { href: "/contact", label: "Contact", desc: "Reach us about anything.", icon: Mail },
 ];
-const MOBILE = [...RESEARCH, ...COMPANY, { href: "/pricing", label: "Pricing", desc: "", icon: FileText }];
+const MOBILE = [...RESEARCH, ...COMPANY];
 
 function MenuGrid({ items }: { items: typeof RESEARCH }) {
   return (
@@ -50,21 +50,32 @@ function MenuGrid({ items }: { items: typeof RESEARCH }) {
 
 export default function Header() {
   const pathname = usePathname();
+  const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(!isHome);
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
-  // Reveal on scroll: header is hidden at the very top (so the hero is all you see),
-  // and slides in once scrolled past ~64px. IntersectionObserver, no scroll listener.
+  // Home: the header is hidden over the full-screen hero and reveals once you scroll
+  // past the fold. Every other page: it's visible at the top, hides as you scroll down
+  // (more reading room), and comes back as you scroll up. rAF-throttled, passive.
   useEffect(() => {
-    const sentinel = document.createElement("div");
-    sentinel.setAttribute("aria-hidden", "true");
-    sentinel.style.cssText = "position:absolute;top:0;left:0;height:64px;width:1px;pointer-events:none";
-    document.body.appendChild(sentinel);
-    const io = new IntersectionObserver(([e]) => setShown(!e.isIntersecting), { threshold: 0 });
-    io.observe(sentinel);
-    return () => { io.disconnect(); sentinel.remove(); };
-  }, []);
+    setShown(!isHome);
+    let lastY = window.scrollY;
+    let ticking = false;
+    const apply = () => {
+      const y = window.scrollY;
+      if (isHome) setShown(y > 64);
+      else if (y <= 64) setShown(true); // near the top (within the reserved header zone): always shown
+      else if (y > lastY + 4) setShown(false); // scrolling down past the fold: hide
+      else if (y < lastY - 4) setShown(true); // scrolling up: show
+      lastY = y;
+      ticking = false;
+    };
+    apply();
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHome]);
 
   return (
     <header
@@ -95,15 +106,6 @@ export default function Header() {
                   Company
                 </NavigationMenuTrigger>
                 <NavigationMenuContent><MenuGrid items={COMPANY} /></NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  asChild
-                  active={isActive("/pricing")}
-                  className="px-3 py-1.5 text-sm font-semibold text-ink hover:text-navy data-active:bg-tile data-active:text-navy"
-                >
-                  <Link href="/pricing">Pricing</Link>
-                </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
@@ -137,8 +139,8 @@ export default function Header() {
                   </SheetClose>
                 ))}
               </nav>
-              <div className="mt-3 flex items-center gap-3 border-t border-line px-4 pt-4">
-                <HeaderAuth />
+              <div className="mt-3 border-t border-line px-2 pt-3">
+                <HeaderAuth mobile onNavigate={() => setOpen(false)} />
               </div>
             </SheetContent>
           </Sheet>

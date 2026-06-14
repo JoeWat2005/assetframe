@@ -1,12 +1,10 @@
-import Link from "next/link";
-import Image from "next/image";
 import { ShieldCheck, LineChart, Lock } from "lucide-react";
 import AuthBackdrop from "@/components/AuthBackdrop";
 import { SITE } from "@/site.config";
 
 // Full-screen auth layout (no marketing nav/footer): a navy brand panel with a live
 // market-ticker backdrop on desktop, next to the centred Clerk widget. On mobile the
-// brand panel collapses and a logo sits above the form.
+// brand panel collapses and only the Clerk card (with its own logo) is shown.
 export default function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-[100dvh] md:grid-cols-2">
@@ -27,10 +25,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
         </p>
       </div>
 
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-8 bg-gradient-to-b from-white to-[#eef2f8] px-5 py-10">
-        <Link href="/" className="md:hidden">
-          <Image src="/logo.png" alt={SITE.brand} width={140} height={28} className="h-7 w-auto" priority />
-        </Link>
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-gradient-to-b from-white to-[#eef2f8] px-5 py-10">
         {children}
       </div>
     </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck, Layers, Clock, BadgeCheck } from "lucide-react";
 import { getCatalog, getTrackRecord } from "@/lib/content";
 import { Section } from "@/components/ui";
 import ReportCard from "@/components/ReportCard";
@@ -11,6 +11,24 @@ import { Card, CardContent } from "@/components/ui/card";
 // Publishing model: editions change only when a new one is published, so serve a
 // cached static render and revalidate in the background. Fast for everyone, light on the DB.
 export const revalidate = 300;
+
+const WHAT = [
+  {
+    icon: Layers,
+    title: "We cover the instrument",
+    body: "Stocks, crypto, FX, commodities and indices — one focused edition per name.",
+  },
+  {
+    icon: Clock,
+    title: "Published before the move",
+    body: "A clear directional read, the key levels and the catalysts that matter — out ahead of the session.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Scored after the fact",
+    body: "Every call is logged before its window and graded against the tape — a public, honest track record.",
+  },
+];
 
 export default async function Home() {
   const catalog = (await getCatalog()).slice(0, 6);
@@ -37,12 +55,14 @@ export default async function Home() {
             Next-session market intelligence,{" "}
             <span className="text-[#7fb0ff]">scored after the fact.</span>
           </h1>
-          <p className="mt-5 max-w-md text-lg text-[#c9d6e8]">
-            A free Snapshot for everyone. Pro adds the full scored ledger.
+          <p className="mt-5 max-w-xl text-lg text-[#c9d6e8]">
+            AssetFrame publishes pre-session research on stocks, crypto, FX and commodities — a clear
+            directional read with the levels that matter. Every call is logged before the market moves
+            and graded against the tape afterwards, so our track record is public.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild className="h-11 bg-white px-6 text-base text-navy shadow-sm hover:bg-white/90">
-              <Link href="/reports">Browse free reports</Link>
+              <Link href="/reports">Browse reports</Link>
             </Button>
             <Button
               asChild
@@ -67,7 +87,24 @@ export default async function Home() {
       </div>
       </div>
 
-      <Section title="Latest editions" lead="Free Snapshots open in your browser. Pro reports unlock with a subscription.">
+      <Section
+        title="What AssetFrame does"
+        lead="Independent, accountable market research — not tips, not signals, and never a recommendation to buy or sell."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {WHAT.map((w) => (
+            <Card key={w.title} data-animate="up">
+              <CardContent>
+                <w.icon className="size-5 text-navy" />
+                <div className="mt-3 text-base font-bold text-ink">{w.title}</div>
+                <p className="mt-1 text-sm text-muted-foreground">{w.body}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Latest editions" lead="A directional read and the levels that matter on each instrument. Open one to read the full report.">
         {catalog.length === 0 ? (
           <p className="text-sm text-muted-foreground">No editions published yet.</p>
         ) : (
