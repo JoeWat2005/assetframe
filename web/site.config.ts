@@ -2,7 +2,7 @@
 export const SITE = {
   brand: "AssetFrame",
   tagline: "Next-session market intelligence, scored after the fact.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://assetframe.co.uk",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.assetframe.co.uk",
   // Lemon Squeezy buy link + price label (public, safe to expose). Env overrides the default.
   checkoutUrl:
     process.env.NEXT_PUBLIC_CHECKOUT_URL ||

@@ -14,13 +14,13 @@
 - The running hit rate, streaks and calibration are published, so the track record can be checked rather than taken on trust.
 
 ## Key pages
-- [Reports](https://assetframe.co.uk/reports) — the latest published editions.
-- [Track record](https://assetframe.co.uk/track-record) — every call, scored against the market.
-- [How it works](https://assetframe.co.uk/how-it-works) — published before the move, graded after.
-- [Pricing](https://assetframe.co.uk/pricing) — free Snapshot vs Pro (£9.99/month).
-- [FAQ](https://assetframe.co.uk/faq)
-- [About](https://assetframe.co.uk/about)
-- [Terms](https://assetframe.co.uk/terms) and [Privacy](https://assetframe.co.uk/privacy)
+- [Reports](https://www.assetframe.co.uk/reports) — the latest published editions.
+- [Track record](https://www.assetframe.co.uk/track-record) — every call, scored against the market.
+- [How it works](https://www.assetframe.co.uk/how-it-works) — published before the move, graded after.
+- [Pricing](https://www.assetframe.co.uk/pricing) — free Snapshot vs Pro (£9.99/month).
+- [FAQ](https://www.assetframe.co.uk/faq)
+- [About](https://www.assetframe.co.uk/about)
+- [Terms](https://www.assetframe.co.uk/terms) and [Privacy](https://www.assetframe.co.uk/privacy)
 
 ## Important
 - Not investment advice, not a personal recommendation, not FCA-regulated advice. Markets are uncertain, you can lose money, and no outcome is guaranteed. Do your own research and consider an FCA-authorised adviser.
