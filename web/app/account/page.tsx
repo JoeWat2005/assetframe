@@ -11,10 +11,15 @@ export const metadata: Metadata = { title: "Account" };
 export default async function AccountPage() {
   const ent = await getEntitlement();
   if (!ent.signedIn) redirect("/sign-in");
+  const cancelling = ent.subscribed && ent.subStatus === "cancelled";
+  const ends = ent.endsAt ? ent.endsAt.slice(0, 10) : null;
 
   return (
     <>
-      <Hero title="Your account" tag={ent.subscribed ? "AssetFrame Pro, active" : "Free member"} />
+      <Hero
+        title="Your account"
+        tag={ent.subscribed ? (cancelling ? "AssetFrame Pro — cancelling" : "AssetFrame Pro, active") : "Free member"}
+      />
       <div className="mx-auto max-w-3xl px-5 py-8">
         {ent.admin && (
           <Note><b>Admin.</b> You have admin access. Open the <a className="text-navy underline" href="/admin">dashboard</a>.</Note>
@@ -34,7 +39,9 @@ export default async function AccountPage() {
           <h2 className="text-lg font-bold text-navy">Reports</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {ent.subscribed
-              ? "Your Pro access is active. Open any edition's Snapshot or Pro report from the Reports page."
+              ? cancelling
+                ? `Your plan is cancelled — Pro access stays on until ${ends ?? "the end of your billing period"}, then it ends. No further charge.`
+                : "Your Pro access is active. Open any edition's Snapshot or Pro report from the Reports page."
               : "Browse free Snapshots on the Reports page. Upgrade to unlock the Pro report on every edition."}
           </p>
           <div className="mt-3">
