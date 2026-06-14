@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Hero, Section } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import RedirectCountdown from "@/components/RedirectCountdown";
 
@@ -7,35 +9,20 @@ export const metadata = { title: "Page not found" };
 
 const LINKS = [
   { href: "/reports", label: "Reports", desc: "Browse the latest editions." },
-  { href: "/track-record", label: "Track record", desc: "Every call, scored." },
+  { href: "/track-record", label: "Track record", desc: "Every call, scored against the tape." },
   { href: "/how-it-works", label: "How it works", desc: "The publish-then-grade method." },
   { href: "/pricing", label: "Pricing", desc: "Free Snapshot vs Pro." },
 ];
 
 export default function NotFound() {
   return (
-    <section className="relative overflow-hidden bg-navy text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(52rem 28rem at 50% -12%, rgba(127,176,255,0.18), transparent 60%), radial-gradient(40rem 26rem at 100% 0%, rgba(20,58,100,0.5), transparent 55%)",
-        }}
-      />
-      <div className="relative mx-auto max-w-3xl px-5 py-24 text-center sm:py-28">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-[#7fb0ff]">Error 404</p>
-        <h1 className="mt-3 text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
-          This page is off the tape.
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-[#c9d6e8]">
-          The link is broken, or the edition was unpublished. We&apos;ll take you back home — or pick a
-          destination below.
-        </p>
-
+    <>
+      <Hero
+        title="This page is off the tape."
+        tag="Error 404 — the link is broken, or the edition may have been unpublished. We'll take you home automatically."
+      >
         <RedirectCountdown seconds={5} to="/" />
-
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
+        <div className="mt-7 flex flex-wrap gap-3">
           <Button asChild className="h-11 bg-white px-6 text-base text-navy shadow-sm hover:bg-white/90">
             <Link href="/">Back home</Link>
           </Button>
@@ -50,23 +37,27 @@ export default function NotFound() {
             </Link>
           </Button>
         </div>
+      </Hero>
 
-        <div className="mx-auto mt-10 grid max-w-xl grid-cols-1 gap-3 text-left sm:grid-cols-2">
+      <Section title="Try one of these" lead="Popular destinations on AssetFrame.">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="group rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-white/25 hover:bg-white/10"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">{l.label}</span>
-                <ArrowRight className="size-4 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white" />
-              </div>
-              <p className="mt-1 text-sm text-[#aebfd6]">{l.desc}</p>
-            </Link>
+            <Card key={l.href} className="group transition hover:border-navy/30 hover:shadow-sm">
+              <CardContent>
+                <Link href={l.href} className="block">
+                  <span className="flex items-center justify-between">
+                    <span className="font-semibold text-ink">{l.label}</span>
+                    <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-navy" />
+                  </span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{l.desc}</span>
+                </Link>
+              </CardContent>
+            </Card>
           ))}
         </div>
-      </div>
-    </section>
+      </Section>
+
+      <div className="h-12" />
+    </>
   );
 }

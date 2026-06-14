@@ -56,7 +56,10 @@ export default function Header() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
-  const [shown, setShown] = useState(!isHome);
+  // Start hidden on every render path (incl. static generation, where usePathname is null):
+  // the scroll effect below sets the right state on mount, so the navbar never paints a
+  // stray bar over the home hero before hydration.
+  const [shown, setShown] = useState(false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   // Home: the header is hidden over the full-screen hero and reveals once you scroll

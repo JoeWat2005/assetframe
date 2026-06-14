@@ -13,7 +13,7 @@ import MemberSearch from "./MemberSearch";
 import AdminLog from "./AdminLog";
 import ProToggle from "./ProToggle";
 import AdminTierToggle from "./AdminTierToggle";
-import EditionToggle from "./EditionToggle";
+import EditionsBrowser from "./EditionsBrowser";
 import { getAuditLog } from "@/lib/audit";
 import { SITE } from "@/site.config";
 
@@ -30,10 +30,12 @@ export default async function AdminPage() {
 
   const priceNum = parseFloat((SITE.proPrice.match(/[\d.]+/) || ["0"])[0]) || 0;
   const mrr = stats.subscribers * priceNum;
-  const conversion = stats.members ? Math.round((stats.subscribers / stats.members) * 1000) / 10 : 0;
+  // Members come from Clerk, subscribers from the billing table — clamp so a stale billing
+  // row (e.g. a deleted Clerk account) can never show an impossible >100% conversion.
+  const conversion = stats.members ? Math.min(100, Math.round((stats.subscribers / stats.members) * 1000) / 10) : 0;
 
   const kpis: { icon: typeof Users; label: string; value: React.ReactNode; sub?: string }[] = [
-    { icon: Users, label: "Members", value: stats.members, sub: stats.membersCapped ? "scan capped at 500" : undefined },
+    { icon: Users, label: "Members", value: stats.members, sub: stats.membersCapped ? "newest 100 in charts" : undefined },
     { icon: CreditCard, label: "Pro subscribers", value: stats.subscribers },
     { icon: Percent, label: "Conversion", value: `${conversion}%` },
     { icon: FileText, label: "Editions", value: catalog.length },
@@ -97,7 +99,7 @@ export default async function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Free vs Pro</CardTitle>
-              <CardDescription>Membership split{stats.membersCapped ? " (first 500)" : ""}</CardDescription>
+              <CardDescription>Membership split{stats.membersCapped ? " (newest 100)" : ""}</CardDescription>
             </CardHeader>
             <CardContent>
               {stats.members > 0 ? (
@@ -208,26 +210,16 @@ export default async function AdminPage() {
         </Card>
 
         <Note>
-          Subscriber and member numbers come from Clerk (scanned up to 500 accounts); downloads come from
-          the in-app log. Full member management (refunds, bans, roles) lives in the <b>Clerk</b> and
-          <b> Lemon Squeezy</b> dashboards.
+          The member count + recent sign-ups come from Clerk (the newest 100 accounts feed the charts);
+          the Pro-subscriber count and MRR come from the billing table. Full member management (refunds,
+          bans, roles) lives in the <b>Clerk</b> and <b>Lemon Squeezy</b> dashboards.
         </Note>
 
         <h2 className="mt-6 mb-1 text-xl font-bold text-navy">Editions</h2>
-        <p className="mb-2 text-sm text-muted-foreground">
-          Toggle an edition to <b>Hidden</b> to unpublish it from the public site, sitemap and reader — the files stay in R2 and it can be restored.
+        <p className="mb-3 text-sm text-muted-foreground">
+          Search for an edition and toggle it to <b>Hidden</b> to unpublish it from the public site, sitemap and reader — the files stay in R2 and it can be restored.
         </p>
-        <div className="overflow-hidden rounded-xl border border-line bg-white">
-          {catalog.map((e) => (
-            <div key={`${e.date}/${e.slug}`} className="flex items-center justify-between gap-3 border-b border-line p-3 text-sm last:border-0">
-              <span className="min-w-0 truncate">
-                <b>{e.instrument}</b> <span className="text-muted-foreground">{e.ticker}</span>
-                <span className="ml-2 whitespace-nowrap text-muted-foreground">{e.reportDate} · {e.hasPro ? "Pro ✓" : "free only"}</span>
-              </span>
-              <EditionToggle id={`${e.date}/${e.slug}`} hidden={e.hidden} />
-            </div>
-          ))}
-        </div>
+        <EditionsBrowser editions={catalog} />
       </div>
     </>
   );

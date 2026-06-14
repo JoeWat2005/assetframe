@@ -14,12 +14,14 @@ export const SITE = {
   // per-subscription portal URL from the webhook.
   lemonPortalUrl: process.env.NEXT_PUBLIC_LEMON_PORTAL_URL || "https://app.lemonsqueezy.com/my-orders",
   // Homepage countdown — when the next batch of editions is generated. Honest + configurable.
-  // cadence "daily" counts to the next hourUTC; "weekly" counts to weekdayUTC at hourUTC.
+  // Times are LOCAL to `tz` and DST-aware (06:00 is 06:00 in London whether BST or GMT).
+  // cadence "daily" counts to the next hourLocal; "weekly" counts to weekdayLocal at hourLocal.
   publish: {
     cadence: "daily" as "daily" | "weekly",
-    hourUTC: 6, // 06:00 UTC ≈ 07:00 London, ahead of the session
-    weekdayUTC: 1, // 0=Sun … 6=Sat (used only when cadence === "weekly")
-    label: "New editions publish daily at 06:00 UTC",
+    tz: "Europe/London",
+    hourLocal: 6, // 06:00 UK time — pre-session (LSE opens 08:00)
+    weekdayLocal: 1, // 0=Sun … 6=Sat (used only when cadence === "weekly")
+    label: "New editions publish daily at 06:00 UK time",
   },
   // Where the admin "Analytics" cards send you. Set these to your own dashboards.
   analyticsUrl: process.env.NEXT_PUBLIC_ANALYTICS_URL || "https://vercel.com/dashboard",

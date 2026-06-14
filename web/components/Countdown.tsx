@@ -1,21 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { SITE } from "@/site.config";
+import { nextPublish } from "@/lib/publish";
 import { cn } from "@/lib/utils";
-
-// Next generation time, in UTC, derived from the configured cadence. Pure so it's testable.
-function nextTarget(now: Date): Date {
-  const { cadence, hourUTC, weekdayUTC } = SITE.publish;
-  const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hourUTC, 0, 0, 0));
-  if (cadence === "weekly") {
-    while (t.getUTCDay() !== weekdayUTC || t.getTime() <= now.getTime()) {
-      t.setUTCDate(t.getUTCDate() + 1);
-    }
-  } else if (t.getTime() <= now.getTime()) {
-    t.setUTCDate(t.getUTCDate() + 1);
-  }
-  return t;
-}
 
 function split(ms: number) {
   const s = Math.floor(Math.max(0, ms) / 1000);
@@ -34,7 +21,7 @@ export default function Countdown({ tone = "dark", showLabel = true }: { tone?: 
   useEffect(() => {
     const tick = () => {
       const now = Date.now();
-      setMs(nextTarget(new Date(now)).getTime() - now);
+      setMs(nextPublish(new Date(now)).getTime() - now);
     };
     tick();
     const id = setInterval(tick, 1000);

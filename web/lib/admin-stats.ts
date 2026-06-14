@@ -30,7 +30,6 @@ function last30Days(): string[] {
 }
 
 type Row = Record<string, unknown>;
-const SCAN_CAP = 500; // plenty for an MVP; avoids unbounded Clerk paging
 
 async function _getAdminStats(): Promise<AdminStats> {
   const days = last30Days();
@@ -40,27 +39,48 @@ async function _getAdminStats(): Promise<AdminStats> {
   let subscribers = 0;
   let membersCapped = false;
 
+  // Bare-minimum Clerk read: ONE page of the newest accounts (not a full multi-page
+  // scan). Gives the member count (totalCount), the recent-members list and the 30-day
+  // signup sparkline. The Pro-subscriber number comes from the DB below, not from
+  // scanning every user's metadata — one cheap query, and it works even if Clerk is down.
   try {
     const cc = await clerkClient();
-    let offset = 0;
-    for (;;) {
-      const page = await cc.users.getUserList({ limit: 100, offset, orderBy: "-created_at" });
-      if (offset === 0) members = page.totalCount;
-      for (const u of page.data) {
+    let page;
+    try {
+      // Newest first so "recent members" + the signup chart are right.
+      page = await cc.users.getUserList({ limit: 100, orderBy: "-created_at" });
+    } catch {
+      // Some Clerk instances reject the orderBy param — fall back to an unordered page
+      // rather than letting the whole stats block fail (the bug that zeroed the dashboard).
+      page = await cc.users.getUserList({ limit: 100 });
+    }
+    members = typeof page.totalCount === "number" ? page.totalCount : page.data.length;
+    membersCapped = members > page.data.length; // charts + recent cover the newest 100 only
+    for (const u of page.data) {
+      const created = new Date(Number(u.createdAt)).toISOString().slice(0, 10);
+      if (signupMap.has(created)) signupMap.set(created, (signupMap.get(created) ?? 0) + 1);
+      if (recent.length < 12) {
         const sub = (u.publicMetadata as { subscribed?: boolean })?.subscribed === true;
-        if (sub) subscribers += 1;
-        const created = new Date(Number(u.createdAt)).toISOString().slice(0, 10);
-        if (signupMap.has(created)) signupMap.set(created, (signupMap.get(created) ?? 0) + 1);
-        if (recent.length < 12) {
-          recent.push({ id: u.id, email: u.primaryEmailAddress?.emailAddress ?? u.id, subscribed: sub });
-        }
+        recent.push({ id: u.id, email: u.primaryEmailAddress?.emailAddress ?? u.id, subscribed: sub });
       }
-      offset += page.data.length;
-      if (page.data.length === 0 || offset >= members) break;
-      if (offset >= SCAN_CAP) { membersCapped = true; break; }
     }
   } catch {
-    /* Clerk not configured — fall back to content-only stats */
+    /* Clerk unavailable — the DB-backed stats below still render */
+  }
+
+  // Pro subscribers straight from the billing table: accurate, cheap, and Clerk-independent.
+  // Counts subscriptions that still grant access (active / trialing / cancelling / past-due).
+  // Admin comps that never paid aren't counted here — correct for a subscriber/MRR metric.
+  if (sql) {
+    try {
+      const r = (await sql.query(
+        `SELECT count(*)::int AS c FROM billing_subscriptions
+         WHERE status IN ('active','on_trial','cancelled','past_due')`
+      )) as Row[];
+      subscribers = Number(r[0]?.c) || 0;
+    } catch {
+      /* billing_subscriptions not migrated yet */
+    }
   }
 
   // Downloads from the log (if a DB is configured and the table exists).

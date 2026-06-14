@@ -44,7 +44,9 @@ export default async function Home() {
 
   return (
     <>
-      <div className="flex min-h-[100dvh] flex-col">
+      {/* -mt-14 cancels AppFrame's reserved header height so the hero is full-bleed to the
+          very top (the header is hidden here until you scroll past the fold). */}
+      <div className="-mt-14 flex min-h-[100dvh] flex-col">
       <section className="relative isolate flex flex-1 items-center overflow-hidden bg-navy text-white">
         <HeroBackdrop />
         <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-14 sm:px-5" data-animate="hero">
