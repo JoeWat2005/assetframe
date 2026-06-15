@@ -20,6 +20,13 @@ const SORTS: [SortKey, string][] = [
 ];
 const PAGE = 12; // how many cards render before "Show more"
 
+// "15 Jun 2026" for the date dropdown; falls back to the raw ISO if it can't parse.
+function fmtDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return y && m && d ? `${d} ${months[m - 1]} ${y}` : iso;
+}
+
 function PickList({
   value, onChange, options,
 }: { value: string; onChange: (v: string) => void; options: [string, string][] }) {
@@ -43,6 +50,7 @@ export default function ReportsBrowser({ editions }: { editions: Edition[] }) {
   const [direction, setDirection] = useState("all");
   const [confidence, setConfidence] = useState("all");
   const [risk, setRisk] = useState("all");
+  const [date, setDate] = useState("all");
   const [sort, setSort] = useState<SortKey>("newest");
   const [shown, setShown] = useState(PAGE);
 
@@ -67,6 +75,17 @@ export default function ReportsBrowser({ editions }: { editions: Edition[] }) {
     () => [["all", "Any risk"], ...present(RISK_LEVELS, (e) => (RISK_LEVELS.find((r) => r.toLowerCase() === (e.risk || "").toLowerCase()) ?? null)).map((r) => [r, `Risk: ${r}`] as [string, string])],
     [editions] // eslint-disable-line react-hooks/exhaustive-deps
   );
+  const dateOptions = useMemo<[string, string][]>(
+    () => [["all", "All dates"], ...Array.from(new Set(editions.map((e) => e.date).filter(Boolean))).sort().reverse().map((d) => [d, fmtDate(d)] as [string, string])],
+    [editions]
+  );
+
+  // Selecting a confidence band ranks results highest → lowest (industry-standard: most
+  // confident first), unless the user then picks a different sort.
+  const onConfidence = (v: string) => {
+    setConfidence(v);
+    if (v !== "all") setSort("conf-high");
+  };
 
   const results = useMemo(() => {
     const filtered = filterEditions(editions, {
@@ -75,16 +94,18 @@ export default function ReportsBrowser({ editions }: { editions: Edition[] }) {
       direction: direction === "all" ? "" : direction,
       confidence: confidence === "all" ? "" : confidence,
       risk: risk === "all" ? "" : risk,
+      from: date === "all" ? "" : date, // exact-day match (from == to)
+      to: date === "all" ? "" : date,
     });
     return sortEditions(filtered, sort);
-  }, [editions, q, category, direction, confidence, risk, sort]);
+  }, [editions, q, category, direction, confidence, risk, date, sort]);
 
   // Reset the visible window whenever the result set changes (new filter/search).
-  useEffect(() => { setShown(PAGE); }, [q, category, direction, confidence, risk, sort]);
+  useEffect(() => { setShown(PAGE); }, [q, category, direction, confidence, risk, date, sort]);
 
-  const active = q || category !== "all" || direction !== "all" || confidence !== "all" || risk !== "all";
+  const active = q || category !== "all" || direction !== "all" || confidence !== "all" || risk !== "all" || date !== "all";
   const clearAll = () => {
-    setQ(""); setCategory("all"); setDirection("all"); setConfidence("all"); setRisk("all"); setSort("newest");
+    setQ(""); setCategory("all"); setDirection("all"); setConfidence("all"); setRisk("all"); setDate("all"); setSort("newest");
   };
   const visible = results.slice(0, shown);
 
@@ -99,8 +120,9 @@ export default function ReportsBrowser({ editions }: { editions: Edition[] }) {
         />
         <PickList value={category} onChange={setCategory} options={categoryOptions} />
         <PickList value={direction} onChange={setDirection} options={directionOptions} />
-        <PickList value={confidence} onChange={setConfidence} options={confidenceOptions} />
+        <PickList value={confidence} onChange={onConfidence} options={confidenceOptions} />
         <PickList value={risk} onChange={setRisk} options={riskOptions} />
+        <PickList value={date} onChange={setDate} options={dateOptions} />
         <PickList value={sort} onChange={(v) => setSort(v as SortKey)} options={SORTS} />
         {active && (
           <Button variant="ghost" size="sm" onClick={clearAll} className="text-muted-foreground">

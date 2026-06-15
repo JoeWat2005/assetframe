@@ -975,9 +975,11 @@ def new_pdf(p, tier_tag):
     pdf = rp.Report(orientation="P", unit="mm", format="A4")
     pdf.core_fonts_encoding = "windows-1252"
     pdf.set_margins(13, 12, 13)
+    _yr = ("".join(c for c in str(p.get("report_id", "")) if c.isdigit())[:4]) or "2026"
     pdf.meta_footer = rp.S(" \xb7 ".join(
         [BRAND, f'{p["report_id"]}-{tier_tag}',
-         "General market research - not personal advice"]))
+         "General market research - not personal advice",
+         f"© {_yr} {BRAND}. All rights reserved."]))
     pdf.alias_nb_pages()
     pdf.set_auto_page_break(auto=True, margin=14)
     pdf.add_page()
