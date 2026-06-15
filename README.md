@@ -9,6 +9,8 @@ AssetFrame produces a two-tier research report pair for any tradable instrument 
 
 Every Pro report registers falsifiable predictions for the next session. The next run scores the expired ones into an append-only ledger **before doing anything else** — the "scored after the fact" promise is mechanical, not editorial.
 
+**How editions are made:** each edition is produced by an **agentic research team** — specialist AI agents pull the market data, research the catalysts and draft the analysis against a strict QA gate — with **human oversight** reviewing every edition before it is published. Research-led, accountable, and never auto-traded.
+
 ---
 
 ## Two planes
@@ -16,9 +18,9 @@ Every Pro report registers falsifiable predictions for the next session. The nex
 AssetFrame is a **publishing house, not a live API**: a curated *edition* is generated on a schedule, published once, and every reader downloads the same pre-built files from a zero-egress CDN. User count barely affects cost or speed.
 
 ```
-GENERATION PLANE  (Python engine, run via /mvp in Claude Code)
+GENERATION PLANE  (Python engine + agentic research team, run via /mvp in Claude Code; human-reviewed)
   intraday.py ─┐
-  news/context ─┼─→ [Claude authors the canonical payload] → mvp_report.py → free/pro PDF+HTML, preview, metadata
+  news/context ─┼─→ [agentic team authors the canonical payload] → mvp_report.py → free/pro PDF+HTML, preview, metadata
   sessions.py ─┘                                                   │
   score_report.py → ledger/outcome_ledger.csv (scores yesterday first)
                                                                    ▼
@@ -54,12 +56,12 @@ DISTRIBUTION PLANE  (Next.js app in web/, hosted on Vercel)
 
 ## The website (distribution)
 
-- **Reports** (`/reports`) — search, asset-class / status / period filters and sort, modern card grid. Snapshots open instantly; Pro is gated.
+- **Reports** (`/reports`) — search, broad asset-category / confidence-band / direction / risk filters, sort (newest/oldest, confidence high↔low, A–Z) and "show more" pagination. Snapshots open instantly; Pro is gated. The same filter/sort taxonomy (`lib/taxonomy.ts`) is reused across the track record and admin tables.
 - **Track record** (`/track-record`) — **Pro-only**: open calls (searchable; expand any call to see its individual predictions), scored results and calibration. Free/signed-out visitors see the public accuracy headline and an upgrade prompt.
 - **Reader** (`/reports/<date>/<slug>`) — Snapshot links for all; Pro downloads stream from R2 via `/api/pro/...` only for entitled users.
 - **Account & subscription** (`/account`, `/account/subscription`) — plan status, billing portal and one-click cancellation (Lemon Squeezy API, with a universal customer-portal fallback).
 - **Admin** (`/admin`) — member/edition glance and links to the Vercel Analytics & Speed Insights dashboards (admins only).
-- **Homepage** — hero with a live countdown to the next edition, latest editions, and a public accuracy scorecard (hit rate + longest streak) teasing the Pro track record.
+- **Homepage** — hero with a compact public **forecast-ledger** strip (reports published · directional accuracy · public archive · forecasts scored, all live), a countdown to the next edition, and the latest editions.
 
 Public listing pages use **ISR** (`revalidate`) so they're served from a cached static render and refreshed in the background — fast for readers, light on the database. A small GSAP layer adds load/scroll motion (reduced-motion aware).
 
@@ -97,9 +99,14 @@ npm run db:setup   # migrate, then sync — the usual publish step
 
 Secrets live in `web/.env.local` (gitignored) and in Vercel project settings — never in the repo. Required keys: `DATABASE_URL` (Neon), Clerk publishable/secret keys, R2 credentials, `LEMONSQUEEZY_WEBHOOK_SECRET`, `LEMONSQUEEZY_API_KEY` (for in-app cancel), and the public `NEXT_PUBLIC_*` settings (site URL, checkout URL, price, analytics URL). See **GO-LIVE.md** for the full runbook.
 
-## Deploy
+## Deploy & environments
 
-Push to GitHub → Vercel rebuilds and ships automatically (Root Directory `web`, Framework Preset Next.js, Deployment Protection off). Custom domain: `assetframe.co.uk`.
+Two branches map to two Vercel environments:
+
+- **`main` → Production** — live Clerk / Lemon Squeezy keys, the Neon `main` branch, served at **`www.assetframe.co.uk`**.
+- **`development` → Preview** — test keys, the Neon `development` branch, served at its own `*.vercel.app` URL.
+
+Push to either branch and Vercel rebuilds automatically (Root Directory `web`, Next.js preset). Absolute URLs (canonical / OpenGraph / sitemap) resolve **per environment** — production uses the domain, preview uses its own Vercel URL (`site.config.ts` + re-exposed `VERCEL_*` system vars). Publishing an edition updates **both** Neon branches in one `npm run sync-db` (`DATABASE_URL` + `DATABASE_URL_DEV`), so preview mirrors production.
 
 ## Repository layout
 

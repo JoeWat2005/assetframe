@@ -10,6 +10,11 @@ import {
 import EditionToggle from "./EditionToggle";
 
 const VIS: [string, string][] = [["all", "All"], ["live", "Live"], ["hidden", "Hidden"]];
+const SORTS: [string, string][] = [
+  ["newest", "Newest first"], ["oldest", "Oldest first"],
+  ["conf-high", "Confidence: high → low"], ["conf-low", "Confidence: low → high"],
+  ["az", "Instrument A–Z"],
+];
 const PAGE = 20; // rows per page
 
 // Filterable, paginated editions list: search by instrument/ticker/class/date, filter by
@@ -18,6 +23,7 @@ export default function EditionsBrowser({ editions }: { editions: Edition[] }) {
   const [q, setQ] = useState("");
   const [vis, setVis] = useState("all");
   const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(0);
 
   const categoryOptions = useMemo<[string, string][]>(() => {
@@ -40,11 +46,21 @@ export default function EditionsBrowser({ editions }: { editions: Edition[] }) {
     [editions, q, vis, category]
   );
 
-  useEffect(() => { setPage(0); }, [q, vis, category]);
+  const sorted = useMemo(() => {
+    const conf = (e: Edition) => { const n = Number(e.confidence); return Number.isFinite(n) ? n : -1; };
+    const arr = [...filtered];
+    if (sort === "az") arr.sort((a, b) => a.instrument.localeCompare(b.instrument));
+    else if (sort === "conf-high") arr.sort((a, b) => conf(b) - conf(a));
+    else if (sort === "conf-low") arr.sort((a, b) => conf(a) - conf(b));
+    else arr.sort((a, b) => (sort === "oldest" ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)));
+    return arr;
+  }, [filtered, sort]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
+  useEffect(() => { setPage(0); }, [q, vis, category, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE));
   const safePage = Math.min(page, pageCount - 1);
-  const pageRows = filtered.slice(safePage * PAGE, safePage * PAGE + PAGE);
+  const pageRows = sorted.slice(safePage * PAGE, safePage * PAGE + PAGE);
 
   return (
     <div>
@@ -65,6 +81,12 @@ export default function EditionsBrowser({ editions }: { editions: Edition[] }) {
           <SelectTrigger className="w-full sm:w-auto sm:min-w-[130px]"><SelectValue /></SelectTrigger>
           <SelectContent><SelectGroup>
             {VIS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+          </SelectGroup></SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={setSort}>
+          <SelectTrigger className="w-full sm:w-auto sm:min-w-[170px]"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectGroup>
+            {SORTS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
           </SelectGroup></SelectContent>
         </Select>
       </div>

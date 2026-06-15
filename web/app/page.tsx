@@ -58,7 +58,7 @@ export default async function Home() {
         <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-10 sm:px-5 sm:py-14" data-animate="hero">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur">
             <ShieldCheck className="size-3.5 text-[#7fb0ff]" />
-            Published before the move, graded after
+            Agentic research desk · human oversight
           </span>
           <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
             Next-session market intelligence,{" "}
@@ -131,6 +131,11 @@ export default async function Home() {
             </Card>
           ))}
         </div>
+        <p className="mt-6 text-sm text-muted-foreground" data-animate="up">
+          Every edition is produced by an <span className="font-semibold text-ink">agentic research team</span> —
+          specialist AI agents pull the market data, research the catalysts and draft the analysis — with
+          <span className="font-semibold text-ink"> human oversight</span> reviewing each edition before it is published.
+        </p>
       </Section>
 
       <Section title="Latest editions" lead="A directional read and the levels that matter on each instrument. Open one to read the full report.">
