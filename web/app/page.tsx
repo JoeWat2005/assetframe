@@ -104,9 +104,11 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* slim next-edition strip — keeps the hero uncluttered */}
+      {/* slim next-edition strip — keeps the hero uncluttered. On mobile it adds extra
+          bottom padding + the iOS safe-area inset so the timer tiles clear the browser's
+          floating bottom toolbar (which was overlapping them); desktop is unchanged. */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-3 gap-y-4 px-4 pt-4 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] sm:px-5 sm:py-3">
           <div>
             <span className="text-sm font-semibold text-ink">Next edition publishes in</span>
             <span className="block text-xs text-muted-foreground">{SITE.publish.label}</span>
