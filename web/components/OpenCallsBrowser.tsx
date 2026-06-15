@@ -15,6 +15,11 @@ import {
 import { cn } from "@/lib/utils";
 
 const PAGE = 15; // rows before "Show more"
+const SORTS: [string, string][] = [
+  ["newest", "Newest first"], ["oldest", "Oldest first"],
+  ["conf-high", "Confidence: high → low"], ["conf-low", "Confidence: low → high"],
+  ["az", "Instrument A–Z"],
+];
 
 function PickList({
   value, onChange, options,
@@ -40,6 +45,7 @@ export default function OpenCallsBrowser({
   const [category, setCategory] = useState("all");
   const [confidence, setConfidence] = useState("all");
   const [date, setDate] = useState("all");
+  const [sort, setSort] = useState("newest");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [shown, setShown] = useState(PAGE);
 
@@ -73,7 +79,18 @@ export default function OpenCallsBrowser({
     });
   }, [open, q, category, confidence, date]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { setShown(PAGE); }, [q, category, confidence, date]);
+  const sorted = useMemo(() => {
+    const conf = (c: OpenCall) => { const n = Number(c.confidence); return Number.isFinite(n) ? n : -1; };
+    const w = (c: OpenCall) => c.windowEnd || "";
+    const arr = [...filtered];
+    if (sort === "az") arr.sort((a, b) => a.instrument.localeCompare(b.instrument));
+    else if (sort === "conf-high") arr.sort((a, b) => conf(b) - conf(a));
+    else if (sort === "conf-low") arr.sort((a, b) => conf(a) - conf(b));
+    else arr.sort((a, b) => (sort === "oldest" ? w(a).localeCompare(w(b)) : w(b).localeCompare(w(a))));
+    return arr;
+  }, [filtered, sort]);
+
+  useEffect(() => { setShown(PAGE); }, [q, category, confidence, date, sort]);
 
   // Drop expanded rows that are no longer visible (so they don't reopen on return).
   useEffect(() => {
@@ -99,7 +116,7 @@ export default function OpenCallsBrowser({
     return <p className="text-sm text-muted-foreground">No prediction calls yet — the next edition opens the next set.</p>;
   }
 
-  const visible = filtered.slice(0, shown);
+  const visible = sorted.slice(0, shown);
 
   return (
     <div className="flex flex-col gap-3">
@@ -113,6 +130,7 @@ export default function OpenCallsBrowser({
         <PickList value={category} onChange={setCategory} options={categoryOptions} />
         <PickList value={confidence} onChange={setConfidence} options={confidenceOptions} />
         <PickList value={date} onChange={setDate} options={dateOptions} />
+        <PickList value={sort} onChange={setSort} options={SORTS} />
         {active && (
           <Button variant="ghost" size="sm" onClick={clearAll} className="text-muted-foreground">Clear</Button>
         )}

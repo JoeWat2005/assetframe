@@ -21,6 +21,9 @@ const RANGES: [string, string][] = [
   ["all", "All time"], ["24h", "Last 24h"], ["7d", "Last 7 days"], ["30d", "Last 30 days"],
 ];
 const PAGE = 25; // rows per page
+const SORTS: [string, string][] = [
+  ["newest", "Newest first"], ["oldest", "Oldest first"], ["az", "Target A–Z"],
+];
 const tsMs = (ts: string) => {
   const t = Date.parse(ts.replace(" ", "T") + ":00Z"); // "YYYY-MM-DD HH:MI" is UTC
   return Number.isNaN(t) ? 0 : t;
@@ -30,6 +33,7 @@ export default function AdminLog({ rows }: { rows: AuditRow[] }) {
   const [q, setQ] = useState("");
   const [action, setAction] = useState("all");
   const [range, setRange] = useState("all");
+  const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(0);
   const actions = useMemo(() => Array.from(new Set(rows.map((r) => r.action))).sort(), [rows]);
 
@@ -53,11 +57,18 @@ export default function AdminLog({ rows }: { rows: AuditRow[] }) {
     [rows, q, action, cutoff]
   );
 
-  useEffect(() => { setPage(0); }, [q, action, range]);
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    if (sort === "az") arr.sort((a, b) => (a.target || "").localeCompare(b.target || ""));
+    else arr.sort((a, b) => (sort === "oldest" ? tsMs(a.ts) - tsMs(b.ts) : tsMs(b.ts) - tsMs(a.ts)));
+    return arr;
+  }, [filtered, sort]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
+  useEffect(() => { setPage(0); }, [q, action, range, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE));
   const safePage = Math.min(page, pageCount - 1);
-  const pageRows = filtered.slice(safePage * PAGE, safePage * PAGE + PAGE);
+  const pageRows = sorted.slice(safePage * PAGE, safePage * PAGE + PAGE);
 
   return (
     <div>
@@ -88,6 +99,18 @@ export default function AdminLog({ rows }: { rows: AuditRow[] }) {
           <SelectContent>
             <SelectGroup>
               {RANGES.map(([v, l]) => (
+                <SelectItem key={v} value={v}>{l}</SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={setSort}>
+          <SelectTrigger className="w-full sm:w-auto sm:min-w-[150px]">
+            <SelectValue placeholder="Newest first" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {SORTS.map(([v, l]) => (
                 <SelectItem key={v} value={v}>{l}</SelectItem>
               ))}
             </SelectGroup>
