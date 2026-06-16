@@ -65,10 +65,10 @@ describe("entitlement matrix — who can reach Pro", () => {
     expect(e.subscribed).toBe(false);
   });
 
-  it("ADMIN who also pays stays Pro even while previewing free (a real sub overrides)", () => {
+  it("ADMIN preview-free wins over a legacy paid flag (admin Pro is decoupled from billing)", () => {
     const e = ent({ role: "admin", adminTier: "free", subscribed: true }, "admin@assetframe.co.uk");
     expect(e.admin).toBe(true);
-    expect(e.subscribed).toBe(true);
+    expect(e.subscribed).toBe(false);
     expect(e.billingActive).toBe(true);
   });
 });

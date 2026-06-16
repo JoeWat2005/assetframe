@@ -38,15 +38,15 @@ describe("computeEntitlement (access business logic)", () => {
     expect(e.billingActive).toBe(false);
   });
 
-  it("admin who ALSO pays stays subscribed even while previewing free (real sub wins)", () => {
+  it("admin preview-free ALWAYS wins, even with a legacy paid flag (admins decoupled from billing)", () => {
     const e = computeEntitlement(
       { role: "admin", adminTier: "free", subscribed: true },
       "a@b.com",
       ADMINS
     );
     expect(e.admin).toBe(true);
-    expect(e.billingActive).toBe(true);
-    expect(e.subscribed).toBe(true);
+    expect(e.billingActive).toBe(true); // the flag still reflects that a stale LS sub exists
+    expect(e.subscribed).toBe(false); // but the preview tier governs admin Pro, never billing
   });
 
   it("non-admin can never self-grant via adminTier metadata", () => {

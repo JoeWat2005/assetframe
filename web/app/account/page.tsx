@@ -19,10 +19,9 @@ export default async function AccountPage() {
   const follows = await getWatchlist(userId);
   const cancelling = ent.billingActive && ent.subStatus === "cancelled";
   const ends = ent.endsAt ? ent.endsAt.slice(0, 10) : null;
-  // Admins are comped: they get Pro for free and never see billing/payment prompts.
-  // The subscription footer only shows for non-admins, or for an admin who also happens
-  // to hold a real paid subscription (so they can still manage/cancel it).
-  const showManage = !ent.admin || ent.billingActive;
+  // Admins are comped and fully decoupled from billing — no manage/cancel entry point at all.
+  // Their only tier control is the Free/Pro preview toggle on the admin dashboard.
+  const showManage = !ent.admin;
 
   return (
     <>

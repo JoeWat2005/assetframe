@@ -53,7 +53,10 @@ export function computeEntitlement(
 ): Entitlement {
   const admin = meta.role === "admin" || (!!email && adminEmails.includes(email));
   const billingActive = meta.subscribed === true;
-  const subscribed = billingActive || (admin && meta.adminTier !== "free");
+  // Admin Pro access is governed PURELY by the preview tier (adminTier) and is fully decoupled
+  // from Lemon Squeezy — a legacy/lingering paid flag never overrides the Free/Pro toggle, so
+  // the toggle always works. A non-admin's Pro is their real paid subscription.
+  const subscribed = admin ? meta.adminTier !== "free" : billingActive;
 
   return {
     signedIn: true,
