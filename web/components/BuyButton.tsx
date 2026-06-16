@@ -13,10 +13,12 @@ export default function BuyButton({
   children,
   className = "",
   full = false,
+  admin = false,
 }: {
   children: React.ReactNode;
   className?: string;
   full?: boolean;
+  admin?: boolean;
 }) {
   const { user, isSignedIn, isLoaded } = useUser();
   const [pending, start] = useTransition();
@@ -28,25 +30,30 @@ export default function BuyButton({
     full ? "w-full" : ""
   } ${className}`;
 
-  const meta = user?.publicMetadata as { subscribed?: boolean; role?: string } | undefined;
+  const meta = user?.publicMetadata as { subscribed?: boolean; role?: string; adminTier?: string } | undefined;
   const subscribed = meta?.subscribed === true;
-  // Role-based admins are detectable client-side; email-allowlist admins are caught by the
-  // server guard in getCheckoutUrl() (which sets reason === "admin" → adminBlocked).
-  const isAdmin = meta?.role === "admin";
+  // Admin signal: the server-passed `admin` prop is authoritative; client-side we also treat a
+  // Clerk "admin" role or the presence of `adminTier` (only ever set on admins) as admin, so
+  // email-allowlist admins are caught even without the prop. getCheckoutUrl is the final
+  // backstop (sets adminBlocked on click).
+  const isAdmin = admin || meta?.role === "admin" || meta?.adminTier !== undefined;
+
+  // Admins are comped and fully decoupled from billing — NEVER a checkout and never a billing
+  // "manage" link, regardless of any stale paid flag. Their tier is the Free/Pro toggle on the
+  // admin dashboard. Checked before the subscribed branch so a free-preview admin never sees
+  // "You're on Pro".
+  if (isAdmin || adminBlocked) {
+    return (
+      <a href="/admin" className={calm}>
+        Admin access — set your view on the dashboard
+      </a>
+    );
+  }
 
   if (subscribed) {
     return (
       <a href="/account/subscription" className={calm}>
         You&apos;re on Pro — manage subscription
-      </a>
-    );
-  }
-
-  // Admins get Pro comped — never offer them a paid checkout.
-  if ((isLoaded && isSignedIn && isAdmin) || adminBlocked) {
-    return (
-      <a href="/account" className={calm}>
-        Admin access — Pro is on
       </a>
     );
   }

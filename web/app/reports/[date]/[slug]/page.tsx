@@ -126,7 +126,7 @@ export default async function ReaderPage(
               <ReportLinks html={`/api/report/${e.date}/${e.slug}/pro.html`} pdf={`/api/report/${e.date}/${e.slug}/pro.pdf`} />
             ) : (
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <BuyButton>Subscribe to unlock</BuyButton>
+                <BuyButton admin={ent.admin}>Subscribe to unlock</BuyButton>
                 <Btn href="/pricing" sm>What&apos;s in Pro?</Btn>
               </div>
             )}
