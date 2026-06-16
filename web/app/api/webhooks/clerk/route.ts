@@ -66,6 +66,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Cascade-delete the user's own data on account deletion. The Clerk user lives outside our
+    // DB, so there is no FK to cascade from — we purge their rows here. The track record
+    // (scored_results / open_calls) is keyed by report, not user, so it is untouched.
+    for (const t of ["watchlists", "push_subscriptions", "subscribers", "feedback"]) {
+      try { await sql.query(`DELETE FROM ${t} WHERE clerk_user_id = $1`, [userId]); }
+      catch { /* table absent on an un-migrated DB — ignore */ }
+    }
+
     // Record every account deletion (incl. admins) so removals are auditable. Admin access
     // via ADMIN_EMAILS survives deletion: re-signing-up with the same email restores it, so
     // deleting an admin account never permanently locks you out of the dashboard.
