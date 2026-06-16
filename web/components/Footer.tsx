@@ -59,6 +59,7 @@ export default function Footer() {
             <Link href="/accessibility" className="hover:text-white">Accessibility</Link>
             <Link href="/contact" className="hover:text-white">Contact</Link>
             <Link href="/feedback" className="hover:text-white">Feedback</Link>
+            <Link href="/developers" className="hover:text-white">Developers</Link>
           </div>
         </div>
         <p className="mt-8 border-t border-navy-700 pt-6 text-xs leading-relaxed text-[#7e93b3]">
