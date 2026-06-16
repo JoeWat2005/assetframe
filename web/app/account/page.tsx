@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { getEntitlement } from "@/lib/entitlements";
+import { getWatchlist } from "@/lib/social";
 import { Btn, Hero } from "@/components/ui";
 import BuyButton from "@/components/BuyButton";
+import FollowingList from "./FollowingList";
 import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +14,8 @@ export const metadata: Metadata = { title: "Account" };
 export default async function AccountPage() {
   const ent = await getEntitlement();
   if (!ent.signedIn) redirect("/sign-in");
+  const { userId } = await auth();
+  const follows = await getWatchlist(userId);
   const cancelling = ent.billingActive && ent.subStatus === "cancelled";
   const ends = ent.endsAt ? ent.endsAt.slice(0, 10) : null;
   // Admins are comped: they get Pro for free and never see billing/payment prompts.
@@ -68,6 +73,14 @@ export default async function AccountPage() {
           <div className="mt-3">
             <Btn href="/reports" variant="primary">Browse reports →</Btn>
           </div>
+        </div>
+
+        <div className="mt-6 rounded-xl border border-line bg-white p-5">
+          <h2 className="text-lg font-bold text-navy">Following</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Instruments you follow — we email you when a new edition publishes for them.
+          </p>
+          <FollowingList initial={follows} />
         </div>
 
         {showManage && (

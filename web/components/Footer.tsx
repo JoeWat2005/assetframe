@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import NewsletterForm from "@/components/NewsletterForm";
 import { SITE } from "@/site.config";
 
 // Minimal inline icons (no icon dependency). Add/remove by editing SITE.socials.
@@ -45,6 +46,7 @@ export default function Footer() {
             <Image src="/logo-white.png" alt={SITE.brand} width={150} height={30} className="h-7 w-auto" />
             <p className="mt-2 text-sm">{SITE.tagline}</p>
             <div className="mt-4"><Social /></div>
+            <div className="mt-5 max-w-xs"><NewsletterForm /></div>
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
             <Link href="/reports" className="hover:text-white">Reports</Link>
@@ -58,6 +60,9 @@ export default function Footer() {
             <Link href="/privacy" className="hover:text-white">Privacy</Link>
             <Link href="/accessibility" className="hover:text-white">Accessibility</Link>
             <Link href="/contact" className="hover:text-white">Contact</Link>
+            <Link href="/feedback" className="hover:text-white">Feedback</Link>
+            <Link href="/developers" className="hover:text-white">Developers</Link>
+            <Link href="/reviews" className="hover:text-white">Reviews</Link>
           </div>
         </div>
         <p className="mt-8 border-t border-navy-700 pt-6 text-xs leading-relaxed text-[#7e93b3]">

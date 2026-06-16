@@ -139,6 +139,24 @@ export async function getEdition(date: string, slug: string): Promise<Edition | 
   return (await getCatalog()).find((e) => e.date === date && e.slug === slug);
 }
 
+// Pro file keys for an edition (not exposed on the public Edition type). Used by the gated
+// MCP Pro tool. Returns null if no DB / not found.
+export async function getEditionProKeys(date: string, slug: string): Promise<{ proHtml: string; proPdf: string } | null> {
+  if (!sql) return null;
+  try {
+    const rows = (await sql.query(
+      `SELECT coalesce(pro_html_key, '') AS pro_html_key, coalesce(pro_pdf_key, '') AS pro_pdf_key
+         FROM editions WHERE id = $1 AND coalesce(hidden, false) = false LIMIT 1`,
+      [`${date}/${slug}`]
+    )) as Row[];
+    const r = rows[0];
+    if (!r) return null;
+    return { proHtml: s(r.pro_html_key), proPdf: s(r.pro_pdf_key) };
+  } catch {
+    return null;
+  }
+}
+
 async function _getTrackRecord(): Promise<TrackRecord> {
   if (sql) {
     try {
@@ -222,3 +240,32 @@ function computeCalibration(rows: Row[]): TrackRecord["calibration"] {
 // like /account or /admin) reuse the cached result instead of re-querying Neon.
 export const getCatalog = unstable_cache(_getCatalog, ["catalog"], { revalidate: 300, tags: ["content"] });
 export const getTrackRecord = unstable_cache(_getTrackRecord, ["track-record"], { revalidate: 300, tags: ["content"] });
+
+// Most-viewed editions over the last 7 days (powers the "Popular this week" rail). Returns
+// [] when the DB or report_views table isn't there yet, so the rail just hides.
+async function _getTrending(limit = 6): Promise<Edition[]> {
+  if (!sql) return [];
+  try {
+    const rows = await sql.query(
+      `WITH top AS (
+         SELECT edition_id, SUM(count) AS views
+         FROM report_views
+         WHERE day >= CURRENT_DATE - INTERVAL '7 days'
+         GROUP BY edition_id
+         ORDER BY views DESC
+         LIMIT $1
+       )
+       SELECT ${EDITION_COLS}
+       FROM top t
+       JOIN editions e ON e.id = t.edition_id
+       LEFT JOIN open_calls oc ON oc.report_id = 'AF-' || replace(e.report_date::text, '-', '') || '-' || e.slug
+       WHERE coalesce(e.hidden, false) = false
+       ORDER BY t.views DESC`,
+      [limit]
+    );
+    return (rows as Row[]).map(rowToEdition);
+  } catch {
+    return [];
+  }
+}
+export const getTrending = unstable_cache(_getTrending, ["trending"], { revalidate: 300, tags: ["content"] });

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility } from "lucide-react";
+import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility, Code2 } from "lucide-react";
 import HeaderAuth from "@/components/HeaderAuth";
 import { SITE } from "@/site.config";
 import {
@@ -25,6 +25,7 @@ const COMPANY = [
   { href: "/about", label: "About", desc: "Who we are and what we stand for.", icon: Building2 },
   { href: "/faq", label: "FAQ", desc: "Common questions, answered.", icon: HelpCircle },
   { href: "/contact", label: "Contact", desc: "Reach us about anything.", icon: Mail },
+  { href: "/developers", label: "Developers", desc: "MCP server & API for agents.", icon: Code2 },
   { href: "/terms", label: "Terms", desc: "The terms of using AssetFrame.", icon: FileText },
   { href: "/privacy", label: "Privacy", desc: "How we handle your data.", icon: ShieldCheck },
   { href: "/accessibility", label: "Accessibility", desc: "Our WCAG 2.2 AA commitment.", icon: Accessibility },
@@ -107,7 +108,9 @@ export default function Header() {
                 <NavigationMenuTrigger className="bg-transparent text-sm font-semibold text-ink hover:text-navy data-[state=open]:text-navy">
                   Research
                 </NavigationMenuTrigger>
-                <NavigationMenuContent><MenuGrid items={RESEARCH} /></NavigationMenuContent>
+                {/* right-align: the trigger sits in a right-aligned cluster, so a left-anchored
+                    440px panel would overflow the viewport. right-0 makes it extend leftward. */}
+                <NavigationMenuContent className="left-auto right-0"><MenuGrid items={RESEARCH} /></NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink
@@ -122,7 +125,7 @@ export default function Header() {
                 <NavigationMenuTrigger className="bg-transparent text-sm font-semibold text-ink hover:text-navy data-[state=open]:text-navy">
                   Company
                 </NavigationMenuTrigger>
-                <NavigationMenuContent><MenuGrid items={COMPANY} /></NavigationMenuContent>
+                <NavigationMenuContent className="left-auto right-0"><MenuGrid items={COMPANY} /></NavigationMenuContent>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>

@@ -26,4 +26,19 @@ export async function signedReportUrl(key: string, expiresIn = 120): Promise<str
   return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn });
 }
 
+/**
+ * Read a report object's bytes as text (used by the MCP/API tools to return the report's
+ * content to an agent). Returns null if R2 isn't configured or the object is missing.
+ */
+export async function getObjectText(key: string): Promise<string | null> {
+  if (!client || !bucket) return null;
+  try {
+    const res = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    if (!res.Body) return null;
+    return await res.Body.transformToString();
+  } catch {
+    return null;
+  }
+}
+
 export const r2Configured = Boolean(client && bucket);
