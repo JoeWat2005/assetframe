@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard } from "lucide-react";
+import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility } from "lucide-react";
 import HeaderAuth from "@/components/HeaderAuth";
 import { SITE } from "@/site.config";
 import {
@@ -27,6 +27,7 @@ const COMPANY = [
   { href: "/contact", label: "Contact", desc: "Reach us about anything.", icon: Mail },
   { href: "/terms", label: "Terms", desc: "The terms of using AssetFrame.", icon: FileText },
   { href: "/privacy", label: "Privacy", desc: "How we handle your data.", icon: ShieldCheck },
+  { href: "/accessibility", label: "Accessibility", desc: "Our WCAG 2.2 AA commitment.", icon: Accessibility },
 ];
 const PRICING = { href: "/pricing", label: "Pricing", desc: "Free Snapshots, and what Pro adds.", icon: CreditCard };
 // Mobile is a flat list of every page (the sheet scrolls if it overflows).
