@@ -107,7 +107,9 @@ export default function Header() {
                 <NavigationMenuTrigger className="bg-transparent text-sm font-semibold text-ink hover:text-navy data-[state=open]:text-navy">
                   Research
                 </NavigationMenuTrigger>
-                <NavigationMenuContent><MenuGrid items={RESEARCH} /></NavigationMenuContent>
+                {/* right-align: the trigger sits in a right-aligned cluster, so a left-anchored
+                    440px panel would overflow the viewport. right-0 makes it extend leftward. */}
+                <NavigationMenuContent className="left-auto right-0"><MenuGrid items={RESEARCH} /></NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink
@@ -122,7 +124,7 @@ export default function Header() {
                 <NavigationMenuTrigger className="bg-transparent text-sm font-semibold text-ink hover:text-navy data-[state=open]:text-navy">
                   Company
                 </NavigationMenuTrigger>
-                <NavigationMenuContent><MenuGrid items={COMPANY} /></NavigationMenuContent>
+                <NavigationMenuContent className="left-auto right-0"><MenuGrid items={COMPANY} /></NavigationMenuContent>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>

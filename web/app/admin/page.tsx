@@ -15,6 +15,8 @@ import ProToggle from "./ProToggle";
 import AdminTierToggle from "./AdminTierToggle";
 import EditionsBrowser from "./EditionsBrowser";
 import { getAuditLog } from "@/lib/audit";
+import { getFeedback } from "@/lib/feedback";
+import FeedbackInbox from "./FeedbackInbox";
 import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +27,9 @@ export default async function AdminPage() {
   if (!ent.signedIn) redirect("/sign-in");
   if (!ent.admin) redirect("/account");
 
-  const [stats, catalog, auditLog] = await Promise.all([getAdminStats(), getAllEditions(), getAuditLog()]);
+  const [stats, catalog, auditLog, feedback] = await Promise.all([
+    getAdminStats(), getAllEditions(), getAuditLog(), getFeedback(),
+  ]);
   const titleById = new Map(catalog.map((e) => [`${e.date}/${e.slug}`, e.instrument]));
 
   const priceNum = parseFloat((SITE.proPrice.match(/[\d.]+/) || ["0"])[0]) || 0;
@@ -187,6 +191,15 @@ export default async function AdminPage() {
             <CardDescription>Admin and billing actions, most recent first — searchable.</CardDescription>
           </CardHeader>
           <CardContent><AdminLog rows={auditLog} /></CardContent>
+        </Card>
+
+        {/* Feedback inbox */}
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">Feedback &amp; feature requests</CardTitle>
+            <CardDescription>Submissions from the public form — triage by changing each one&rsquo;s status.</CardDescription>
+          </CardHeader>
+          <CardContent><FeedbackInbox rows={feedback} /></CardContent>
         </Card>
 
         {/* External dashboards */}
