@@ -62,16 +62,10 @@ export default async function SubscriptionPage({
               </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm">
-              <p>You have full Pro access as an admin — no subscription or payment required.</p>
-              {ent.billingActive && (
-                <p className="text-muted-foreground">
-                  There&rsquo;s also a Lemon Squeezy subscription on this account from earlier. It isn&rsquo;t
-                  needed for admin Pro — cancel or manage it any time in the{" "}
-                  <a className="font-semibold text-navy underline underline-offset-2" href={portalUrl} target="_blank" rel="noopener noreferrer">billing portal</a>.
-                </p>
-              )}
+              <p>You have full Pro access as an admin — no subscription, payment or billing to manage.</p>
               <p className="text-muted-foreground">
-                Manage tiers, members, billing and content from the{" "}
+                Switch your own view between the <b>Free</b> and <b>Pro</b> tiers — and manage members
+                and content — from the{" "}
                 <Link className="font-semibold text-navy underline underline-offset-2" href="/admin">admin dashboard</Link>.
               </p>
             </CardContent>

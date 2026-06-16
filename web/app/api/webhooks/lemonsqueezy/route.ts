@@ -41,6 +41,17 @@ function isVerifiedPayer(u: ClerkUser, email: string): boolean {
 const ALLOWED_VARIANTS = (process.env.LEMONSQUEEZY_VARIANT_IDS || "")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
+// Admins are comped Pro by ROLE and must never be coupled to Lemon Squeezy: a paid grant is
+// never written onto an admin account (so an admin can't become a payer even via a direct LS
+// checkout that bypasses the site). Revokes still pass through (they only clear a stale flag).
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
+  .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+function isAdminUser(u: ClerkUser): boolean {
+  const role = (u.publicMetadata as { role?: string } | undefined)?.role;
+  const em = primaryEmail(u)?.toLowerCase();
+  return role === "admin" || (!!em && ADMIN_EMAILS.includes(em));
+}
+
 /**
  * Lemon Squeezy subscription webhook.
  *  1. verify the HMAC signature over the RAW body (reject forgeries),
@@ -154,6 +165,17 @@ export async function POST(req: NextRequest) {
         detail: `${eventName} status=${attrs.status ?? ""} sub=${subscriptionId ?? ""}`,
       });
       return NextResponse.json({ ok: true, ignored: true, reason: "no-account" });
+    }
+
+    // Admins are comped by role — never write a paid-subscription grant onto an admin account.
+    if (subscribed === true && isAdminUser(user)) {
+      await logAudit({
+        actor: "webhook",
+        action: "admin_grant_skipped",
+        target: primaryEmail(user) ?? user.id,
+        detail: `${eventName} status=${attrs.status ?? ""} sub=${subscriptionId ?? ""}`,
+      });
+      return NextResponse.json({ ok: true, ignored: true, reason: "admin-comped" });
     }
 
     // 3) Apply: Clerk metadata, durable mapping, audit.
