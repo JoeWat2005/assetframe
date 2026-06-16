@@ -20,15 +20,17 @@ export default function AppFrame({
   // (initially hidden) header that only reveals once you scroll past the fold.
   return (
     <>
-      {/* WCAG 2.4.1 — keyboard users can jump past the nav straight to content. */}
+      {/* WCAG 2.4.1 — kept in the DOM (not display:none) and slid off the top of the
+          viewport until focused, so it reliably reveals on the first Tab. `main` is
+          tabIndex=-1 so activating the link actually moves keyboard focus into it. */}
       <a
         href="#main-content"
-        className="sr-only rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-[100]"
+        className="fixed left-2 top-2 z-[100] -translate-y-20 rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white transition-transform focus:translate-y-0 motion-reduce:transition-none"
       >
         Skip to content
       </a>
       {header}
-      <main id="main-content" className="flex-1 pt-14">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1 pt-14 outline-none scroll-mt-14">{children}</main>
       {footer}
     </>
   );
