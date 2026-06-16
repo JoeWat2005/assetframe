@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BookOpen, Download } from "lucide-react";
+import { auth } from "@clerk/nextjs/server";
 import { getCatalog, getEdition } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
+import { isFollowing } from "@/lib/social";
+import FollowButton from "@/components/FollowButton";
 import { Badge, Btn, Note } from "@/components/ui";
 import BuyButton from "@/components/BuyButton";
+import ViewBeacon from "@/components/ViewBeacon";
 import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic"; // reads auth for the gated sections
@@ -45,10 +49,30 @@ export default async function ReaderPage(
   if (!e) notFound();
 
   const ent = await getEntitlement();
+  const { userId } = await auth();
+  const following = await isFollowing(userId, e.slug);
   const back = encodeURIComponent(`/reports/${e.date}/${e.slug}`);
+  const base = SITE.url.replace(/\/$/, "");
+  const url = `${base}/reports/${e.date}/${e.slug}`;
+  // Article structured data so the edition can earn a rich result in search.
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: `${e.instrument} — next-session market research (${e.reportDate})`,
+    datePublished: e.reportDate,
+    dateModified: e.reportDate,
+    url,
+    mainEntityOfPage: url,
+    author: { "@type": "Organization", name: SITE.brand, url: SITE.url },
+    publisher: { "@id": `${SITE.url}/#organization` },
+    about: e.instrument,
+    ...(e.preview && e.preview.startsWith("http") ? { image: e.preview } : {}),
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
+      <ViewBeacon id={`${e.date}/${e.slug}`} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
       <Link href="/reports" className="text-sm text-muted-foreground hover:text-navy">← All reports</Link>
       <h1 className="mt-2 text-3xl font-bold">{e.instrument}</h1>
       <div className="text-sm font-semibold text-muted-foreground">{e.ticker} · {e.assetClass}</div>
@@ -59,6 +83,17 @@ export default async function ReaderPage(
       <p className="mt-3 text-[15px]">{e.bias}</p>
       <p className="mt-1 text-sm text-muted-foreground">Edition {e.reportDate} · prediction window to {e.windowEnd}</p>
       {e.catalystStatus && <p className="mt-1 text-sm text-muted-foreground"><b>Catalyst:</b> {e.catalystStatus}</p>}
+
+      <div className="mt-4">
+        <FollowButton
+          symbol={e.slug}
+          instrument={e.instrument}
+          initialFollowing={following}
+          signedIn={ent.signedIn}
+          signInHref={`/sign-in?redirect_url=${back}`}
+        />
+        <p className="mt-1.5 text-xs text-muted-foreground">Follow to get an email when a new {e.instrument} edition publishes.</p>
+      </div>
 
       {!ent.signedIn ? (
         // Friendly gate: the teaser above stays visible, but reading the report needs an account.

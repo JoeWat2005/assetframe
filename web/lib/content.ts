@@ -222,3 +222,32 @@ function computeCalibration(rows: Row[]): TrackRecord["calibration"] {
 // like /account or /admin) reuse the cached result instead of re-querying Neon.
 export const getCatalog = unstable_cache(_getCatalog, ["catalog"], { revalidate: 300, tags: ["content"] });
 export const getTrackRecord = unstable_cache(_getTrackRecord, ["track-record"], { revalidate: 300, tags: ["content"] });
+
+// Most-viewed editions over the last 7 days (powers the "Popular this week" rail). Returns
+// [] when the DB or report_views table isn't there yet, so the rail just hides.
+async function _getTrending(limit = 6): Promise<Edition[]> {
+  if (!sql) return [];
+  try {
+    const rows = await sql.query(
+      `WITH top AS (
+         SELECT edition_id, SUM(count) AS views
+         FROM report_views
+         WHERE day >= CURRENT_DATE - INTERVAL '7 days'
+         GROUP BY edition_id
+         ORDER BY views DESC
+         LIMIT $1
+       )
+       SELECT ${EDITION_COLS}
+       FROM top t
+       JOIN editions e ON e.id = t.edition_id
+       LEFT JOIN open_calls oc ON oc.report_id = 'AF-' || replace(e.report_date::text, '-', '') || '-' || e.slug
+       WHERE coalesce(e.hidden, false) = false
+       ORDER BY t.views DESC`,
+      [limit]
+    );
+    return (rows as Row[]).map(rowToEdition);
+  } catch {
+    return [];
+  }
+}
+export const getTrending = unstable_cache(_getTrending, ["trending"], { revalidate: 300, tags: ["content"] });
