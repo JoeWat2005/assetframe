@@ -1,5 +1,5 @@
 import "server-only";
-import { getCatalog, getEdition, getTrackRecord, type Edition, type TrackRecord } from "./content";
+import { getCatalog, getEdition, getEditionProKeys, getTrackRecord, type Edition, type TrackRecord } from "./content";
 import { getObjectText, signedReportUrl } from "./r2";
 import { SITE } from "@/site.config";
 
@@ -113,6 +113,20 @@ export async function getReportDetail(date: string, slug: string) {
     proAccess: e.hasPro ? `Subscribe at ${BASE}/pricing to unlock the full Pro analysis.` : null,
     disclaimer: DISCLAIMER,
   };
+}
+
+// Gated Pro detail — only call after confirming the caller is an entitled subscriber.
+export async function getProReportDetail(date: string, slug: string) {
+  const e = await getEdition(date, slug);
+  if (!e || !e.hasPro) return null;
+  const keys = await getEditionProKeys(date, slug);
+  let proText = "";
+  if (keys?.proHtml) {
+    const html = await getObjectText(keys.proHtml);
+    if (html) proText = htmlToText(html);
+  }
+  const proPdfUrl = keys?.proPdf ? await signedReportUrl(keys.proPdf, 600) : null;
+  return { ...toSummary(e), proText, proPdfUrl, disclaimer: DISCLAIMER };
 }
 
 export async function getTrackRecordPayload() {

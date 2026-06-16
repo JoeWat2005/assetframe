@@ -1,15 +1,33 @@
-import { createMcpHandler } from "mcp-handler";
+import { createMcpHandler, experimental_withMcpAuth } from "mcp-handler";
+import { verifyClerkToken } from "@clerk/mcp-tools/next";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
-import { listReports, getReportDetail, getTrackRecordPayload } from "@/lib/reports-api";
+import { listReports, getReportDetail, getProReportDetail, getTrackRecordPayload } from "@/lib/reports-api";
+import { computeEntitlement, type PublicMeta } from "@/lib/access";
+import { SITE } from "@/site.config";
 
-// AssetFrame MCP server (Streamable HTTP) at /api/mcp. Free, read-only tools — anyone can
-// connect and read the published Snapshot research + track record. Pro report content is
-// gated behind subscription on the website (a Pro tool is added under OAuth separately).
+// AssetFrame MCP server (Streamable HTTP) at /api/mcp.
+//  - Free tools (list/search/get_report/track_record): no auth.
+//  - get_pro_report: gated behind Clerk OAuth (MCP Authorization spec) AND a live Pro
+//    subscription. The handler is wrapped with experimental_withMcpAuth({ required: false })
+//    so the free tools keep working without a token; the Pro tool enforces auth itself.
 export const maxDuration = 60;
 
-const json = (data: unknown) => ({
-  content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-});
+const json = (data: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] });
+const note = (t: string, isError = false) => ({ content: [{ type: "text" as const, text: t }], ...(isError ? { isError: true } : {}) });
+
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+
+async function userIsPro(userId: string): Promise<boolean> {
+  try {
+    const cc = await clerkClient();
+    const u = await cc.users.getUser(userId);
+    const email = u.primaryEmailAddress?.emailAddress?.toLowerCase();
+    return computeEntitlement((u.publicMetadata || {}) as PublicMeta, email, ADMIN_EMAILS).subscribed;
+  } catch {
+    return false;
+  }
+}
 
 const handler = createMcpHandler(
   (server) => {
@@ -48,7 +66,7 @@ const handler = createMcpHandler(
       {
         title: "Get a report",
         description:
-          "Get one report's free Snapshot: metadata, the Snapshot text, and a short-lived PDF link. The full Pro analysis requires a subscription on assetframe.co.uk.",
+          "Get one report's free Snapshot: metadata, the Snapshot text, and a short-lived PDF link. The full Pro analysis requires a subscription (see get_pro_report).",
         inputSchema: {
           date: z.string().describe("ISO date YYYY-MM-DD"),
           slug: z.string().describe("instrument slug, e.g. 'AAPL' or 'BTC'"),
@@ -56,9 +74,7 @@ const handler = createMcpHandler(
       },
       async ({ date, slug }) => {
         const r = await getReportDetail(date, slug);
-        return r
-          ? json(r)
-          : { content: [{ type: "text" as const, text: "No published report found for that date/slug." }], isError: true };
+        return r ? json(r) : note("No published report found for that date/slug.", true);
       }
     );
 
@@ -72,9 +88,48 @@ const handler = createMcpHandler(
       },
       async () => json(await getTrackRecordPayload())
     );
+
+    server.registerTool(
+      "get_pro_report",
+      {
+        title: "Get the full Pro report",
+        description:
+          "The full Pro analysis text plus a short-lived Pro PDF link. Requires an authenticated AssetFrame account (OAuth) with an active Pro subscription.",
+        inputSchema: {
+          date: z.string().describe("ISO date YYYY-MM-DD"),
+          slug: z.string().describe("instrument slug, e.g. 'AAPL' or 'BTC'"),
+        },
+      },
+      async ({ date, slug }, extra) => {
+        const userId = extra?.authInfo?.extra?.userId as string | undefined;
+        if (!userId) {
+          return note("This tool requires signing in with your AssetFrame account (OAuth). Free Snapshots are available via get_report.", true);
+        }
+        if (!(await userIsPro(userId))) {
+          return note(`Your account doesn't have an active AssetFrame Pro subscription. Subscribe at ${SITE.url}/pricing to unlock Pro reports.`, true);
+        }
+        const r = await getProReportDetail(date, slug);
+        return r ? json(r) : note("No Pro report found for that date/slug.", true);
+      }
+    );
   },
   { serverInfo: { name: "assetframe", version: "1.0.0" } },
   { basePath: "/api", disableSse: true, verboseLogs: false }
 );
 
-export { handler as GET, handler as POST, handler as DELETE };
+// Optional OAuth: populates extra.authInfo when a valid Clerk OAuth token is present.
+// required:false keeps the free tools usable without any token. Defensive try/catch so a
+// Clerk/OAuth misconfiguration can never take down the free tools.
+const authHandler = experimental_withMcpAuth(
+  handler,
+  async (_req: Request, token?: string) => {
+    try {
+      return verifyClerkToken(await auth({ acceptsToken: "oauth_token" }), token);
+    } catch {
+      return undefined;
+    }
+  },
+  { required: false }
+);
+
+export { authHandler as GET, authHandler as POST, authHandler as DELETE };

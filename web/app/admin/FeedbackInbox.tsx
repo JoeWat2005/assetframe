@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import type { FeedbackRow } from "@/lib/feedback";
 import { setFeedbackStatus } from "./actions";
 import { Input } from "@/components/ui/input";
@@ -53,8 +53,8 @@ export default function FeedbackInbox({ rows: initial }: { rows: FeedbackRow[] }
     return arr;
   }, [filtered, sort]);
 
-  useEffect(() => { setPage(0); }, [q, cat, status, sort]);
-
+  // No reset-page effect: safePage below clamps an out-of-range page when filters shrink the
+  // list, which avoids a setState-in-effect and is enough here.
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = sorted.slice(safePage * PAGE, safePage * PAGE + PAGE);

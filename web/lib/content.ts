@@ -139,6 +139,24 @@ export async function getEdition(date: string, slug: string): Promise<Edition | 
   return (await getCatalog()).find((e) => e.date === date && e.slug === slug);
 }
 
+// Pro file keys for an edition (not exposed on the public Edition type). Used by the gated
+// MCP Pro tool. Returns null if no DB / not found.
+export async function getEditionProKeys(date: string, slug: string): Promise<{ proHtml: string; proPdf: string } | null> {
+  if (!sql) return null;
+  try {
+    const rows = (await sql.query(
+      `SELECT coalesce(pro_html_key, '') AS pro_html_key, coalesce(pro_pdf_key, '') AS pro_pdf_key
+         FROM editions WHERE id = $1 AND coalesce(hidden, false) = false LIMIT 1`,
+      [`${date}/${slug}`]
+    )) as Row[];
+    const r = rows[0];
+    if (!r) return null;
+    return { proHtml: s(r.pro_html_key), proPdf: s(r.pro_pdf_key) };
+  } catch {
+    return null;
+  }
+}
+
 async function _getTrackRecord(): Promise<TrackRecord> {
   if (sql) {
     try {
