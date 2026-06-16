@@ -99,8 +99,8 @@ export default function Header() {
           <Image src="/logo.png" alt={SITE.brand} width={124} height={25} priority className="h-6 w-auto" />
         </a>
 
-        {/* desktop */}
-        <div className="hidden items-center gap-3 sm:flex">
+        {/* desktop — only at lg+; below that the mega-menu cramps/overflows, so use the sheet */}
+        <div className="hidden items-center gap-3 lg:flex">
           <NavigationMenu viewport={false}>
             <NavigationMenuList className="gap-1">
               <NavigationMenuItem>
@@ -131,8 +131,8 @@ export default function Header() {
           </div>
         </div>
 
-        {/* mobile */}
-        <div className="sm:hidden">
+        {/* mobile + tablet (below lg) — the hamburger sheet */}
+        <div className="lg:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon-sm" aria-label="Open menu">
