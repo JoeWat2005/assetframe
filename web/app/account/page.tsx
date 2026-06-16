@@ -79,7 +79,7 @@ export default async function AccountPage() {
         <div className="mt-6 rounded-xl border border-line bg-white p-5">
           <h2 className="text-lg font-bold text-navy">Following</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Instruments you follow — we email you when a new edition publishes for them.
+            Instruments you follow — we&rsquo;ll notify you (push, with email fallback) when a new edition publishes for them.
           </p>
           <FollowingList initial={follows} />
         </div>

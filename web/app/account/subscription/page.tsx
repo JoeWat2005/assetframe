@@ -36,8 +36,10 @@ export default async function SubscriptionPage({
   const canManageInApp = paid && !!ent.subscriptionId && !!process.env.LEMONSQUEEZY_API_KEY;
   // Per-subscription portal if the webhook captured it, else the universal email magic-link.
   const portalUrl = ent.portalUrl || SITE.lemonPortalUrl;
-  // Admins with no paid plan see a complimentary-Pro card instead of any payment prompt.
-  const compOnly = ent.admin && !paid;
+  // Admins are kept entirely outside Lemon Squeezy: they ALWAYS see the complimentary-Pro
+  // card (never a paid / cancelling / checkout state), even if a legacy LS subscription
+  // lingers on the account. Admin Pro is comped by role and never depends on a paid plan.
+  const compOnly = ent.admin;
 
   return (
     <>
@@ -61,6 +63,13 @@ export default async function SubscriptionPage({
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm">
               <p>You have full Pro access as an admin — no subscription or payment required.</p>
+              {ent.billingActive && (
+                <p className="text-muted-foreground">
+                  There&rsquo;s also a Lemon Squeezy subscription on this account from earlier. It isn&rsquo;t
+                  needed for admin Pro — cancel or manage it any time in the{" "}
+                  <a className="font-semibold text-navy underline underline-offset-2" href={portalUrl} target="_blank" rel="noopener noreferrer">billing portal</a>.
+                </p>
+              )}
               <p className="text-muted-foreground">
                 Manage tiers, members, billing and content from the{" "}
                 <Link className="font-semibold text-navy underline underline-offset-2" href="/admin">admin dashboard</Link>.
@@ -128,7 +137,7 @@ export default async function SubscriptionPage({
           </Card>
         )}
 
-        {paid && cancelling && (
+        {!compOnly && paid && cancelling && (
           <>
             <Separator className="my-6" />
             <h2 className="mb-1 text-base font-semibold">Changed your mind?</h2>
@@ -145,7 +154,7 @@ export default async function SubscriptionPage({
           </>
         )}
 
-        {paid && !cancelling && (
+        {!compOnly && paid && !cancelling && (
           <>
             <Separator className="my-6" />
             <h2 className="mb-1 text-base font-semibold">Cancel subscription</h2>
