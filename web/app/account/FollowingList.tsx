@@ -5,7 +5,14 @@ import { X } from "lucide-react";
 import { toggleFollow } from "@/lib/social-actions";
 import type { Follow } from "@/lib/social";
 
-export default function FollowingList({ initial }: { initial: Follow[] }) {
+export default function FollowingList({
+  initial,
+  links = {},
+}: {
+  initial: Follow[];
+  // Map of followed symbol (edition slug) -> its latest report URL. Falls back to /reports.
+  links?: Record<string, string>;
+}) {
   const [items, setItems] = useState(initial);
   const [, start] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
@@ -31,7 +38,7 @@ export default function FollowingList({ initial }: { initial: Follow[] }) {
     <ul className="mt-3 divide-y divide-line">
       {items.map((f) => (
         <li key={f.symbol} className="flex items-center justify-between py-2">
-          <Link href="/reports" className="text-sm font-semibold text-navy hover:underline">{f.instrument || f.symbol}</Link>
+          <Link href={links[f.symbol] ?? "/reports"} className="text-sm font-semibold text-navy hover:underline">{f.instrument || f.symbol}</Link>
           <button
             type="button"
             onClick={() => unfollow(f.symbol, f.instrument)}
