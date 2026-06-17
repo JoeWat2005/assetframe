@@ -15,8 +15,7 @@
     "migrate:up": "node-pg-migrate up --envPath .env.local",
     "migrate:down": "node-pg-migrate down --envPath .env.local",
     "migrate:create": "node-pg-migrate create --migration-file-language js",
-    "sync-db": "node scripts/sync-db.mjs",
-    "db:setup": "npm run migrate:up && npm run sync-db"
+    "db:setup": "npm run migrate:up"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
