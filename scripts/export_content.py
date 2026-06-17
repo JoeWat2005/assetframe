@@ -81,11 +81,13 @@ def _agg_rows(rows, key_fn):
     return out
 
 
-def load_catalog(reports_dir, include_dev):
+def load_catalog(reports_dir, include_dev, since=None):
     editions = []
     for meta_path in sorted(reports_dir.glob("*/*/metadata.json")):
         date, slug = meta_path.parent.parent.name, meta_path.parent.name
         if not include_dev and date.startswith("_"):
+            continue
+        if since and date < since:          # scope out stale/old editions (republish guard)
             continue
         try:
             m = json.loads(meta_path.read_text(encoding="utf-8"))
@@ -325,6 +327,8 @@ def main():
     ap.add_argument("--web", default="web")
     ap.add_argument("--reports", default="reports")
     ap.add_argument("--include-dev", action="store_true")
+    ap.add_argument("--since", default=None,
+                    help="only include editions dated >= YYYY-MM-DD (scopes out stale/old reports)")
     a = ap.parse_args()
 
     web = (ROOT / a.web) if not Path(a.web).is_absolute() else Path(a.web)
@@ -332,7 +336,7 @@ def main():
     content = web / "content"
     content.mkdir(parents=True, exist_ok=True)
 
-    catalog = load_catalog(reports_dir, a.include_dev)
+    catalog = load_catalog(reports_dir, a.include_dev, since=a.since)
 
     # ledger stats from the raw CSV (hits/misses) for the headline numbers
     ledger_csv = ROOT / "ledger" / "outcome_ledger.csv"

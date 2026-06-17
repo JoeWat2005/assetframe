@@ -1408,6 +1408,15 @@ def main():
         sys.exit(1)
 
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Forecast-only: the QA gate has already passed; skip the PDF/HTML/preview render
+    # (predictions + payload are written upstream by scaffold). Used by the scheduler and
+    # backtests where artifacts aren't needed - much faster/cheaper, QA still enforced.
+    if "--no-render" in sys.argv:
+        meta = build_metadata(p, qa, [], [], warns)
+        (out_dir / "metadata.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        print(f"metadata.json: {out_dir / 'metadata.json'} (forecast-only)")
+        print("QA: all pre-render checks passed (--no-render: PDFs/HTML/preview skipped)")
+        return
     rp.WARN[:] = []
     build_free(p).output(str(out_dir / "free.pdf"))
     free_warn = list(dict.fromkeys(rp.WARN))

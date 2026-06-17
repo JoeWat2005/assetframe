@@ -25,6 +25,11 @@ data/research/*
 data/social/*
 data/ledger_context/*
 data/social_posts/*
+data/memory_packs/*
+
+# Scheduler run manifests + backtest output — per-run observability artifacts, not versioned.
+runs/*
+ledger/sim/
 
 # Derived ledger products — rebuilt by calibrate.py / research_memory.py.
 # The source-of-truth outcome_ledger.csv stays tracked.

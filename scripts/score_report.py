@@ -85,12 +85,14 @@ def load_bars(path, start, end):
 
 
 def parse_args(argv):
-    opts = {"force": False, "dry_run": False, "hourly": None, "manual": {}}
+    opts = {"force": False, "force_rescore": False, "dry_run": False, "hourly": None, "manual": {}}
     i = 0
     while i < len(argv):
         a = argv[i]
         if a == "--force":
             opts["force"] = True
+        elif a == "--force-rescore":
+            opts["force_rescore"] = True
         elif a == "--dry-run":
             opts["dry_run"] = True
         elif a == "--hourly":
@@ -272,7 +274,19 @@ def main():
            p.get("conf_version", ""), p.get("conf_raw", ""), tax.get("asset_class", ""),
            tax.get("prediction_type", ""), tax.get("direction", ""),
            tax.get("horizon", ""), tax.get("market_regime", "")]
-    if not opts["dry_run"]:
+    # Idempotency guard: the ledger is append-only with one row per report_id. Re-running
+    # the scorer on an already-scored report must NOT append a duplicate (it would double-
+    # count in every hit-rate and calibration bucket). Skip-and-warn unless --force-rescore.
+    existing_ids = set()
+    if LEDGER.exists():
+        with open(LEDGER, newline="", encoding="utf-8") as f:
+            existing_ids = {r.get("report_id") for r in csv.DictReader(f)}
+    duplicate = (p["report_id"] in existing_ids) and not opts["force_rescore"]
+    if duplicate:
+        print(f"report_id {p['report_id']} already scored in the ledger - skipped "
+              f"(append-only; use --force-rescore to re-score deliberately)")
+
+    if not opts["dry_run"] and not duplicate:
         LEDGER.parent.mkdir(parents=True, exist_ok=True)
         new_file = not LEDGER.exists()
         with open(LEDGER, "a", newline="", encoding="utf-8") as f:
@@ -286,14 +300,16 @@ def main():
     if LEDGER.exists():
         with open(LEDGER, newline="", encoding="utf-8") as f:
             rows = list(csv.DictReader(f))
-    if opts["dry_run"]:
+    if opts["dry_run"] and not duplicate:
         rows = rows + [dict(zip(LEDGER_COLS, [str(x) for x in row]))]
+    if opts["dry_run"]:
         print("DRY RUN - ledger not written")
     tot_h = sum(int(r["hits"] or 0) for r in rows)
     tot_m = sum(int(r["misses"] or 0) for r in rows)
     cum = round(100 * tot_h / (tot_h + tot_m), 1) if (tot_h + tot_m) else None
 
     summary = {"report_id": p["report_id"], "partial": partial, "dry_run": opts["dry_run"],
+               "skipped_duplicate": duplicate,
                "results": results, "hit_rate_pct": rate, "unresolved_manual": unresolved,
                "setup_filled": filled, "setup_outcome": outcome,
                "ledger_reports": len(rows), "cumulative_hit_rate_pct": cum}
