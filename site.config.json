@@ -1,6 +1,0 @@
-{
-  "site_url": "https://assetframe.pages.dev",
-  "checkout_url": "",
-  "pro_price_label": "",
-  "_help": "Edit this file, then re-run scripts/build_site.py. checkout_url = your Lemon Squeezy buy link (leave empty until you have one; Pro buttons then point at the pricing page). pro_price_label = e.g. '£12/month'. site_url = your live Cloudflare Pages URL. No secrets go here — R2 and Lemon Squeezy keys live in Cloudflare env vars (see LAUNCH.md)."
-}
