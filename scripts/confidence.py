@@ -21,7 +21,7 @@ Confidence blends four parts, then applies hard caps, then a calibration map:
 Hard caps (take the min): stale data 40 · degraded data 50 ·
 single-source/unverified high-impact thesis 55 · hype-driven thesis 55 ·
 ledger shows a strong historical failure pattern 55 · cold indicators 60 ·
-engine errors 65.
+high-impact catalyst INSIDE the prediction window 60 · engine errors 65.
 
 Every output carries `components` (for the Pro scorecard) and `caps_applied`,
 so the published number is fully explainable. Pure stdlib.
@@ -250,7 +250,8 @@ def catalyst_confidence(brief, research_pack=None):
             supported.append(base)
         pts.append(sum(supported) / len(supported))
         detail["claim_support"] = round(pts[-1], 2)
-    gaps = (brief.get("news_context") or {}).get("source_gaps") or []
+    gaps = ((brief.get("news_context") or {}).get("source_gaps")
+            or brief.get("source_gaps") or [])
     if gaps:
         pts.append(_clamp(1.0 - 0.15 * len(gaps)))
         detail["source_gaps"] = len(gaps)
@@ -318,6 +319,18 @@ def _ledger_failure(ledger_context, pred_type):
     return (rate / 100.0 if rate > 1 else rate) < 0.4
 
 
+def _in_window_event(brief):
+    """A scheduled high-impact catalyst INSIDE the prediction window widens the
+    outcome distribution no matter how well-sourced it is - you cannot be highly
+    confident across a binary event. Gated on in_window AND gap_risk so a routine
+    in-window item (e.g. an unconfirmed minor print) doesn't trip the cap; an event
+    that is merely well-sourced but OUT of window (the next session's risk) does not."""
+    for c in ((brief or {}).get("catalysts") or []):
+        if c.get("in_window") and c.get("gap_risk"):
+            return True
+    return False
+
+
 # --- calibration map --------------------------------------------------------
 
 def _apply_calibration(score, calib):
@@ -372,6 +385,8 @@ def compute_confidence(analysis, setup, brief=None, research_pack=None,
         cap = min(cap, 55); caps.append("hype_driven_thesis->55")
     if _ledger_failure(ledger_context, pred_type):
         cap = min(cap, 55); caps.append("ledger_failure_pattern->55")
+    if _in_window_event(brief):
+        cap = min(cap, 60); caps.append("in_window_event->60")
 
     capped = min(raw, cap)
     published = int(round(_clamp(_apply_calibration(capped, calib), 0, 100)))

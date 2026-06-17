@@ -4,6 +4,15 @@ Usage:
   python scripts/intraday.py SYMBOL [--name NAME] [--datadir data]
          [--hrange 10d] [--drange 1y] [--roll-utc 22] [--related "SYM1,SYM2,SYM3"]
          [--provider yahoo|eodhd] [--anchor live|prior-completed|friday]
+         [--as-of "YYYY-MM-DD HH:MM"]
+
+--as-of TRIMS every fetched series (hourly/daily/related) to bars at/<= that UTC
+moment BEFORE any indicator/pivot/session/freshness computation or CSV write, so the
+whole analysis reproduces the information state at that past instant (retroactive /
+backtest generation). Freshness is measured as of the cutoff (not wall-clock), and
+fetched_utc + an "as_of" marker record it. Combine with the natural live anchoring to
+get a pre-session read: pivots from the last completed session before the cutoff,
+bands on the in-progress session's open, last_price = the last bar at/<= the cutoff.
 
 --anchor re-derives floor pivots + ATR day-bands on a CHOSEN COMPLETED daily session
 instead of the live/in-progress one (the pre-market case), replacing the old hand-built
@@ -441,6 +450,18 @@ def main():
         print(f"ERROR: --anchor must be one of live|prior-completed|friday (got {anchor_mode!r})",
               file=sys.stderr)
         sys.exit(2)
+    as_of = args.get("--as-of")
+    cutoff_ts = cutoff_dt = None
+    if as_of:
+        s = as_of.strip()
+        try:
+            cutoff_dt = datetime.strptime(s, "%Y-%m-%d %H:%M" if len(s) > 10 else "%Y-%m-%d") \
+                .replace(tzinfo=timezone.utc)
+        except ValueError:
+            print(f"ERROR: --as-of must be 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM' UTC (got {as_of!r})",
+                  file=sys.stderr)
+            sys.exit(2)
+        cutoff_ts = cutoff_dt.timestamp()
 
     # Warm-up extension: fetch extra lookback BEFORE the display window so the
     # largest chart indicators (hourly SMA50, daily SMA200) are fully warmed at the
@@ -474,12 +495,18 @@ def main():
         for rs, fut in fut_rel:
             try:
                 _, rrows = fut.result()
+                if cutoff_ts is not None:
+                    rrows = [r for r in rrows if r["ts"] <= cutoff_ts]
                 rc = [r["c"] for r in rrows]
                 related.append({"symbol": rs, "last": round(rc[-1], 6),
                                 "chg_1d_pct": round(100 * (rc[-1] / rc[-2] - 1), 2) if len(rc) > 1 else None,
                                 "chg_5d_pct": round(100 * (rc[-1] / rc[-6] - 1), 2) if len(rc) > 5 else None})
             except Exception as ex:
                 related.append({"symbol": rs, "error": str(ex)[:80]})
+
+    if cutoff_ts is not None:
+        hourly = [r for r in hourly if r["ts"] <= cutoff_ts]
+        daily = [r for r in daily if r["ts"] <= cutoff_ts]
 
     if not daily:
         print(f"ERROR: no usable data for {symbol} "
@@ -585,9 +612,9 @@ def main():
     # freshness from hourly bars whenever any exist (timestamps reflect feed lag
     # honestly even when too thin to analyze); daily bars only as a last resort
     if hourly:
-        fresh = freshness_block(meta_h, hourly, granularity="hourly")
+        fresh = freshness_block(meta_h, hourly, now=cutoff_dt, granularity="hourly")
     else:
-        fresh = freshness_block(meta_d, daily, granularity="daily")
+        fresh = freshness_block(meta_d, daily, now=cutoff_dt, granularity="daily")
     meta_best = (meta_d if degraded else meta_h) or {}
     notes = []
     for m in (meta_h, meta_d):
@@ -676,10 +703,13 @@ def main():
         },
     }
 
+    last_px = meta_best.get("regularMarketPrice")
+    if cutoff_ts is not None:  # as-of: the last bar at/<= the cutoff, never the live quote
+        last_px = round((hourly[-1]["c"] if hourly else daily[-1]["c"]), 6)
     out = {
         "symbol": symbol, "timezone": meta_best.get("exchangeTimezoneName"),
-        "fetched_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
-        "last_price": meta_best.get("regularMarketPrice"),
+        "fetched_utc": (cutoff_dt or datetime.now(timezone.utc)).strftime("%Y-%m-%d %H:%M"),
+        "last_price": last_px,
         "last_bar_utc": fresh["last_bar_utc"],
         "degraded": degraded,
         "errors": errors or None,
@@ -709,6 +739,8 @@ def main():
         "files": {"hourly_csv": (candles_dir / f"{name}_hourly.csv").as_posix(),
                   "daily_csv": (candles_dir / f"{name}_daily.csv").as_posix()},
     }
+    if cutoff_dt is not None:
+        out["as_of"] = cutoff_dt.strftime("%Y-%m-%d %H:%M")
     if anchor_mode != "live":
         out["anchor"] = anchor_meta
         if pivots_live_out is not None:

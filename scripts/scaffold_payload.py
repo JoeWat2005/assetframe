@@ -81,12 +81,14 @@ def read_last_bar(csv_path):
 
 
 def _dp(v):
-    """Sensible decimal places for a price (fx/crypto vary)."""
+    """Sensible decimal places for a price. FX majors (~1-2, e.g. 1.3406) need 4dp or
+    adjacent pivots/bands collapse onto a single value (3 levels, no setups); JPY
+    crosses / indices / metals / futures (>=10) read fine at 2dp; sub-1 FX/crypto at 5dp."""
     av = abs(v)
-    if av >= 100:
+    if av >= 10:
         return 2
     if av >= 1:
-        return 2
+        return 4
     return 5
 
 
@@ -563,11 +565,12 @@ def _source_audit_html(brief, analysis, dq):
 def parse_args(argv):
     o = {"analysis": None, "brief": None, "research": None, "social": None,
          "ledger_context": None, "calib": None, "session_profile": None,
-         "out": None, "predictions": None, "check": False}
+         "out": None, "predictions": None, "as_of": None, "window_end": None, "check": False}
     i = 0
     keys = {"--analysis": "analysis", "--brief": "brief", "--research": "research",
             "--social": "social", "--ledger-context": "ledger_context", "--calib": "calib",
-            "--session-profile": "session_profile", "--out": "out", "--predictions": "predictions"}
+            "--session-profile": "session_profile", "--out": "out", "--predictions": "predictions",
+            "--as-of": "as_of", "--window-end": "window_end"}
     while i < len(argv):
         a = argv[i]
         if a == "--check":
@@ -604,7 +607,32 @@ def main():
         if not brief.get(req):
             die(f"brief missing required field '{req}'")
 
-    session = get_session(profile)
+    # As-of / explicit-window overrides (retroactive generation). --as-of backdates the
+    # session clock so get_session reports the correct state for that past moment; for a
+    # single-day window on a 24/5 FX week (where get_session would otherwise target the
+    # weekly close) --window-end caps the prediction window so it can be scored once it
+    # passes. report_date is taken from window_start, so an as-of run dates correctly.
+    now_dt = None
+    if o["as_of"]:
+        s = o["as_of"].strip()
+        try:
+            now_dt = datetime.strptime(s, "%Y-%m-%d %H:%M" if len(s) > 10 else "%Y-%m-%d") \
+                .replace(tzinfo=timezone.utc)
+        except ValueError:
+            die(f"--as-of must be 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM' UTC (got {o['as_of']!r})")
+    session = get_session(profile, now=now_dt)
+    if now_dt is not None:
+        session["window_start_utc"] = now_dt.strftime("%Y-%m-%d %H:%M")
+    if o["window_end"]:
+        we = o["window_end"].strip()
+        try:
+            datetime.strptime(we[:16], "%Y-%m-%d %H:%M")
+        except ValueError:
+            die(f"--window-end must be 'YYYY-MM-DD HH:MM' UTC (got {o['window_end']!r})")
+        if we[:16] <= session["window_start_utc"]:
+            die("--window-end must be after the window start / as-of moment")
+        session["window_end_utc"] = we[:16]
+        session["window_label"] = "explicit window (as-of / retroactive run)"
     hourly_csv = (analysis.get("files") or {}).get("hourly_csv", f"data/candles/{name}_hourly.csv")
     last_price, last_ts = read_last_bar(hourly_csv)
 

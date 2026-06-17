@@ -134,31 +134,38 @@ def score_prediction(p, bars):
         return "MANUAL"
     if not bars:
         return "NT"
+    # A prediction is a HIT when the named condition's outcome matches `expect`.
+    # V2 briefs phrase bearish/neutral calls as expect=False (e.g. type close_above
+    # at PP with expect False == "settles BELOW PP"), so the verdict must compare to
+    # expect, not report the raw condition. Legacy expect-True predictions are
+    # unchanged: hit(raw) == "Y" iff raw, identical to the old raw-return.
+    expect = bool(p.get("expect", True))
+
+    def hit(raw):
+        return "Y" if bool(raw) == expect else "N"
+
     if typ == "close_above":
-        return "Y" if bars[-1]["c"] > p["level"] else "N"
+        return hit(bars[-1]["c"] > p["level"])
     if typ == "close_below":
-        return "Y" if bars[-1]["c"] < p["level"] else "N"
+        return hit(bars[-1]["c"] < p["level"])
     if typ == "range_inside":
-        ok = min(b["l"] for b in bars) >= p["lo"] and max(b["h"] for b in bars) <= p["hi"]
-        return "Y" if ok else "N"
+        return hit(min(b["l"] for b in bars) >= p["lo"] and max(b["h"] for b in bars) <= p["hi"])
     if typ == "touches":
-        return "Y" if any(b["l"] <= p["level"] <= b["h"] for b in bars) else "N"
+        return hit(any(b["l"] <= p["level"] <= b["h"] for b in bars))
     if typ == "no_close_below":
-        return "Y" if all(b["c"] >= p["level"] for b in bars) else "N"
+        return hit(all(b["c"] >= p["level"] for b in bars))
     if typ == "no_close_above":
-        return "Y" if all(b["c"] <= p["level"] for b in bars) else "N"
+        return hit(all(b["c"] <= p["level"] for b in bars))
     if typ == "no_close_above_after_touch":
         touched = [i for i, b in enumerate(bars) if b["h"] >= p["touch"]]
         if not touched:
             return "NT"
-        i = touched[0]
-        return "N" if bars[i]["c"] > p["level"] else "Y"
+        return hit(bars[touched[0]]["c"] <= p["level"])   # held = first-touch bar did NOT close above
     if typ == "no_close_below_after_touch":
         touched = [i for i, b in enumerate(bars) if b["l"] <= p["touch"]]
         if not touched:
             return "NT"
-        i = touched[0]
-        return "N" if bars[i]["c"] < p["level"] else "Y"
+        return hit(bars[touched[0]]["c"] >= p["level"])   # held = first-touch bar did NOT close below
     return f"UNKNOWN({typ})"
 
 
