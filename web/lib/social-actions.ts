@@ -1,7 +1,9 @@
 "use server";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { sql } from "./db";
 import { sendEmail, emailShell, emailButton } from "./email";
+import { rateLimit } from "./rate-limit";
 import { SITE } from "@/site.config";
 
 const BASE = SITE.url.replace(/\/$/, "");
@@ -43,6 +45,10 @@ export async function subscribeNewsletter(formData: FormData): Promise<{ ok: boo
   if (String(formData.get("company") || "").trim()) return { ok: true, message: "Thanks — check your inbox to confirm." }; // honeypot
   const email = String(formData.get("email") || "").trim().toLowerCase();
   if (!email || !email.includes("@") || email.length > 200) return { ok: false, message: "Enter a valid email." };
+  const xff = (await headers()).get("x-forwarded-for") ?? "";
+  const ip = xff.split(",")[0].trim() || "local";
+  const rl = await rateLimit(`newsletter:${ip}`, { limit: 5, windowSec: 60 });
+  if (!rl.ok) return { ok: false, message: "Too many requests, try again shortly." };
   if (!sql) return { ok: false, message: "Sign-ups are unavailable right now." };
   try {
     const confirm = crypto.randomUUID();

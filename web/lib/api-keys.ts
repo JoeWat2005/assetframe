@@ -96,3 +96,47 @@ export async function revokeApiKey(clerkUserId: string, id: string): Promise<voi
     WHERE id = ${id} AND clerk_user_id = ${clerkUserId} AND revoked_at IS NULL
   `;
 }
+
+/**
+ * Return the single active (non-revoked) key for a user, or null if none exists.
+ */
+export async function getActiveApiKey(clerkUserId: string): Promise<ApiKeyRecord | null> {
+  if (!sql) return null;
+  const rows = await sql`
+    SELECT id, name, key_prefix, created_at, last_used_at
+    FROM api_keys
+    WHERE clerk_user_id = ${clerkUserId} AND revoked_at IS NULL
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  const row = (rows as ApiKeyRecord[])[0];
+  return row ?? null;
+}
+
+/**
+ * Revoke any existing active key for the user, then create a new one.
+ * Returns the full CreatedApiKey (key shown once). Enforces the one-active-key invariant.
+ */
+export async function regenerateApiKey(
+  clerkUserId: string,
+  name?: string | null
+): Promise<CreatedApiKey> {
+  if (!sql) throw new Error("Database not configured");
+  // Revoke all active keys atomically before creating the new one.
+  await sql`
+    UPDATE api_keys SET revoked_at = now()
+    WHERE clerk_user_id = ${clerkUserId} AND revoked_at IS NULL
+  `;
+  return createApiKey(clerkUserId, name ?? null);
+}
+
+/**
+ * Revoke the user's active key (if any). No-op if they have no active key.
+ */
+export async function revokeActiveApiKey(clerkUserId: string): Promise<void> {
+  if (!sql) return;
+  await sql`
+    UPDATE api_keys SET revoked_at = now()
+    WHERE clerk_user_id = ${clerkUserId} AND revoked_at IS NULL
+  `;
+}

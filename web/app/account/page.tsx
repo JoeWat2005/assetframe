@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { getEntitlement } from "@/lib/entitlements";
+import { getActiveApiKey } from "@/lib/api-keys";
 import { Btn, Hero } from "@/components/ui";
 import BuyButton from "@/components/BuyButton";
+import ApiKeyManager from "@/components/ApiKeyManager";
+import type { ApiKeyStatus } from "@/lib/api-key-actions";
 import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +15,11 @@ export const metadata: Metadata = { title: "Account" };
 export default async function AccountPage() {
   const ent = await getEntitlement();
   if (!ent.signedIn) redirect("/sign-in");
+  const { userId } = await auth();
+  const activeKey = userId ? await getActiveApiKey(userId) : null;
+  const apiKeyStatus: ApiKeyStatus = activeKey
+    ? { hasKey: true, prefix: activeKey.key_prefix, createdAt: activeKey.created_at, lastUsedAt: activeKey.last_used_at }
+    : { hasKey: false };
   const cancelling = ent.billingActive && ent.subStatus === "cancelled";
   const ends = ent.endsAt ? ent.endsAt.slice(0, 10) : null;
   const showManage = !ent.admin;
@@ -75,6 +84,20 @@ export default async function AccountPage() {
           <div className="mt-3">
             <Btn href="/notifications" variant="primary">Go to Notifications →</Btn>
           </div>
+        </div>
+
+        <div className="mt-6 rounded-xl border border-line bg-white p-5">
+          <h2 className="text-lg font-bold text-navy">API access</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Use your API key to authenticate requests to the REST API.
+            The free tier (report catalog, Snapshots, track record) is public; Pro report content requires a subscription.
+          </p>
+          <div className="mt-3">
+            <ApiKeyManager initial={apiKeyStatus} />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            <a href="/developers/api" className="font-semibold text-navy hover:underline">Read the API docs →</a>
+          </p>
         </div>
 
         {showManage && (

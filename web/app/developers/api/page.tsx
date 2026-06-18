@@ -86,6 +86,9 @@ def list_assetframe_reports(asset_class: str = "", limit: int = 5) -> dict:
     r.raise_for_status()
     return r.json()`;
 
+const proExample = `curl -H "Authorization: Bearer af_live_..." \\
+  ${BASE}/api/v1/reports/2026-06-18/AAPL/pro`;
+
 export default function ApiDocsPage() {
   return (
     <>
@@ -97,7 +100,31 @@ export default function ApiDocsPage() {
           here — it&rsquo;s available to subscribers over <Link href="/developers/mcp" className="font-semibold text-navy hover:underline">MCP</Link>.
         </p>
 
-        <h2 className="mt-8 text-xl font-bold text-navy">Base URL</h2>
+        <h2 className="mt-8 text-xl font-bold text-navy">Authentication</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The following endpoints are <strong>public</strong> — no key required:
+        </p>
+        <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
+          <li><code>GET /reports</code> — report catalog</li>
+          <li><code>GET /reports/{`{date}`}/{`{slug}`}</code> — Snapshot + free content</li>
+          <li><code>GET /track-record</code> — public ledger stats</li>
+          <li><code>GET /openapi.json</code> — OpenAPI schema</li>
+        </ul>
+        <p className="mt-3 text-sm text-muted-foreground">
+          <strong>Pro report content</strong> and the <code>/pro</code> endpoint require a valid API key sent as a
+          Bearer token:
+        </p>
+        <CodeBlock code={`Authorization: Bearer af_live_...`} label="Header" />
+        <CodeBlock code={proExample} label="Example — fetch a Pro report" />
+        <p className="mt-3 text-sm text-muted-foreground">
+          Generate your key on the{" "}
+          <Link href="/account" className="font-semibold text-navy hover:underline">
+            Account page →
+          </Link>
+          {" "}(requires sign-in and an active Pro subscription for gated endpoints).
+        </p>
+
+        <h2 className="mt-10 text-xl font-bold text-navy">Base URL</h2>
         <CodeBlock code={API} />
         <p className="mt-3 text-sm text-muted-foreground">
           Machine-readable schema (OpenAPI 3.1):{" "}

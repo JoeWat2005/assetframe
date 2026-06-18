@@ -1,10 +1,13 @@
 import { sql } from "@/lib/db";
+import { rateLimitResponse, getRequestIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 // Fire-and-forget view counter for the "Popular this week" rail. Always returns 204 — a
 // failed count must never surface to the reader. Dedupe happens client-side (per session).
 export async function POST(req: Request) {
+  const lr = await rateLimitResponse(req, `view:${getRequestIp(req)}`, { limit: 30, windowSec: 60 });
+  if (lr) return lr;
   try {
     const body = (await req.json().catch(() => null)) as { id?: unknown } | null;
     const id = typeof body?.id === "string" ? body.id : "";
