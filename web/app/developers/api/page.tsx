@@ -253,10 +253,10 @@ export default function ApiDocsPage() {
         <h3 className="mt-5 text-base font-semibold text-navy">How free vs Pro is decided</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           On each request the key is resolved to its owning account. Free-content endpoints accept{" "}
-          <em>any</em> valid key. The <code>/pro</code> endpoint additionally checks that account for an active Pro
+          <em>any</em> valid key. The <code>/pro</code>{" "}endpoint additionally checks that account for an active Pro
           subscription (admins included) — if it isn&rsquo;t entitled you get <code>403</code>. Because the check is
           per-request against the account, upgrading or cancelling takes effect immediately on the{" "}
-          <em>same</em> key — there&rsquo;s nothing to reissue.
+          <em>same</em>{" "}key — there&rsquo;s nothing to reissue.
         </p>
         <CodeBlock code={curlPro} label="Example — fetch a Pro report" />
 
@@ -322,7 +322,7 @@ export default function ApiDocsPage() {
         <p className="mt-1"><Access tone="pro">API key + active Pro subscription</Access></p>
         <p className="mt-2 text-sm text-muted-foreground">
           The full Pro analysis: metadata, the complete Pro text, and a short-lived signed Pro PDF link
-          (~10 minutes). Returns <code>401</code> without a valid key and <code>403</code> if the key&rsquo;s account
+          (~10 minutes). Returns <code>401</code> without a valid key and <code>403</code>{" "}if the key&rsquo;s account
           isn&rsquo;t a Pro subscriber.
         </p>
         <CodeBlock code={curlPro} />

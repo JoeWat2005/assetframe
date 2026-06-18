@@ -15,7 +15,7 @@ const BASE = SITE.url.replace(/\/$/, "");
 
 const CARDS = [
   { href: "/developers/mcp", icon: Terminal, title: "MCP server", desc: "Connect Claude Code, Claude Desktop, Cursor and other agents to AssetFrame over the Model Context Protocol — five read-only tools, four of them keyless." },
-  { href: "/developers/api", icon: Code2, title: "REST API", desc: "A read-only JSON API for the report catalog, individual Snapshots and the track record. No key, CORS-open, every payload carries the disclaimer." },
+  { href: "/developers/api", icon: Code2, title: "REST API", desc: "A read-only JSON API: public catalog and track record, plus API-key access to each Snapshot and the full Pro analysis. CORS-open; every payload carries the disclaimer." },
   { href: `${BASE}/api/v1/openapi.json`, icon: FileJson, title: "OpenAPI schema", desc: "Import the OpenAPI 3.1 document straight into ChatGPT Actions, LangChain or any client that speaks OpenAPI.", external: true },
 ];
 
@@ -71,9 +71,10 @@ export default function DevelopersPage() {
       <Hero title="Developers" tag="Bring AssetFrame research into your tools and agents — over MCP or a simple REST API." />
       <div className="mx-auto max-w-3xl px-5 py-10">
         <p className="text-muted-foreground" data-animate="up">
-          Everything we publish can be read programmatically. The free tier covers the full report catalog, each free
-          Snapshot and the public track record — no key required. Only the paid Pro analysis sits behind a subscription
-          (and, over MCP, an OAuth sign-in).
+          Everything we publish can be read programmatically. The report catalog and the public track record are open —
+          no key required. Reading an individual report&rsquo;s content takes a free API key tied to your account, and
+          the full Pro analysis additionally needs a Pro subscription. The same model applies over MCP, with an OAuth
+          sign-in for Pro.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2" data-animate="up">
           {CARDS.map((c) => (
@@ -96,9 +97,9 @@ export default function DevelopersPage() {
           ))}
         </div>
         <div className="mt-8 rounded-xl border border-[#cdd9ea] bg-tile px-4 py-3 text-sm text-[#33415c]" data-animate="up">
-          What you can access: the report catalog (instrument, directional status, risk, confidence, window),
-          each free Snapshot (text plus a short-lived PDF link), and the public track record (hit rate, streaks,
-          calibration).
+          What you can access: the report catalog and public track record (instrument, directional status, risk,
+          confidence, window, hit rate, streaks, calibration) with no key; each report&rsquo;s free Snapshot (text plus
+          a short-lived PDF link) with a free API key; and the full Pro analysis with a Pro subscription.
         </div>
 
         <AgentGuidance />
