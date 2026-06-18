@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility, Code2, Star, Terminal, MessageSquare } from "lucide-react";
+import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility, Bell, Code2, Star, Terminal, MessageSquare } from "lucide-react";
 import HeaderAuth from "@/components/HeaderAuth";
 import { SITE } from "@/site.config";
 import {
@@ -18,6 +18,7 @@ const HOME = process.env.NODE_ENV === "production" ? SITE.url : "/";
 
 // Items within each category are alphabetical by label (per request).
 const RESEARCH = [
+  { href: "/notifications", label: "Notifications", desc: "Manage push alerts and your email newsletter.", icon: Bell },
   { href: "/reports", label: "Reports", desc: "Browse the latest published editions.", icon: FileText },
   { href: "/reviews", label: "Reviews", desc: "What people say about AssetFrame.", icon: Star },
   { href: "/track-record", label: "Track record", desc: "Every call, scored against the tape.", icon: LineChart },

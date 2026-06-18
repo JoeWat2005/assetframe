@@ -35,12 +35,17 @@ export default function FollowButton({
   };
 
   return (
-    <span className="inline-flex items-center gap-2">
-      <Button size="sm" variant={following ? "default" : "outline"} onClick={onClick} disabled={pending} aria-pressed={following}>
-        <Star className="mr-1.5 size-4" fill={following ? "currentColor" : "none"} aria-hidden="true" />
-        {following ? "Following" : "Follow"}
-      </Button>
-      {msg && <span className="text-xs text-[#b91c1c]">{msg}</span>}
+    <span className="inline-flex flex-col items-start gap-1">
+      <span className="inline-flex items-center gap-2">
+        <Button size="sm" variant={following ? "default" : "outline"} onClick={onClick} disabled={pending} aria-pressed={following}>
+          <Star className="mr-1.5 size-4" fill={following ? "currentColor" : "none"} aria-hidden="true" />
+          {following ? "Following" : "Follow"}
+        </Button>
+        {msg && <span className="text-xs text-[#b91c1c]">{msg}</span>}
+      </span>
+      {!following && !pending && (
+        <span className="text-xs text-muted-foreground">Get a push when this instrument publishes a new edition.</span>
+      )}
     </span>
   );
 }

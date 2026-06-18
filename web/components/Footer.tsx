@@ -61,6 +61,7 @@ export default function Footer() {
             <Link href="/accessibility" className="hover:text-white">Accessibility</Link>
             <Link href="/contact" className="hover:text-white">Contact</Link>
             <Link href="/feedback" className="hover:text-white">Feedback</Link>
+            <Link href="/notifications" className="hover:text-white">Notifications</Link>
             <Link href="/developers" className="hover:text-white">Developers</Link>
             <Link href="/reviews" className="hover:text-white">Reviews</Link>
           </div>
