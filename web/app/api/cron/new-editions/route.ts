@@ -77,14 +77,29 @@ export async function GET(req: Request) {
       for (const row of followerSubs) {
         const ed = bySlug.get(String(row.symbol));
         if (!ed) continue;
+        const endpoint = String(row.endpoint);
+        // Idempotency: claim (edition, endpoint) before sending so a re-run never double-sends
+        // to the same device. A different day's edition has a new id, so it still notifies.
+        const claim = (await sql.query(
+          `INSERT INTO notification_log (ref, recipient, channel) VALUES ($1, $2, 'push')
+           ON CONFLICT DO NOTHING RETURNING ref`,
+          [ed.id, endpoint]
+        )) as Record<string, unknown>[];
+        if (claim.length === 0) continue; // already notified this device for this edition
         const r = await sendPush(
-          { endpoint: String(row.endpoint), p256dh: String(row.p256dh), auth: String(row.auth) },
+          { endpoint, p256dh: String(row.p256dh), auth: String(row.auth) },
           instrumentPayload(ed)
         );
         if (r.ok) {
           pushes++;
         } else if (r.expired) {
-          expiredEndpoints.push(String(row.endpoint));
+          expiredEndpoints.push(endpoint); // dead endpoint; pruned below, claim is moot
+        } else {
+          // transient failure — release the claim so a later run can retry.
+          await sql.query(
+            `DELETE FROM notification_log WHERE ref = $1 AND recipient = $2 AND channel = 'push'`,
+            [ed.id, endpoint]
+          ).catch(() => {});
         }
       }
 
@@ -105,8 +120,18 @@ export async function GET(req: Request) {
     )) as Record<string, unknown>[];
     let digests = 0;
     for (const s of subs) {
+      const email = String(s.email);
+      // Idempotency: one digest per subscriber per publish-day. Claim before sending; release
+      // the claim on failure so a later run can retry.
+      const claim = (await sql.query(
+        `INSERT INTO notification_log (ref, recipient, channel)
+         VALUES (to_char(CURRENT_DATE, 'YYYY-MM-DD'), $1, 'email_digest')
+         ON CONFLICT DO NOTHING RETURNING ref`,
+        [email]
+      )) as Record<string, unknown>[];
+      if (claim.length === 0) continue; // already sent today's digest to this subscriber
       const r = await sendEmail({
-        to: String(s.email),
+        to: email,
         subject: `New AssetFrame editions — ${list.length} today`,
         html: emailShell({
           heading: "New editions are live",
@@ -117,7 +142,14 @@ export async function GET(req: Request) {
           footerNote: `You subscribed to AssetFrame alerts. <a href="${BASE}/api/unsubscribe?token=${String(s.unsub_token)}">Unsubscribe</a>.`,
         }),
       });
-      if (r.ok) digests++;
+      if (r.ok) {
+        digests++;
+      } else {
+        await sql.query(
+          `DELETE FROM notification_log WHERE ref = to_char(CURRENT_DATE, 'YYYY-MM-DD') AND recipient = $1 AND channel = 'email_digest'`,
+          [email]
+        ).catch(() => {});
+      }
     }
 
     // alerts is always 0 now — per-instrument email alerts removed; push covers followers.

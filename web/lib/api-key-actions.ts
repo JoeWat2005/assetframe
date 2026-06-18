@@ -1,6 +1,7 @@
 "use server";
 import { auth } from "@clerk/nextjs/server";
 import { getActiveApiKey, regenerateApiKey, revokeActiveApiKey } from "./api-keys";
+import { logAudit } from "./audit";
 
 // --- Result shapes -----------------------------------------------------------
 
@@ -58,6 +59,7 @@ export async function regenerateMyApiKey(): Promise<RegenerateResult> {
 
   try {
     const created = await regenerateApiKey(userId, "Default");
+    await logAudit({ actor: userId, action: "api_key_regenerated", target: `api_key:${created.prefix}`, detail: "regenerated; previous key revoked" });
     return { ok: true, key: created.key };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Could not generate key." };
@@ -73,6 +75,7 @@ export async function revokeMyApiKey(): Promise<RevokeResult> {
 
   try {
     await revokeActiveApiKey(userId);
+    await logAudit({ actor: userId, action: "api_key_revoked", target: userId, detail: "active API key revoked" });
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Could not revoke key." };

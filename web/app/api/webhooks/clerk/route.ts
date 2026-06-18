@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   );
   if (!ok) return new NextResponse("Invalid signature", { status: 401 });
 
-  let event: { type?: string; data?: { id?: string } };
+  let event: { type?: string; data?: { id?: string; email_addresses?: Array<{ email_address?: string }> } };
   try {
     event = JSON.parse(raw);
   } catch {
@@ -66,12 +66,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Resolve any emails tied to this user so we can also purge email-keyed rows (newsletter
+    // sign-ups with no clerk_user_id, and the Pro download log). The user.deleted payload may
+    // carry email_addresses; we also pull any email stored against the clerk_user_id.
+    const emails = new Set<string>();
+    for (const ea of event.data?.email_addresses ?? []) {
+      const e = ea?.email_address?.trim().toLowerCase();
+      if (e) emails.add(e);
+    }
+    try {
+      const erows = (await sql.query(
+        `SELECT email FROM subscribers WHERE clerk_user_id = $1 AND email IS NOT NULL`,
+        [userId]
+      )) as Record<string, unknown>[];
+      for (const r of erows) { const e = String(r.email).trim().toLowerCase(); if (e) emails.add(e); }
+    } catch { /* table absent — ignore */ }
+
     // Cascade-delete the user's own data on account deletion. The Clerk user lives outside our
-    // DB, so there is no FK to cascade from — we purge their rows here. The track record
-    // (scored_results / open_calls) is keyed by report, not user, so it is untouched.
-    for (const t of ["watchlists", "push_subscriptions", "subscribers", "feedback"]) {
+    // DB, so there is no FK to cascade from — we purge their rows here. api_keys is included so a
+    // deleted account's API key can no longer authenticate. The track record (scored_results /
+    // open_calls) is keyed by report, not user, so it is untouched; admin_audit_log is preserved.
+    for (const t of ["watchlists", "push_subscriptions", "subscribers", "feedback", "api_keys"]) {
       try { await sql.query(`DELETE FROM ${t} WHERE clerk_user_id = $1`, [userId]); }
       catch { /* table absent on an un-migrated DB — ignore */ }
+    }
+    // Email-keyed rows: newsletter sign-ups with no clerk_user_id, and the Pro download log.
+    for (const email of emails) {
+      try { await sql.query(`DELETE FROM subscribers WHERE email = $1`, [email]); } catch { /* ignore */ }
+      try { await sql.query(`DELETE FROM download_log WHERE user_id = $1`, [email]); } catch { /* ignore */ }
     }
 
     // Record every account deletion (incl. admins) so removals are auditable. Admin access
@@ -81,7 +103,7 @@ export async function POST(req: NextRequest) {
       actor: "clerk",
       action: "user_deleted",
       target: userId,
-      detail: `account deleted; ${cancelled} subscription(s) cancelled${failed ? `, ${failed} FAILED — manual cancel needed` : ""}`,
+      detail: `account deleted; ${cancelled} subscription(s) cancelled${failed ? `, ${failed} FAILED — manual cancel needed` : ""}; data purged (incl. api_keys${emails.size ? `, ${emails.size} email(s)` : ""})`,
     });
     return NextResponse.json({ ok: true, cancelled, failed });
   } catch {

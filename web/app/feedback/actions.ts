@@ -32,8 +32,15 @@ export async function submitFeedback(form: FormData): Promise<FeedbackResult> {
   const rl = await rateLimit(`feedback:${ip}`, { limit: 5, windowSec: 60 });
   if (!rl.ok) return { ok: false, message: "Too many requests, try again shortly." };
 
+  // Per-account limit too — a signed-in user rotating IPs/VPN shouldn't be able to flood the
+  // admin inbox past the per-IP burst limit. 10/hour per user.
+  const { userId } = await auth();
+  if (userId) {
+    const rlUser = await rateLimit(`feedback:user:${userId}`, { limit: 10, windowSec: 3600 });
+    if (!rlUser.ok) return { ok: false, message: "You've sent a lot of feedback recently — please try again later." };
+  }
+
   try {
-    const { userId } = await auth();
     const ua = (await headers()).get("user-agent")?.slice(0, 300) ?? null;
     await sql.query(
       `INSERT INTO feedback (email, clerk_user_id, category, message, user_agent)
