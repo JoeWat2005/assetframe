@@ -49,21 +49,21 @@ export default function Footer() {
             <div className="mt-5 max-w-xs"><NewsletterForm /></div>
           </div>
           <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
-            <Link href="/reports" className="hover:text-white">Reports</Link>
-            <Link href="/pricing" className="hover:text-white">Pricing</Link>
-            <Link href="/track-record" className="hover:text-white">Track record</Link>
-            <Link href="/how-it-works" className="hover:text-white">How it works</Link>
-            <Link href="/faq" className="hover:text-white">FAQ</Link>
             <Link href="/about" className="hover:text-white">About</Link>
-            <Link href="/account" className="hover:text-white">Account</Link>
-            <Link href="/terms" className="hover:text-white">Terms</Link>
-            <Link href="/privacy" className="hover:text-white">Privacy</Link>
             <Link href="/accessibility" className="hover:text-white">Accessibility</Link>
+            <Link href="/account" className="hover:text-white">Account</Link>
             <Link href="/contact" className="hover:text-white">Contact</Link>
-            <Link href="/feedback" className="hover:text-white">Feedback</Link>
-            <Link href="/notifications" className="hover:text-white">Notifications</Link>
             <Link href="/developers" className="hover:text-white">Developers</Link>
+            <Link href="/faq" className="hover:text-white">FAQ</Link>
+            <Link href="/feedback" className="hover:text-white">Feedback</Link>
+            <Link href="/how-it-works" className="hover:text-white">How it works</Link>
+            <Link href="/notifications" className="hover:text-white">Notifications</Link>
+            <Link href="/pricing" className="hover:text-white">Pricing</Link>
+            <Link href="/privacy" className="hover:text-white">Privacy</Link>
+            <Link href="/reports" className="hover:text-white">Reports</Link>
             <Link href="/reviews" className="hover:text-white">Reviews</Link>
+            <Link href="/terms" className="hover:text-white">Terms</Link>
+            <Link href="/track-record" className="hover:text-white">Track record</Link>
           </div>
         </div>
         <p className="mt-8 border-t border-navy-700 pt-6 text-xs leading-relaxed text-[#7e93b3]">
