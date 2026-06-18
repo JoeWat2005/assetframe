@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, PoundSterling } from "lucide-react";
+import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, PoundSterling, Cpu } from "lucide-react";
 import { getAllEditions, getHiddenEditions } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
+import { getEngineState, getGenerationRequests, getEngineRuns } from "@/lib/engine";
 import { Badge, Hero, Note } from "@/components/ui";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,9 @@ import ProToggle from "./ProToggle";
 import AdminTierToggle from "./AdminTierToggle";
 import EditionsBrowser from "./EditionsBrowser";
 import ApproveButton from "./ApproveButton";
+import PauseToggle from "./PauseToggle";
+import GenerateForm from "./GenerateForm";
+import { RequestQueue, RunLog } from "./EnginePanels";
 import { getAuditLog } from "@/lib/audit";
 import { getFeedback } from "@/lib/feedback";
 import FeedbackInbox from "./FeedbackInbox";
@@ -28,10 +32,19 @@ export default async function AdminPage() {
   if (!ent.signedIn) redirect("/sign-in");
   if (!ent.admin) redirect("/account");
 
-  const [stats, catalog, pending, auditLog, feedback] = await Promise.all([
+  const [stats, catalog, pending, auditLog, feedback, engineState, genRequests, engineRuns] = await Promise.all([
     getAdminStats(), getAllEditions(), getHiddenEditions(), getAuditLog(), getFeedback(),
+    getEngineState(), getGenerationRequests(), getEngineRuns(),
   ]);
   const titleById = new Map(catalog.map((e) => [`${e.date}/${e.slug}`, e.instrument]));
+
+  // Distinct instruments (by slug) for the Generate picker — one row per asset the engine can
+  // regenerate, taking the newest edition's instrument/ticker as the label.
+  const assetMap = new Map<string, { slug: string; instrument: string; ticker: string }>();
+  for (const e of catalog) {
+    if (!assetMap.has(e.slug)) assetMap.set(e.slug, { slug: e.slug, instrument: e.instrument, ticker: e.ticker });
+  }
+  const assets = [...assetMap.values()].sort((a, b) => a.instrument.localeCompare(b.instrument));
 
   const priceNum = parseFloat((SITE.proPrice.match(/[\d.]+/) || ["0"])[0]) || 0;
   const mrr = stats.subscribers * priceNum;
@@ -228,6 +241,76 @@ export default async function AdminPage() {
           the Pro-subscriber count and MRR come from the billing table. Full member management (refunds,
           bans, roles) lives in the <b>Clerk</b> and <b>Lemon Squeezy</b> dashboards.
         </Note>
+
+        {/* Engine — control plane for the Oracle Cloud VM that runs the Python engine. The VM has
+            no inbound ports, so everything here is mediated through Neon (we enqueue; it polls). */}
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-1.5 text-base">
+              <Cpu className="size-4" />Engine
+            </CardTitle>
+            <CardDescription>
+              The generation engine runs on a scheduled cloud instance. Queue runs, pause the daily automation,
+              and review the instance&rsquo;s run history below.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            {/* Instance status */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                  engineState.online ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]"
+                }`}
+              >
+                <span className={`size-1.5 rounded-full ${engineState.online ? "bg-[#1a7f37]" : "bg-[#cf222e]"}`} />
+                {engineState.online ? "Online" : "Offline"}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                Last heartbeat: {engineState.lastHeartbeatAt ? `${engineState.lastHeartbeatAt} UTC` : "never"}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Automation: <b className={engineState.automationPaused ? "text-[#9a6700]" : "text-[#1a7f37]"}>
+                  {engineState.automationPaused ? "Paused" : "Active"}
+                </b>
+              </span>
+              <PauseToggle paused={engineState.automationPaused} />
+            </div>
+            {!engineState.online && (
+              <p className="-mt-3 text-[11px] text-muted-foreground">
+                The engine has not checked in — scheduled and manual runs won&rsquo;t execute until it&rsquo;s back.
+              </p>
+            )}
+
+            {/* Generate */}
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-navy">Generate</h3>
+              <GenerateForm assets={assets} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Queue + recent runs (the OC instance logs) */}
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Generation queue</CardTitle>
+              <CardDescription>Recent requests — cancel a queued or running one to stop it at the next safe point.</CardDescription>
+            </CardHeader>
+            <CardContent className={genRequests.length === 0 ? undefined : "px-0"}>
+              <RequestQueue rows={genRequests} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Recent engine runs</CardTitle>
+              <CardDescription>Run history from the cloud instance — expand a row for its error / log excerpt.</CardDescription>
+            </CardHeader>
+            <CardContent className={engineRuns.length === 0 ? undefined : "px-0"}>
+              <RunLog rows={engineRuns} />
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Pending approval — editions generated hidden by the engine's approval gate, awaiting publish */}
         <Card className="mt-4">
