@@ -107,8 +107,8 @@ const orgJsonLd = {
         "Read-only REST API with OpenAPI 3.1 schema",
       ],
       offers: [
-        { "@type": "Offer", name: "Snapshot", price: "0", priceCurrency: "GBP", description: "Free one-page Snapshot on every edition." },
-        { "@type": "Offer", name: "Pro", price: "9.99", priceCurrency: "GBP", category: "subscription", url: `${SITE.url}/pricing`, description: "Full Pro report, billed monthly. Cancel anytime." },
+        { "@type": "Offer", name: "Snapshot", price: "0", priceCurrency: "USD", description: "Free one-page Snapshot on every edition." },
+        { "@type": "Offer", name: "Pro", price: "9.99", priceCurrency: "USD", category: "subscription", url: `${SITE.url}/pricing`, description: "Full Pro report, billed monthly. Cancel anytime." },
       ],
       potentialAction: {
         "@type": "ConsumeAction",

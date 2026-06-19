@@ -6,7 +6,7 @@ import { SITE } from "@/site.config";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "AssetFrame pricing — a free Snapshot on every edition, or Pro at £9.99/month for conditional setups, the price ladder, the calibrated confidence score, the full scored ledger and Pro access over MCP and the API. Cancel anytime.",
+    "AssetFrame pricing — a free Snapshot on every edition, or Pro at $9.99/month for conditional setups, the price ladder, the calibrated confidence score, the full scored ledger and Pro access over MCP and the API. Cancel anytime.",
   alternates: { canonical: "/pricing" },
 };
 

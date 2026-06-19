@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, PoundSterling, Cpu } from "lucide-react";
+import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, DollarSign, Cpu } from "lucide-react";
 import { getAllEditions, getHiddenEditions } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
@@ -58,7 +58,7 @@ export default async function AdminPage() {
     { icon: Percent, label: "Conversion", value: `${conversion}%` },
     { icon: FileText, label: "Editions", value: catalog.length },
     { icon: Download, label: "Pro downloads", value: stats.downloadsTotal },
-    { icon: PoundSterling, label: "Est. MRR", value: `£${mrr.toFixed(2)}` },
+    { icon: DollarSign, label: "Est. MRR", value: `$${mrr.toFixed(2)}` },
   ];
 
   return (

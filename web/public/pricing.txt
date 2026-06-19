@@ -1,12 +1,12 @@
 # Pricing — AssetFrame
 
 ## Snapshot (Free)
-- Price: £0
+- Price: $0
 - Includes: a one-page Snapshot per edition — status, risk rating, broad expected range, one chart with support/resistance, a three-bullet thesis, and a risk-window timeline.
 - Access: requires a free account to read.
 
 ## Pro
-- Price: £9.99 / month (cancel anytime; 3-day free trial)
+- Price: $9.99 / month (cancel anytime; 3-day free trial)
 - Includes: everything in the Snapshot, plus conditional long & short setups with risk:reward, the price ladder with distances and key-level cards, a scenario matrix, an event-risk timeline, technicals, sentiment and positioning where sourced, a trade-quality scorecard, the full source audit, and the append-only outcome ledger.
 - Billing: subscriptions managed by Clerk; card payments processed securely by Stripe. AssetFrame never sees card details.
 

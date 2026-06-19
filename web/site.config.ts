@@ -28,7 +28,7 @@ export const SITE = {
   url: resolveSiteUrl(),
   // Pro price label (public). Checkout + plan management are handled by Clerk Billing's
   // <PricingTable />, so there's no checkout/portal URL to configure here.
-  proPrice: process.env.NEXT_PUBLIC_PRO_PRICE || "£9.99/month",
+  proPrice: process.env.NEXT_PUBLIC_PRO_PRICE || "$9.99/month",
   contactEmail: "contact@assetframe.co.uk",
   // Homepage countdown — when the next batch of editions is generated. Honest + configurable.
   // Times are in `tz`; with tz "UTC" the countdown targets a fixed 06:00 UTC daily (DST-free).

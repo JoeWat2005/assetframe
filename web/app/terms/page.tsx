@@ -111,7 +111,7 @@ export default function TermsPage() {
           <ul className="ml-5 list-disc space-y-1">
             <li>{SITE.brand} and its operators are <b>not liable for any trading, investment, or financial losses</b>, or for any decision you make or refrain from making, based on the Service or any Content;</li>
             <li>we are not liable for any <b>indirect, incidental, special, consequential, or punitive loss</b>, or for any loss of profits, revenue, anticipated savings, goodwill, data, or business opportunity, however arising; and</li>
-            <li>our <b>total aggregate liability</b> to you for all claims arising out of or relating to the Service or these terms is limited to the <b>greater of (a) the total amount you paid us in the 12 months immediately before the event giving rise to the claim, and (b) £100</b>.</li>
+            <li>our <b>total aggregate liability</b> to you for all claims arising out of or relating to the Service or these terms is limited to the <b>greater of (a) the total amount you paid us in the 12 months immediately before the event giving rise to the claim, and (b) $100</b>.</li>
           </ul>
           <p>You acknowledge that the Service is decision-support and information only, that you are solely responsible for your own decisions, and that the allocation of risk in these terms is reasonable given the nature and price of the Service.</p>
         </Clause>
