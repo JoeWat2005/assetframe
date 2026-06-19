@@ -41,9 +41,12 @@ export async function upstashCommand(command: (string | number)[]): Promise<unkn
   }
 }
 
-// Keys shared with the engine (scripts/engine_ops.py).
-const HEARTBEAT_KEY = "af:engine:heartbeat";
-const WAKE_KEY = "af:engine:wake";
+// Keys shared with the engine (scripts/engine_ops.py). UPSTASH_KEY_PREFIX namespaces a 2nd
+// environment (e.g. "dev:") onto the SAME Upstash DB so dev + prod heartbeat/wake don't collide;
+// unset = prod (no prefix). The engine's matching box must set the SAME prefix.
+const KEY_PREFIX = process.env.UPSTASH_KEY_PREFIX ?? "";
+const HEARTBEAT_KEY = `${KEY_PREFIX}af:engine:heartbeat`;
+const WAKE_KEY = `${KEY_PREFIX}af:engine:wake`;
 
 /** Flag that a generation request is waiting, so the OCI poller picks it up on its next ~30s tick
  *  instead of waiting for its periodic Neon safety sweep. Best-effort (1h TTL safety net). */
