@@ -1,5 +1,6 @@
 import "server-only";
 import { sql } from "./db";
+import { getEngineHeartbeat } from "./upstash";
 
 // Server-only data layer for the admin Engine console. Mirrors lib/content.ts / lib/audit.ts:
 // every read guards for `sql` being null (DB not configured / tables not migrated yet) and
@@ -58,6 +59,13 @@ const DEFAULT_STATE: EngineState = {
 // (now() - last_heartbeat_at) so it doesn't depend on web/VM clock skew beyond the DB's own clock.
 export async function getEngineState(): Promise<EngineState> {
   if (!sql) return DEFAULT_STATE;
+  // The poller now heartbeats into Upstash (so the Neon compute can auto-suspend); read that for
+  // "online", keeping the Neon heartbeat as a fallback so the indicator still works during the
+  // transition or if Upstash is unset. paused + current_run still live in Neon (read here on the
+  // admin page load — not a hot path).
+  const upstashHb = await getEngineHeartbeat().catch(() => null);
+  const upstashOnline =
+    !!upstashHb && Date.now() - new Date(upstashHb).getTime() < HEARTBEAT_WINDOW_SEC * 1000;
   try {
     const rows = (await sql.query(
       `SELECT automation_paused,
@@ -70,16 +78,18 @@ export async function getEngineState(): Promise<EngineState> {
       [HEARTBEAT_WINDOW_SEC]
     )) as Record<string, unknown>[];
     const r = rows[0];
-    if (!r) return DEFAULT_STATE;
+    if (!r) return { ...DEFAULT_STATE, online: upstashOnline, lastHeartbeatAt: upstashHb };
+    const neonHb = r.last_heartbeat_at == null ? null : s(r.last_heartbeat_at);
     return {
       automationPaused: Boolean(r.automation_paused),
-      lastHeartbeatAt: r.last_heartbeat_at == null ? null : s(r.last_heartbeat_at),
+      lastHeartbeatAt: upstashHb ?? neonHb, // prefer Upstash (the engine's primary source now)
       currentRunId: r.current_run_id == null ? null : s(r.current_run_id),
       updatedAt: r.updated_at == null ? null : s(r.updated_at),
-      online: Boolean(r.online),
+      online: Boolean(r.online) || upstashOnline,
     };
   } catch {
-    return DEFAULT_STATE;
+    // Neon read failed — still report online from Upstash if its heartbeat is fresh.
+    return { ...DEFAULT_STATE, online: upstashOnline, lastHeartbeatAt: upstashHb };
   }
 }
 

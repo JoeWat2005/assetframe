@@ -6,6 +6,7 @@ import { getEntitlement } from "@/lib/entitlements";
 import { logAudit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
 import { getAllEditions } from "@/lib/content";
+import { signalEngineWake } from "@/lib/upstash";
 import { sql } from "@/lib/db";
 
 type Result = { ok: boolean; message: string };
@@ -188,6 +189,9 @@ export async function requestGeneration(
       [id, ent.email ?? null, JSON.stringify(normalized)]
     );
     await logAudit({ actor: ent.email, action: "engine_request", target: id, detail: summary });
+    // Wake the OCI poller now (via Upstash) so it picks the request up on its next ~30s tick
+    // instead of waiting for its periodic Neon safety sweep. Best-effort — the row is queued either way.
+    await signalEngineWake();
     return { ok: true, message: `Queued a run for ${summary}.`, id };
   } catch {
     return { ok: false, message: "Couldn't queue the run — has the engine migration been applied?" };
