@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEntitlement } from "@/lib/entitlements";
 import { signedReportUrl } from "@/lib/r2";
 import { classifyReportKey } from "@/lib/report-key";
+import { getEdition } from "@/lib/content";
+import { rateLimitResponse, getRequestIp } from "@/lib/rate-limit";
 import { sql } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,24 @@ export async function GET(
     }
     if (tier === "pro" && !ent.subscribed) {
       return NextResponse.redirect(new URL("/pricing", req.url));
+    }
+
+    // Throttle the (authenticated) enumeration path: keys are predictable, so cap how fast
+    // one caller can mint signed URLs / probe <date>/<slug> combinations.
+    const limited = await rateLimitResponse(req, `report:${ent.email ?? getRequestIp(req)}`, {
+      limit: 60,
+      windowSec: 60,
+    });
+    if (limited) return limited;
+
+    // Only serve files for an actually-published edition. The engine uploads report bytes to
+    // R2 *before* inserting the edition row as hidden=true (pending admin approval), and keys
+    // are predictable — so without this a signed-in/Pro caller could pull unapproved,
+    // pre-release reports. getEdition only returns non-hidden editions.
+    const [date, slug] = objectKey.split("/");
+    const edition = await getEdition(date, slug);
+    if (!edition || (tier === "pro" && !edition.hasPro)) {
+      return new NextResponse("Not found", { status: 404 });
     }
 
     // Best-effort Pro-download logging, deduped per (user, report, kind) per hour so a
