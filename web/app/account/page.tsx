@@ -21,7 +21,10 @@ export default async function AccountPage() {
     ? { hasKey: true, prefix: activeKey.key_prefix, createdAt: activeKey.created_at, lastUsedAt: activeKey.last_used_at }
     : { hasKey: false };
   const cancelling = ent.billingActive && ent.subStatus === "cancelled";
+  const trialing = ent.billingActive && ent.subStatus === "trialing";
+  const pastDue = ent.billingActive && ent.subStatus === "past_due";
   const ends = ent.endsAt ? ent.endsAt.slice(0, 10) : null;
+  const trialEnds = ent.trialEndsAt ? ent.trialEndsAt.slice(0, 10) : ent.renewsAt ? ent.renewsAt.slice(0, 10) : null;
   const showManage = !ent.admin;
 
   return (
@@ -32,7 +35,13 @@ export default async function AccountPage() {
           ent.admin
             ? "AssetFrame Admin — full access"
             : ent.subscribed
-              ? cancelling ? "AssetFrame Pro — cancelling" : "AssetFrame Pro, active"
+              ? trialing
+                ? "AssetFrame Pro — free trial"
+                : pastDue
+                  ? "AssetFrame Pro — payment due"
+                  : cancelling
+                    ? "AssetFrame Pro — cancelling"
+                    : "AssetFrame Pro, active"
               : "Free member"
         }
       />
@@ -66,9 +75,13 @@ export default async function AccountPage() {
             {ent.admin
               ? "You can open the Snapshot and the full Pro report on every edition."
               : ent.subscribed
-                ? cancelling
-                  ? `Your plan is cancelled — Pro access stays on until ${ends ?? "the end of your billing period"}, then it ends. No further charge.`
-                  : "Your Pro access is active. Open any edition's Snapshot or Pro report from the Reports page."
+                ? trialing
+                  ? `You're on a free trial — full Pro access${trialEnds ? `, with your first charge on ${trialEnds}` : ""}. Open any edition's Snapshot or Pro report from the Reports page.`
+                  : pastDue
+                    ? "Your last payment didn't go through. Pro access continues during a short grace period — update your card on the subscription page to keep it."
+                    : cancelling
+                      ? `Your plan is cancelled — Pro access stays on until ${ends ?? "the end of your billing period"}, then it ends. No further charge.`
+                      : "Your Pro access is active. Open any edition's Snapshot or Pro report from the Reports page."
                 : "Browse free Snapshots on the Reports page. Upgrade to unlock the Pro report on every edition."}
           </p>
           <div className="mt-3">

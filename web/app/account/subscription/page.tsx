@@ -27,6 +27,19 @@ export default async function SubscriptionPage({
   // can be true with no paid plan — the billing card keys off `paid`, never the comp.
   const paid = ent.billingActive;
   const renews = fmtDate(ent.renewsAt);
+  const trialEnds = fmtDate(ent.trialEndsAt) || renews;
+  const ends = fmtDate(ent.endsAt);
+  const status = ent.subStatus;
+  // The status badge shown on the plan card, derived from the Clerk Billing lifecycle.
+  const badge: { label: string; variant: "default" | "secondary" | "destructive" } = !paid
+    ? { label: "Free", variant: "secondary" }
+    : status === "trialing"
+      ? { label: "Free trial", variant: "default" }
+      : status === "past_due"
+        ? { label: "Payment due", variant: "destructive" }
+        : status === "cancelled"
+          ? { label: "Cancelling", variant: "secondary" }
+          : { label: "Active", variant: "default" };
   // Admins are kept entirely outside billing: they ALWAYS see the complimentary-Pro card
   // (never a paid / checkout state). Admin Pro is comped by role and never depends on a plan.
   const compOnly = ent.admin;
@@ -73,13 +86,30 @@ export default async function SubscriptionPage({
                 </CardTitle>
                 <CardDescription>{ent.email}</CardDescription>
                 <div className="mt-1 flex flex-wrap gap-1.5">
-                  <Badge variant={paid ? "default" : "secondary"}>{paid ? "Active" : "Free"}</Badge>
+                  <Badge variant={badge.variant}>{badge.label}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="flex flex-col gap-2 text-sm">
                 {paid ? (
                   <>
-                    {renews ? (
+                    {status === "trialing" ? (
+                      <p>
+                        You&apos;re on a <b>free trial</b>. Your first charge of {SITE.proPrice}
+                        {trialEnds ? <> is on <b>{trialEnds}</b></> : <> is when the trial ends</>}. Cancel
+                        any time before then and you won&apos;t be charged.
+                      </p>
+                    ) : status === "past_due" ? (
+                      <p>
+                        We couldn&apos;t take your last payment. Your Pro access continues for a short grace
+                        period — please update your card below to keep it.
+                      </p>
+                    ) : status === "cancelled" ? (
+                      <p>
+                        Your plan is <b>cancelled</b>. Pro access stays on until{" "}
+                        <b>{ends ?? "the end of your billing period"}</b>, then ends — no further charge. You
+                        can resume below.
+                      </p>
+                    ) : renews ? (
                       <p>Renews on <b>{renews}</b> at {SITE.proPrice}.</p>
                     ) : (
                       <p>Your AssetFrame Pro plan is active.</p>

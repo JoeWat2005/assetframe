@@ -3,53 +3,34 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { verifyClerkWebhook } from "@/lib/clerk-webhook";
 import { sql } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { sendEmail, emailConfigured } from "@/lib/email";
+import { buildBillingEmail } from "@/lib/billing-emails";
+import {
+  resolveProState,
+  decideBillingEmail,
+  PRO_PLAN_SLUG,
+  type BillingData,
+} from "@/lib/billing-state";
+import { SITE } from "@/site.config";
 
 export const dynamic = "force-dynamic";
 
 // Clerk webhook. Two responsibilities, both verified with the same svix signature
 // (CLERK_WEBHOOK_SECRET). Configure in Clerk Dashboard -> Webhooks: endpoint
-// /api/webhooks/clerk, and subscribe to:
-//   - user.deleted              -> cascade-delete the user's data in our DB
-//   - subscription.*            -> grant/revoke Pro (publicMetadata.subscribed)
-//   - subscriptionItem.*        -> grant/revoke Pro at the item level (incl. cancellation)
-// Clerk Billing is the source of truth for Pro; this webhook mirrors a paid 'pro'
-// subscription onto publicMetadata.subscribed, which lib/access.ts derives access from.
-// Clerk Billing tears the subscription down itself on user deletion, so user.deleted no
-// longer touches billing.
-
-// The Plan whose active subscription grants Pro. Matches the Clerk Billing plan slug.
-const PRO_PLAN_SLUG = "pro";
-
-// Statuses that GRANT access (the subscription/item is paid, or paid-through a grace/period
-// end). 'cancelled' keeps access until the term actually ends, when an 'ended'/'expired'
-// event flips it off — same lifecycle the old LS webhook honoured. Mirrors the status table
-// in the clerk-billing billing-webhooks reference.
-// A free trial reports as `active` (Clerk's status enum has no `trialing`), but we include
-// trial variants defensively so a configured free trial reliably grants Pro either way.
-const ACTIVE_STATUSES = new Set(["active", "trialing", "trial", "past_due"]);
-// Terminal statuses that REVOKE access. 'canceled' here means the term has fully ended (the
-// item-level cancellation grace is represented as a status, not necessarily this set); we also
-// revoke on these regardless of plan so a lingering flag can't survive teardown.
-const TERMINAL_STATUSES = new Set(["ended", "expired", "abandoned"]);
-
-// ---- Billing payload shape (raw JSON; Clerk sends snake_case in webhook bodies) ----
-type BillingPlan = { id?: string; slug?: string; name?: string };
-type BillingPayer = { user_id?: string; organization_id?: string; email?: string };
-type BillingItem = {
-  status?: string;
-  plan?: BillingPlan;
-  period_end?: number | null;
-  canceled_at?: number | null;
-};
-type BillingData = {
-  id?: string;
-  status?: string;
-  payer?: BillingPayer;
-  items?: BillingItem[]; // present on subscription.* events
-  plan?: BillingPlan; // present on subscriptionItem.* events (the data IS the item)
-  period_end?: number | null;
-  canceled_at?: number | null;
-};
+// /api/webhooks/clerk. The events that DO something here:
+//   - user.deleted                     -> cascade-delete the user's data in our DB
+//   - subscriptionItem.active          -> grant Pro (new sub, trial start, renewal)
+//   - subscriptionItem.updated         -> detect cancel-at-period-end ("cancelling" state)
+//   - subscriptionItem.canceled/.ended -> revoke Pro when the term fully ends
+//   - subscriptionItem.pastDue         -> keep access in grace + send a dunning email
+//   - subscriptionItem.freeTrialEnding -> send the trial-ending reminder email
+//   - subscription.active              -> belt-and-braces grant (subscription-level)
+// Other billing events (paymentAttempt.*, subscription.created/updated/pastDue,
+// subscriptionItem.abandoned/incomplete/upcoming) are harmless no-ops. Clerk Billing is the
+// source of truth for Pro; this webhook mirrors a paid 'pro' subscription onto
+// publicMetadata.subscribed (+ display fields), which lib/access.ts derives access from.
+// Clerk Billing tears the subscription down itself on user deletion, so user.deleted no longer
+// touches billing.
 
 type ClerkEvent = {
   type?: string;
@@ -62,49 +43,13 @@ type ClerkEvent = {
 const isBillingEvent = (type: string) =>
   type.startsWith("subscription") || type.startsWith("subscriptionItem");
 
-// Resolve, from a billing event, whether the user should have Pro and the derived display
-// fields. Returns null when the event doesn't concern the 'pro' plan at all (e.g. an item for
-// a different plan) so we leave their flag untouched.
-function resolveProState(
-  type: string,
-  data: BillingData
-): { subscribed: boolean; planName?: string; renewsAt?: string } | null {
-  // subscription.* events carry an items[] array; find the 'pro' item.
-  // subscriptionItem.* events ARE the item (plan at data.plan).
-  let item: BillingItem | undefined;
-  if (Array.isArray(data.items)) {
-    item = data.items.find((i) => i.plan?.slug === PRO_PLAN_SLUG);
-  } else if (data.plan?.slug !== undefined) {
-    item = data.plan?.slug === PRO_PLAN_SLUG ? data : undefined;
-  } else {
-    // No plan info on the payload. Fall back to the subscription-level status so a
-    // top-level subscription.* event can still revoke on a terminal status.
-    item = data;
-  }
-  if (!item) return null;
-
-  // Prefer the item status; fall back to the subscription-level status.
-  const status = (item.status || data.status || "").toLowerCase();
-
-  // A *.canceled / *.ended / *.expired event type is authoritative for revocation even if a
-  // stale status string lags behind.
-  const terminalEvent =
-    type === "subscriptionItem.canceled" ||
-    type === "subscriptionItem.ended" ||
-    type === "subscriptionItem.expired" ||
-    type === "subscription.canceled"; // defensive; Clerk has no such event today
-
-  let subscribed: boolean;
-  if (terminalEvent || TERMINAL_STATUSES.has(status)) subscribed = false;
-  else if (ACTIVE_STATUSES.has(status)) subscribed = true;
-  else if (status === "canceled") subscribed = false; // term ended
-  else return null; // upcoming / incomplete / unknown — leave access unchanged
-
-  const planName = item.plan?.name;
-  const renewsAt =
-    item.period_end != null ? new Date(item.period_end * 1000).toISOString() : undefined;
-  return { subscribed, planName, renewsAt };
-}
+// publicMetadata view used here. Spread untyped so we never clobber keys we don't own
+// (adminTier, role, comp, …). `notified` tracks which lifecycle emails we've already sent.
+type Meta = Record<string, unknown> & {
+  subscribed?: boolean;
+  subStatus?: string;
+  notified?: Record<string, string>;
+};
 
 async function handleBilling(event: ClerkEvent): Promise<NextResponse> {
   const type = event.type || "";
@@ -114,32 +59,71 @@ async function handleBilling(event: ClerkEvent): Promise<NextResponse> {
   if (!userId) return NextResponse.json({ ok: true, ignored: true, reason: "no-user-payer" });
 
   const state = resolveProState(type, data);
-  if (!state) return NextResponse.json({ ok: true, ignored: true, reason: "not-pro-plan" });
+  if (!state) return NextResponse.json({ ok: true, ignored: true, reason: "not-actionable" });
 
   try {
     const cc = await clerkClient();
     const user = await cc.users.getUser(userId).catch(() => null);
     if (!user) return NextResponse.json({ ok: true, ignored: true, reason: "no-account" });
 
-    // MERGE — never clobber other publicMetadata keys (adminTier, comp, role, …). Clear the
-    // renews date on revoke. planName mirrors the Clerk plan for display only.
-    const next: Record<string, unknown> = {
-      ...user.publicMetadata,
-      subscribed: state.subscribed,
-    };
+    const prev = (user.publicMetadata || {}) as Meta;
+
+    // MERGE — never clobber other publicMetadata keys. On grant, mirror the lifecycle display
+    // fields; on revoke, clear them all (and `notified`, so a future resubscribe re-welcomes).
+    const next: Meta = { ...prev, subscribed: state.subscribed };
     if (state.subscribed) {
+      next.subStatus = state.subStatus;
       if (state.planName) next.planName = state.planName;
-      next.renewsAt = state.renewsAt;
+      next.renewsAt = state.renewsAt; // undefined clears the key on serialization
+      next.endsAt = state.endsAt;
+      next.trialEndsAt = state.trialEndsAt;
+      if (data.id) next.subscriptionId = data.id;
     } else {
+      next.subStatus = undefined;
+      next.planName = undefined;
       next.renewsAt = undefined;
+      next.endsAt = undefined;
+      next.trialEndsAt = undefined;
+      next.subscriptionId = undefined;
+      next.notified = undefined;
     }
+
+    // Lifecycle email — idempotent across re-deliveries (see decideBillingEmail). Sent best-effort;
+    // a send failure never fails the webhook, and `notified` only advances on a successful send so
+    // a redelivery retries. No-ops entirely until Resend is configured.
+    const to = user.primaryEmailAddress?.emailAddress;
+    const decision = decideBillingEmail(
+      { subscribed: prev.subscribed, subStatus: prev.subStatus, notified: prev.notified },
+      type,
+      data,
+      state
+    );
+    if (decision && to && emailConfigured) {
+      const date =
+        decision.kind === "cancelled"
+          ? state.endsAt
+          : decision.kind === "trial_ending"
+            ? state.trialEndsAt
+            : state.renewsAt;
+      const { subject, html } = buildBillingEmail(decision.kind, {
+        date: date ? date.slice(0, 10) : undefined,
+        price: SITE.proPrice,
+      });
+      try {
+        const r = await sendEmail({ to, subject, html });
+        if (r.ok) next.notified = { ...(prev.notified || {}), [decision.kind]: decision.key };
+      } catch {
+        /* never fail the webhook on an email error */
+      }
+    }
+
     await cc.users.updateUserMetadata(userId, { publicMetadata: next });
 
     await logAudit({
       actor: "clerk-billing",
       action: state.subscribed ? "billing_grant" : "billing_revoke",
       target: user.primaryEmailAddress?.emailAddress ?? userId,
-      detail: `${type} plan=${PRO_PLAN_SLUG} status=${(data.status || "").toString()} sub=${data.id ?? ""}`,
+      detail: `${type} plan=${PRO_PLAN_SLUG} status=${(data.status || "").toString()} subStatus=${state.subStatus ?? ""} sub=${data.id ?? ""}${decision ? ` email=${decision.kind}` : ""}`,
     });
     return NextResponse.json({ ok: true, updated: 1, subscribed: state.subscribed });
   } catch {

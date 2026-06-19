@@ -18,6 +18,7 @@ export type Entitlement = {
   planName?: string;
   renewsAt?: string;
   endsAt?: string;
+  trialEndsAt?: string;
 };
 
 export type PublicMeta = {
@@ -31,6 +32,7 @@ export type PublicMeta = {
   planName?: string;
   renewsAt?: string;
   endsAt?: string;
+  trialEndsAt?: string;
 };
 
 export const SIGNED_OUT: Entitlement = {
@@ -73,5 +75,6 @@ export function computeEntitlement(
     planName: meta.planName,
     renewsAt: meta.renewsAt || undefined,
     endsAt: meta.endsAt || undefined,
+    trialEndsAt: meta.trialEndsAt || undefined,
   };
 }

@@ -66,4 +66,15 @@ describe("computeEntitlement (access business logic)", () => {
     expect(e.planName).toBe("Pro");
     expect(e.renewsAt).toBeUndefined();
   });
+
+  it("passes the trial state through (subStatus + trialEndsAt)", () => {
+    const e = computeEntitlement(
+      { subscribed: true, subStatus: "trialing", trialEndsAt: "2026-06-22T00:00:00Z" },
+      "u@x.com",
+      ADMINS
+    );
+    expect(e.subscribed).toBe(true);
+    expect(e.subStatus).toBe("trialing");
+    expect(e.trialEndsAt).toBe("2026-06-22T00:00:00Z");
+  });
 });

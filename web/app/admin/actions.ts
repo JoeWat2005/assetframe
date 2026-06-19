@@ -33,8 +33,18 @@ export async function setPro(email: string, subscribed: boolean): Promise<Result
     if (!user) return { ok: false, message: `No member found for ${cleaned}.` };
     const m = user.publicMetadata || {};
 
-    // Comp toggle — flip the flag, merging the rest of publicMetadata.
-    await cc.users.updateUserMetadata(user.id, { publicMetadata: { ...m, subscribed } });
+    // Comp toggle — flip the flag, merging the rest of publicMetadata. On revoke we also clear
+    // the billing display fields (subStatus / planName / renews / ends / trial / notified) so a
+    // stale paid flag left over from the Lemon Squeezy era is fully wiped, not just hidden. A
+    // real *paid* Clerk Billing subscriber should be cancelled in the Clerk dashboard instead —
+    // their next billing event would re-set these anyway.
+    const next: Record<string, unknown> = { ...m, subscribed };
+    if (!subscribed) {
+      for (const k of ["subStatus", "planName", "renewsAt", "endsAt", "trialEndsAt", "subscriptionId", "notified", "lsCustomerId", "portalUrl"]) {
+        next[k] = undefined;
+      }
+    }
+    await cc.users.updateUserMetadata(user.id, { publicMetadata: next });
     await logAudit({
       actor: ent.email, action: subscribed ? "grant_pro" : "revoke_pro",
       target: cleaned, detail: subscribed ? "comp Pro (no charge)" : "removed Pro",
