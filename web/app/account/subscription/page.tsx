@@ -85,7 +85,7 @@ export default async function SubscriptionPage({
                       <p>Your AssetFrame Pro plan is active.</p>
                     )}
                     <p className="text-muted-foreground">
-                      Billing is handled securely by our merchant of record. Manage or cancel your plan below.
+                      Billing is handled securely in-app, with card payments processed by Stripe. Manage or cancel your plan below.
                     </p>
                   </>
                 ) : (

@@ -4,12 +4,13 @@
 export type Entitlement = {
   signedIn: boolean;
   subscribed: boolean; // has Pro access (real subscription OR admin comp)
-  billingActive: boolean; // has a real, paid Lemon Squeezy subscription (not admin comp)
+  billingActive: boolean; // has a real, paid Clerk Billing subscription (not admin comp)
   admin: boolean;
   email?: string;
   // Admins implicitly get Pro; "free" lets an admin preview the free tier without paying.
   adminTier?: "pro" | "free";
-  // Billing details mirrored from Lemon Squeezy by the webhook (all public-safe).
+  // Billing details mirrored by the Clerk Billing webhook (all public-safe). lsCustomerId /
+  // portalUrl are legacy fields kept for type-compat; they are no longer populated.
   subscriptionId?: string;
   lsCustomerId?: string;
   portalUrl?: string;
@@ -42,7 +43,7 @@ export const SIGNED_OUT: Entitlement = {
 /**
  * Derive a signed-in user's entitlement from their Clerk publicMetadata.
  * - admin: Clerk role === "admin" OR their email is in the allowlist.
- * - billingActive: a real, paid Lemon Squeezy subscription (webhook sets meta.subscribed).
+ * - billingActive: a real, paid Clerk Billing subscription (webhook sets meta.subscribed).
  * - subscribed (Pro access): billingActive OR an admin who hasn't toggled to the free preview.
  * `adminEmails` must already be lowercased; `email` should be lowercased too.
  */
@@ -54,7 +55,7 @@ export function computeEntitlement(
   const admin = meta.role === "admin" || (!!email && adminEmails.includes(email));
   const billingActive = meta.subscribed === true;
   // Admin Pro access is governed PURELY by the preview tier (adminTier) and is fully decoupled
-  // from Lemon Squeezy — a legacy/lingering paid flag never overrides the Free/Pro toggle, so
+  // from billing — a legacy/lingering paid flag never overrides the Free/Pro toggle, so
   // the toggle always works. A non-admin's Pro is their real paid subscription.
   const subscribed = admin ? meta.adminTier !== "free" : billingActive;
 

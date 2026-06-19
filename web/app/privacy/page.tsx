@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-const UPDATED = "16 June 2026";
+const UPDATED = "19 June 2026";
 
 function Clause({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -20,10 +20,8 @@ function Clause({ title, children }: { title: string; children: React.ReactNode 
 }
 
 const PROCESSORS = [
-  ["Clerk", "Authentication & account management", "USA"],
-  // TODO(copy): billing migrated to Clerk Billing (Stripe is the payment processor / MoR);
-  // this sub-processor row + the Lemon Squeezy mentions in the body are handled in the copy pass.
-  ["Lemon Squeezy", "Payments & subscriptions (merchant of record), invoicing & tax", "USA"],
+  ["Clerk", "Authentication, account management & subscription billing", "USA"],
+  ["Stripe", "Payment processing (card payments for Pro subscriptions)", "USA / global"],
   ["Neon", "Database — accounts, subscription status, watchlists, follows, report catalogue & track record", "EU (London region)"],
   ["Cloudflare", "Private Pro-file storage (R2) & content delivery", "Global edge"],
   ["Vercel", "Website hosting & privacy-friendly product analytics", "USA / global edge"],
@@ -43,14 +41,14 @@ export default function PrivacyPage() {
         </p>
 
         <Clause title="Who we are (controller)">
-          <p>{SITE.brand} is the <b>data controller</b> for personal data processed through this site. For any privacy question, or to exercise your rights, contact us at <a className="text-navy underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>. Where we act as controller, the providers listed in the sub-processors table below act as our <b>processors</b> (or, for payments, as an independent controller / merchant of record).</p>
+          <p>{SITE.brand} is the <b>data controller</b> for personal data processed through this site. For any privacy question, or to exercise your rights, contact us at <a className="text-navy underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>. Where we act as controller, the providers listed in the sub-processors table below act as our <b>processors</b> (or, for card payments, as an independent controller in their own right).</p>
         </Clause>
 
         <Clause title="What we collect">
           <p>We keep what we need to run the service, and no more:</p>
           <ul className="ml-5 list-disc space-y-1">
             <li><b>Account data</b> — your email address, name (if provided), and authentication details, handled by our identity provider, Clerk.</li>
-            <li><b>Billing data</b> — whether you have an active {SITE.brand} Pro subscription and the related billing identifiers we receive from Lemon Squeezy, our merchant of record. Lemon Squeezy handles your payment and never passes us your full card details — <b>we never see or store card numbers</b>.</li>
+            <li><b>Billing data</b> — whether you have an active {SITE.brand} Pro subscription and the related billing identifiers we receive from our billing provider, Clerk. Card payments are processed by Stripe; neither Clerk nor Stripe passes us your full card details — <b>we never see or store card numbers</b>.</li>
             <li><b>Usage &amp; analytics data</b> — privacy-friendly, aggregated analytics about how the site is used and performs, and (only with your consent) Google Analytics measurement.</li>
             <li><b>Web-push subscription data</b> — if you enable browser notifications, the push subscription endpoint and keys your browser generates, so we can send you alerts. We do not receive your identity from this beyond what you have already given us.</li>
             <li><b>Newsletter email</b> — if you subscribe, your email address, captured with <b>double opt-in</b> (we send a confirmation link and only add you once you confirm), plus your subscription status and unsubscribe events.</li>
@@ -106,7 +104,7 @@ export default function PrivacyPage() {
         </Clause>
 
         <Clause title="How long we keep it">
-          <p>We keep account, watchlist, and follow data while your account is active and for a reasonable period afterwards, then delete or anonymise it. Subscription and billing/tax records are retained by our merchant of record for as long as the law requires. Newsletter data is kept until you unsubscribe (plus a short suppression record so we don&apos;t re-add you). Web-push subscriptions are kept until you revoke them or they expire. Server and analytics logs are kept only for a short period for security and operational purposes.</p>
+          <p>We keep account, watchlist, and follow data while your account is active and for a reasonable period afterwards, then delete or anonymise it. Subscription and billing/tax records are retained by us and our billing and payment providers for as long as the law requires. Newsletter data is kept until you unsubscribe (plus a short suppression record so we don&apos;t re-add you). Web-push subscriptions are kept until you revoke them or they expire. Server and analytics logs are kept only for a short period for security and operational purposes.</p>
         </Clause>
 
         <Clause title="Your rights">

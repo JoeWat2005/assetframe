@@ -1,5 +1,5 @@
 -- AssetFrame report database (Neon Postgres).
--- Holds ONLY report data — users live in Clerk, payments in Lemon Squeezy,
+-- Holds ONLY report data — users + subscriptions live in Clerk (Clerk Billing),
 -- and the report files (HTML/PDF) stay in R2 (referenced here by key).
 -- Normalised at the level the site actually uses, storing nothing that isn't needed.
 

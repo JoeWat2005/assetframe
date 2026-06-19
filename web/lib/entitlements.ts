@@ -11,7 +11,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
 
 /**
  * Single source of truth for access. Subscription + admin role live in Clerk
- * user publicMetadata (set by the Lemon Squeezy webhook / Clerk dashboard).
+ * user publicMetadata (set by the Clerk Billing webhook / Clerk dashboard).
  * Admins implicitly get subscriber access. Falls back to an env email allowlist
  * so you can grant yourself admin before wiring metadata. Pure derivation lives in
  * lib/access.ts (computeEntitlement) so the business logic is unit-tested.

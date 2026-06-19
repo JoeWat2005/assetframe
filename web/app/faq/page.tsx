@@ -54,8 +54,8 @@ const FAQS: { q: string; a: React.ReactNode; text: string }[] = [
   },
   {
     q: "How much does Pro cost, and how do I pay?",
-    a: <>Pro is {SITE.proPrice}, billed securely through our merchant of record (which handles VAT). You can subscribe from any report or the pricing page.</>,
-    text: `Pro is ${SITE.proPrice}, billed securely through our merchant of record (which handles VAT). You can subscribe from any report or the pricing page.`,
+    a: <>Pro is {SITE.proPrice}. Checkout runs securely in-page — card payments are processed by Stripe and we never see your card details. You can subscribe from any report or the pricing page.</>,
+    text: `Pro is ${SITE.proPrice}. Checkout runs securely in-page — card payments are processed by Stripe and we never see your card details. You can subscribe from any report or the pricing page.`,
   },
   {
     q: "How do I cancel?",

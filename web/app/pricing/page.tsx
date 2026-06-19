@@ -66,8 +66,8 @@ export default function PricingPage() {
         <Note>
           Checkout opens right here on the page. After paying you&apos;re subscribed automatically against
           your signed-in account — open any Pro report from <b>Reports</b> or your <b>Account</b>. Pro is{" "}
-          {SITE.proPrice}, billed through our merchant of record; cancel in one click anytime and keep access to the
-          end of the period you&apos;ve paid for.
+          {SITE.proPrice}, with card payments processed securely by Stripe; cancel in one click anytime and keep
+          access to the end of the period you&apos;ve paid for.
         </Note>
         <p className="mt-4 text-xs text-muted-foreground" data-animate="up">{SITE.disclaimer}</p>
       </div>

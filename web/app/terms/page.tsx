@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/terms" },
 };
 
-const UPDATED = "16 June 2026";
+const UPDATED = "19 June 2026";
 
 function Clause({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
@@ -57,18 +57,16 @@ export default function TermsPage() {
           <p>Notify us promptly at <a className="text-navy underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a> if you suspect any unauthorised use of, or security breach affecting, your account. We are not liable for losses arising from your failure to safeguard your credentials.</p>
         </Clause>
 
-        {/* TODO(copy): billing migrated from Lemon Squeezy to Clerk Billing (Stripe-backed);
-            update the merchant-of-record / portal references in clauses 5 & 6 in the copy pass. */}
         <Clause n="5" title="Subscriptions and billing">
-          <p>The Snapshot tier is free. <b>{SITE.brand} Pro</b> is a paid subscription priced at <b>{SITE.proPrice}</b> (or as otherwise shown to you at checkout). Pro is sold and billed by our merchant of record, <b>Lemon Squeezy</b>, which acts as the <b>seller / merchant of record</b>: it processes your payment, appears on your statement, issues your invoice, and <b>collects and remits any applicable taxes</b> (such as VAT or sales tax) based on your location. Your purchase is also subject to Lemon Squeezy&apos;s own terms.</p>
-          <p>The price, currency, and billing period are shown at checkout. Unless stated otherwise, subscriptions <b>renew automatically</b> at the end of each billing period at the then-current price, using your saved payment method, until cancelled. By subscribing you authorise these recurring charges.</p>
-          <p>We may change subscription prices or the features included in a tier. Any change to your renewal price will take effect from your next billing period and we will give you <b>reasonable advance notice</b>; if you do not accept the new price, you may cancel before it takes effect (see clause 6). Taxes are determined and applied by the merchant of record and may change as tax rules or your location change.</p>
+          <p>The Snapshot tier is free. <b>{SITE.brand} Pro</b> is a paid subscription priced at <b>{SITE.proPrice}</b> (or as otherwise shown to you at checkout). Pro is sold by <b>{SITE.brand}</b> as the seller. Subscriptions are managed through <b>Clerk</b>, our billing provider, and card payments are processed securely by <b>Stripe</b>, our payment processor; your purchase is also subject to their respective terms. {SITE.brand} <b>does not see or store your full card details</b>.</p>
+          <p>The price, currency, and billing period are shown at checkout. Any taxes that apply to your purchase will be shown or accounted for at checkout in accordance with applicable law. Unless stated otherwise, subscriptions <b>renew automatically</b> at the end of each billing period at the then-current price, using your saved payment method, until cancelled. By subscribing you authorise these recurring charges.</p>
+          <p>We may change subscription prices or the features included in a tier. Any change to your renewal price will take effect from your next billing period and we will give you <b>reasonable advance notice</b>; if you do not accept the new price, you may cancel before it takes effect (see clause 6).</p>
         </Clause>
 
         <Clause n="6" title="Cancellation and refunds">
-          <p>You can <b>cancel at any time</b> from your <a className="text-navy underline" href="/account">account</a>, from the Lemon Squeezy customer portal, or via your Lemon Squeezy receipt. Cancellation stops future renewals; your Pro access continues until the end of the period you have already paid for, and we do not provide partial-period refunds except where required by law.</p>
+          <p>You can <b>cancel at any time</b> from your <a className="text-navy underline" href="/account/subscription">subscription page</a>. Cancellation stops future renewals; your Pro access continues until the end of the period you have already paid for, and we do not provide partial-period refunds except where required by law.</p>
           <p><b>UK / EU consumer cancellation rights.</b> If you are a consumer, you normally have a statutory right to cancel a purchase of digital content within <b>14 days</b> and receive a refund. However, because Pro is digital content supplied immediately, by purchasing and accessing it you (a) <b>request that supply begins straight away, during the 14-day period</b>, and (b) <b>acknowledge that you will lose your statutory right to cancel</b> once supply (download or access) has begun. Where you have not yet accessed any Pro content, you keep the 14-day right to cancel for a refund.</p>
-          <p>Nothing in this clause affects your other statutory rights as a consumer, including rights in respect of digital content that is faulty, not as described, or not of satisfactory quality. Refunds, where due, are handled under the merchant of record&apos;s policy and applicable consumer law. If you believe you are entitled to a refund, contact us at <a className="text-navy underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.</p>
+          <p>Nothing in this clause affects your other statutory rights as a consumer, including rights in respect of digital content that is faulty, not as described, or not of satisfactory quality. Refunds, where due, are handled in accordance with applicable consumer law. If you believe you are entitled to a refund, contact us at <a className="text-navy underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.</p>
         </Clause>
 
         <Clause n="7" title="Acceptable use">
@@ -98,7 +96,7 @@ export default function TermsPage() {
         </Clause>
 
         <Clause n="10" title="Third-party services">
-          <p>We rely on third parties to run the Service — including <b>Clerk</b> (authentication), <b>Lemon Squeezy</b> (payments and as merchant of record), <b>Vercel</b> (hosting and analytics), <b>Cloudflare</b> (private file storage and content delivery), <b>Neon</b> (database), <b>Google</b> (analytics and reviews), and <b>Resend</b> (email). Your use of those services may also be governed by their own terms and policies. We are not responsible for third-party websites, content, or resources linked from or integrated with the Service, and links do not imply endorsement.</p>
+          <p>We rely on third parties to run the Service — including <b>Clerk</b> (authentication and billing), <b>Stripe</b> (payment processing), <b>Vercel</b> (hosting and analytics), <b>Cloudflare</b> (private file storage and content delivery), <b>Neon</b> (database), <b>Google</b> (analytics and reviews), and <b>Resend</b> (email). Your use of those services may also be governed by their own terms and policies. We are not responsible for third-party websites, content, or resources linked from or integrated with the Service, and links do not imply endorsement.</p>
         </Clause>
 
         <Clause n="11" title="Availability and &ldquo;as is&rdquo; — no warranty">
