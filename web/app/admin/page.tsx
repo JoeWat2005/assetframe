@@ -335,6 +335,11 @@ export default async function AdminPage() {
                   ["Score now", "Grade any closed prediction windows into the ledger immediately (no new reports)."],
                   ["Reset ledger", "Truncate the box’s outcome ledger to empty — a fresh track-record source. Pair with clearing Neon."],
                   ["Clear reports", "Wipe the box’s working dirs (reports/data/content/runs) — a full system refresh, no SSH needed."],
+                  ["Check schedule", "Computes which assets are due to generate now (a dry-run on the box) and fills the Scheduled column in the Asset universe."],
+                  ["Service check", "Pings Neon, R2 and Upstash from the box and reports each service’s health in the Box command log."],
+                  ["Clear wake flag", "Clears a stuck Upstash wake key (the low-latency nudge the web sets when you queue a run)."],
+                  ["Clear R2 files", "Deletes the report files from the R2 bucket. They’d need re-publishing (Re-run publish, or regenerate)."],
+                  ["Clear catalog (Neon)", "Deletes editions + scored results from the database — the Neon side of a full reset (pair with Reset ledger / Clear reports / Clear R2)."],
                   ["Asset universe", "Add / enable / disable the instruments the engine generates, plus the global approval toggle. Auto-syncs to the box."],
                   ["Approve / Unpublish", "Publish a hidden edition to the public site, or hide a live one (per-report, in Pending approval below)."],
                 ].map(([t, d]) => (
