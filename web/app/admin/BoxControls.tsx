@@ -20,7 +20,9 @@ const SETTABLE_KEYS = [
 
 type Result = { ok: boolean; message: string };
 
-export default function BoxControls() {
+// `hideScoreNow` drops the Score-now button when it's already surfaced in the daily-loop section
+// (Generate → Score), so it isn't shown twice.
+export default function BoxControls({ hideScoreNow = false }: { hideScoreNow?: boolean }) {
   const router = useRouter();
   const [msg, setMsg] = useState<Result | null>(null);
   const [pending, start] = useTransition();
@@ -58,13 +60,23 @@ export default function BoxControls() {
     start(async () => {
       if (!window.confirm("FULL RESET — delete the Neon catalog AND clear the box's reports, ledger and R2 files? This wipes all generated data and cannot be undone. Continue?")) return;
       try {
-        const r = await clearCatalog();
-        await sendEngineCommand("clear_reports");
-        await sendEngineCommand("reset_ledger");
-        await sendEngineCommand("clear_r2");
-        setMsg(r.ok
+        // Clear the Neon catalog FIRST. If that fails, stop — don't half-wipe the box and
+        // leave orphaned state (the original foot-gun). Only enqueue the box commands once
+        // Neon is clean, then report any that failed to queue (e.g. engine_commands unmigrated)
+        // instead of showing a false success.
+        const cat = await clearCatalog();
+        if (!cat.ok) {
+          setMsg({ ok: false, message: `Full reset aborted — catalog clear failed: ${cat.message}. Box left untouched.` });
+          return;
+        }
+        const cmds: [string, Result][] = [];
+        for (const cmd of ["clear_reports", "reset_ledger", "clear_r2"] as const) {
+          cmds.push([cmd, await sendEngineCommand(cmd)]);
+        }
+        const failed = cmds.filter(([, r]) => !r.ok).map(([c]) => c);
+        setMsg(failed.length === 0
           ? { ok: true, message: "Full reset: catalog cleared in Neon; box clearing reports + ledger + R2 (watch the command log)." }
-          : r);
+          : { ok: false, message: `Catalog cleared, but these box commands failed to queue: ${failed.join(", ")}. Re-run them from the Danger zone.` });
         router.refresh();
       } catch {
         setMsg({ ok: false, message: "Full reset failed — not authorized?" });
@@ -83,10 +95,12 @@ export default function BoxControls() {
           title="Pull the latest ~200 poller log lines into the box command log below.">
           Fetch logs
         </Button>
-        <Button size="sm" variant="outline" disabled={pending} onClick={() => run("run_scoring")}
-          title="Grade any closed prediction windows into the ledger now (no new reports generated).">
-          Score now
-        </Button>
+        {!hideScoreNow && (
+          <Button size="sm" variant="outline" disabled={pending} onClick={() => run("run_scoring")}
+            title="Grade any closed prediction windows into the ledger now (no new reports generated).">
+            Score now
+          </Button>
+        )}
         <Button size="sm" variant="outline" disabled={pending} onClick={() => run("service_check")}
           title="Check the box can reach Neon, R2 and Upstash. Result shows in the Box command log.">
           Service check

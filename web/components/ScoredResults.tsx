@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ScoredRow } from "@/lib/content";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,8 +32,8 @@ export default function ScoredResults({ rows }: { rows: ScoredRow[] }) {
     return arr;
   }, [rows, sort]);
 
-  useEffect(() => { setPage(0); }, [sort]);
-
+  // Re-sorting jumps back to the first page. Done in the change handler (below) rather than an
+  // effect — safePage already clamps an out-of-range page, so no setState-in-effect is needed.
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = sorted.slice(safePage * PAGE, safePage * PAGE + PAGE);
@@ -41,7 +41,7 @@ export default function ScoredResults({ rows }: { rows: ScoredRow[] }) {
   return (
     <>
       <div className="mb-3 flex justify-end">
-        <Select value={sort} onValueChange={setSort}>
+        <Select value={sort} onValueChange={(v) => { setSort(v); setPage(0); }}>
           <SelectTrigger aria-label="Sort scored results" className="w-full sm:w-auto sm:min-w-[190px]"><SelectValue /></SelectTrigger>
           <SelectContent><SelectGroup>
             {SORTS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
@@ -59,12 +59,17 @@ export default function ScoredResults({ rows }: { rows: ScoredRow[] }) {
           </thead>
           <tbody>
             {pageRows.map((r, i) => {
-              const good = Number(r.hitRate) >= 50;
+              // hitRate is "" / null for rows that scored all-no-trade (nothing triggered) —
+              // those are ungraded, not failures. Show a neutral "—", never a red bare "%".
+              const known = r.hitRate !== "" && r.hitRate != null && Number.isFinite(Number(r.hitRate));
+              const good = known && Number(r.hitRate) >= 50;
+              const pill = !known ? "bg-tile text-muted-foreground"
+                : good ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]";
               return (
                 <tr key={`${r.instrument}-${r.windowEnd}-${safePage * PAGE + i}`} className="border-t border-line">
                   <td className="p-3"><b>{r.instrument}</b></td><td className="p-3">{r.view}</td>
                   <td className="p-3">{r.confidence}</td><td className="p-3">{r.results}</td>
-                  <td className="p-3"><span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${good ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]"}`}>{r.hitRate}%</span></td>
+                  <td className="p-3"><span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${pill}`}>{known ? `${r.hitRate}%` : "—"}</span></td>
                   <td className="p-3">{r.windowEnd}</td>
                 </tr>
               );

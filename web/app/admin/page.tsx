@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, DollarSign, Cpu } from "lucide-react";
+import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileText, Download, DollarSign } from "lucide-react";
 import { getAllEditions, getHiddenEditions } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
 import { getEngineState, getGenerationRequests, getEngineRuns, getEngineCommands } from "@/lib/engine";
 import { getEngineAssets } from "@/lib/engine-assets";
-import { Badge, Hero, Note } from "@/components/ui";
+import { Hero, Note } from "@/components/ui";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendChart, ClassBars, SplitDonut } from "@/components/admin/Charts";
@@ -16,11 +16,14 @@ import AdminLog from "./AdminLog";
 import ProToggle from "./ProToggle";
 import AdminTierToggle from "./AdminTierToggle";
 import EditionsBrowser from "./EditionsBrowser";
-import ApproveButton from "./ApproveButton";
 import PauseToggle from "./PauseToggle";
 import GenerateForm from "./GenerateForm";
 import BoxControls from "./BoxControls";
 import AssetManager from "./AssetManager";
+import PendingApprovalList from "./PendingApprovalList";
+import OperatorManual from "./OperatorManual";
+import ScoreNowButton from "./ScoreNowButton";
+import CollapsibleSection from "./CollapsibleSection";
 import { RequestQueue, RunLog, CommandLog } from "./EnginePanels";
 import { getAuditLog } from "@/lib/audit";
 import { getFeedback } from "@/lib/feedback";
@@ -30,6 +33,11 @@ import { SITE } from "@/site.config";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 
+// The admin page is the engine control plane, reworked around the Operator manual (top): live
+// status → manual → the numbered daily-loop spine (1 Asset universe → 2 Generate/backdate/score →
+// 3 Approve) → advanced "Operate the box" (collapsed) → a "Reference" zone (collapsed) holding the
+// business/member/traffic cards. Pre-launch attention belongs on the engine + track record, so the
+// growth dashboards are demoted below the fold. Data fetching is unchanged.
 export default async function AdminPage() {
   const ent = await getEntitlement();
   if (!ent.signedIn) redirect("/sign-in");
@@ -67,301 +75,58 @@ export default async function AdminPage() {
 
   return (
     <>
-      <Hero title="Admin" tag="Operations overview — visible to admins only." />
+      <Hero title="Admin" tag="Engine control plane — visible to admins only." />
       <div className="mx-auto max-w-[1800px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* KPI row */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {kpis.map((k) => (
-            <Card key={k.label}>
-              <CardContent className="flex flex-col gap-1">
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <k.icon className="size-3.5" />
-                  <span className="text-[11px] font-semibold uppercase tracking-wide">{k.label}</span>
-                </div>
-                <div className="text-2xl font-extrabold text-navy">{k.value}</div>
-                {k.sub && <div className="text-[11px] text-muted-foreground">{k.sub}</div>}
-              </CardContent>
-            </Card>
-          ))}
+        {/* === Engine status bar (promoted to the top so it's the first thing you see) === */}
+        <div className="rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                engineState.online ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]"
+              }`}
+            >
+              <span className={`size-2 rounded-full ${engineState.online ? "bg-[#1a7f37]" : "bg-[#cf222e]"}`} />
+              {engineState.online ? "Online" : "Offline"}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Last check-in:{" "}
+              <b className="text-navy">
+                {engineState.lastHeartbeatAt ? `${engineState.lastHeartbeatAt.replace("T", " ").slice(0, 16)} UTC` : "never"}
+              </b>
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Daily automation:{" "}
+              <b className={engineState.automationPaused ? "text-[#9a6700]" : "text-[#1a7f37]"}>
+                {engineState.automationPaused ? "Paused" : "Active"}
+              </b>
+            </span>
+            {engineState.currentRunId && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff7e6] px-3 py-1 text-xs font-bold text-[#9a6700]">
+                <span className="size-2 animate-pulse rounded-full bg-[#9a6700]" />
+                Running: {engineState.currentRunId}
+              </span>
+            )}
+            <span className="ml-auto"><PauseToggle paused={engineState.automationPaused} /></span>
+          </div>
+          {!engineState.online && (
+            <p className="mt-2 text-xs text-[#cf222e]">
+              The box hasn&rsquo;t checked in — scheduled and manual runs won&rsquo;t execute until it&rsquo;s back.
+              Open the manual&rsquo;s Troubleshooting, or use <b>Restart poller</b> in <b>Operate the box</b> below.
+            </p>
+          )}
         </div>
 
-        {/* Preview tier — admins get Pro free; switch to Free to see the non-subscriber view */}
-        <Card className="mt-4">
+        {/* === Operator manual — the spine of the page (open by default on first visit) === */}
+        <OperatorManual />
+
+        {/* === 1 · Asset universe === */}
+        <Card id="sec-assets" className="mt-4 scroll-mt-24">
           <CardHeader>
-            <CardTitle className="text-base">Preview tier</CardTitle>
-            <CardDescription>You get Pro for free as an admin — switch to Free to see what non-subscribers see (your admin access is unaffected).</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AdminTierToggle current={ent.adminTier === "free" ? "free" : "pro"} />
-          </CardContent>
-        </Card>
-
-        {/* Charts */}
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">New members</CardTitle>
-              <CardDescription>Sign-ups over the last 30 days</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TrendChart data={stats.signups30d} label="Sign-ups" color="#0b2545" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Pro downloads</CardTitle>
-              <CardDescription>Pro report fetches over the last 30 days</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TrendChart data={stats.downloads30d} label="Downloads" color="#9a6700" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Free vs Pro</CardTitle>
-              <CardDescription>Membership split{stats.membersCapped ? " (newest 100)" : ""}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats.members > 0 ? (
-                <SplitDonut pro={stats.subscribers} free={Math.max(0, stats.members - stats.subscribers)} />
-              ) : (
-                <p className="py-12 text-center text-sm text-muted-foreground">No members yet.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Editions by asset class</CardTitle>
-              <CardDescription>Published coverage</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats.editionsByClass.length > 0 ? (
-                <ClassBars data={stats.editionsByClass} />
-              ) : (
-                <p className="py-12 text-center text-sm text-muted-foreground">No editions yet.</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Top reports + Recent members */}
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Top reports by downloads</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0">
-              {stats.topReports.length === 0 ? (
-                <p className="px-6 pb-2 text-sm text-muted-foreground">No downloads logged yet.</p>
-              ) : (
-                <div className="divide-y divide-line border-t border-line">
-                  {stats.topReports.map((r) => (
-                    <div key={r.reportId} className="flex items-center justify-between px-6 py-2.5 text-sm">
-                      <span className="truncate">{titleById.get(r.reportId) ?? r.reportId}</span>
-                      <span className="font-semibold text-navy">{r.count}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Recent members</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0">
-              {stats.recent.length === 0 ? (
-                <p className="px-6 pb-2 text-sm text-muted-foreground">No members yet (or Clerk not configured).</p>
-              ) : (
-                <div className="divide-y divide-line border-t border-line">
-                  {stats.recent.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm">
-                      <span className="truncate">{m.email}</span>
-                      <ProToggle email={m.email} subscribed={m.subscribed} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Manage access */}
-        <AdminActions />
-
-        {/* Member search */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Find a member</CardTitle>
-            <CardDescription>Search by email or name, then grant or revoke Pro inline.</CardDescription>
-          </CardHeader>
-          <CardContent><MemberSearch /></CardContent>
-        </Card>
-
-        {/* Activity log */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Activity log</CardTitle>
-            <CardDescription>Admin and billing actions, most recent first — searchable.</CardDescription>
-          </CardHeader>
-          <CardContent><AdminLog rows={auditLog} /></CardContent>
-        </Card>
-
-        {/* Feedback inbox */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Feedback &amp; feature requests</CardTitle>
-            <CardDescription>Submissions from the public form — triage by changing each one&rsquo;s status.</CardDescription>
-          </CardHeader>
-          <CardContent><FeedbackInbox rows={feedback} /></CardContent>
-        </Card>
-
-        {/* External dashboards */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Traffic &amp; performance</CardTitle>
-            <CardDescription>Visitors, Core Web Vitals and analytics live in these dashboards.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline">
-              <a href={SITE.analyticsUrl} target="_blank" rel="noopener noreferrer">
-                <BarChart3 data-icon="inline-start" />Vercel — Analytics &amp; Speed<ExternalLink data-icon="inline-end" />
-              </a>
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <a href={SITE.gaUrl} target="_blank" rel="noopener noreferrer">
-                <LineChart data-icon="inline-start" />Google Analytics<ExternalLink data-icon="inline-end" />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Note>
-          The member count + recent sign-ups come from Clerk (the newest 100 accounts feed the charts);
-          the Pro-subscriber count and MRR are derived from the same accounts&rsquo; subscription flag.
-          Full member and subscription management (refunds, cancellations, bans, roles) lives in the{" "}
-          <b>Clerk</b> dashboard.
-        </Note>
-
-        {/* Engine — control plane for the Oracle Cloud VM that runs the Python engine. The VM has
-            no inbound ports, so everything here is mediated through Neon (we enqueue; it polls). */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-1.5 text-base">
-              <Cpu className="size-4" />Engine
-            </CardTitle>
+            <CardTitle className="text-base">1 · Asset universe</CardTitle>
             <CardDescription>
-              Your report generator runs on a cloud box that checks in every ~30s. The daily batch fires
-              at <b>05:00 UTC</b> unless automation is paused. Everything below controls or inspects it.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-6">
-            {/* Status — one clear, plain-English row. */}
-            <div className="rounded-xl border border-line bg-tile/40 px-4 py-3">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                    engineState.online ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]"
-                  }`}
-                >
-                  <span className={`size-2 rounded-full ${engineState.online ? "bg-[#1a7f37]" : "bg-[#cf222e]"}`} />
-                  {engineState.online ? "Online" : "Offline"}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  Last check-in:{" "}
-                  <b className="text-navy">
-                    {engineState.lastHeartbeatAt ? `${engineState.lastHeartbeatAt.replace("T", " ").slice(0, 16)} UTC` : "never"}
-                  </b>
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  Daily automation:{" "}
-                  <b className={engineState.automationPaused ? "text-[#9a6700]" : "text-[#1a7f37]"}>
-                    {engineState.automationPaused ? "Paused" : "Active"}
-                  </b>
-                </span>
-                {engineState.currentRunId && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff7e6] px-3 py-1 text-xs font-bold text-[#9a6700]">
-                    <span className="size-2 animate-pulse rounded-full bg-[#9a6700]" />
-                    Running: {engineState.currentRunId}
-                  </span>
-                )}
-                <span className="ml-auto"><PauseToggle paused={engineState.automationPaused} /></span>
-              </div>
-              {!engineState.online && (
-                <p className="mt-2 text-xs text-[#cf222e]">
-                  The box hasn&rsquo;t checked in — scheduled and manual runs won&rsquo;t execute until it&rsquo;s back.
-                  Use <b>Restart poller</b> or <b>Pull + restart</b> below.
-                </p>
-              )}
-            </div>
-
-            {/* 1. Generate */}
-            <div>
-              <h3 className="text-sm font-bold text-navy">1 · Generate reports</h3>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Queue a run now — the whole due batch, or hand-pick assets. New editions land <b>hidden</b> for
-                your approval (see <b>Pending approval</b> below). The daily 05:00 run does this automatically.
-              </p>
-              <GenerateForm assets={assets} />
-            </div>
-
-            {/* 2. Box control — allow-listed commands the OCI poller claims + runs (engine_commands). */}
-            <div className="border-t border-line pt-5">
-              <h3 className="text-sm font-bold text-navy">2 · Operate the box <span className="font-normal text-muted-foreground">(maintenance)</span></h3>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Direct control of the cloud instance: <b>Re-run publish</b> recovers a run that generated but
-                didn&rsquo;t publish · <b>Fetch logs</b> pulls recent output · <b>Pull + restart</b> deploys the
-                latest code · <b>Restart poller</b> bounces it · <b>Set config</b> tweaks an allow-listed setting.
-                Each runs on the box&rsquo;s next ~30s poll; watch the <b>Box command log</b> below for results.
-              </p>
-              <BoxControls />
-            </div>
-
-            {/* Command reference — what each control does. */}
-            <details className="border-t border-line pt-4">
-              <summary className="cursor-pointer text-sm font-bold text-navy">Command reference — what each control does</summary>
-              <dl className="mt-3 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
-                {[
-                  ["Generate → All due / Pick", "Queue a run now for every due asset, or a hand-picked set. New editions land per their publish policy."],
-                  ["Pause / Resume automation", "Stop or restart the automatic 05:00 UTC daily run. Manual runs still work while paused."],
-                  ["Re-run publish", "Re-runs export → R2 → Neon for a run that generated locally but didn’t publish (e.g. a transient error)."],
-                  ["Fetch logs", "Pulls the box’s recent poller output into the Box command log below."],
-                  ["Pull + restart", "git pull the latest code on the box + reinstall deps, then restart onto it."],
-                  ["Restart poller", "Gracefully bounce the box process (picks up .env / config changes)."],
-                  ["Set config", "Write an allow-listed env setting on the box (applies after a restart)."],
-                  ["Score now", "Grade any closed prediction windows into the ledger immediately (no new reports)."],
-                  ["Reset ledger", "Truncate the box’s outcome ledger to empty — a fresh track-record source. Pair with clearing Neon."],
-                  ["Clear reports", "Wipe the box’s working dirs (reports/data/content/runs) — a full system refresh, no SSH needed."],
-                  ["Check schedule", "Computes which assets are due to generate now (a dry-run on the box) and fills the Scheduled column in the Asset universe."],
-                  ["Service check", "Pings Neon, R2 and Upstash from the box and reports each service’s health in the Box command log."],
-                  ["Clear wake flag", "Clears a stuck Upstash wake key (the low-latency nudge the web sets when you queue a run)."],
-                  ["Clear R2 files", "Deletes the report files from the R2 bucket. They’d need re-publishing (Re-run publish, or regenerate)."],
-                  ["Clear catalog (Neon)", "Deletes editions + scored results from the database — the Neon side of a full reset (pair with Reset ledger / Clear reports / Clear R2)."],
-                  ["Asset universe", "Add / enable / disable the instruments the engine generates, plus the global approval toggle. Auto-syncs to the box."],
-                  ["Approve / Unpublish", "Publish a hidden edition to the public site, or hide a live one (per-report, in Pending approval below)."],
-                ].map(([t, d]) => (
-                  <div key={t}>
-                    <dt className="text-sm font-semibold text-navy">{t}</dt>
-                    <dd className="text-xs text-muted-foreground">{d}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
-          </CardContent>
-        </Card>
-
-        {/* Asset universe — what the engine generates reports for (dashboard-editable). */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Asset universe</CardTitle>
-            <CardDescription>
-              What the engine generates reports for. Add or enable/disable instruments and set whether new
-              reports need your approval. Edited here and auto-synced to the box — validated before it applies,
-              so a bad entry can never break generation.
+              What the engine generates reports for. Confirm at least one instrument is <b>Enabled</b> and set
+              the approval policy before generating. <b>Check schedule</b> fills the Scheduled column. Edited
+              here and auto-synced to the box — validated first, so a bad entry can never break generation.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -369,7 +134,31 @@ export default async function AdminPage() {
           </CardContent>
         </Card>
 
-        {/* Queue + recent runs (the OC instance logs) */}
+        {/* === 2 · Generate, backdate & score === */}
+        <Card id="sec-generate" className="mt-4 scroll-mt-24">
+          <CardHeader>
+            <CardTitle className="text-base">2 · Generate, backdate &amp; score</CardTitle>
+            <CardDescription>
+              Queue a run now — the whole due batch, hand-picked assets, or a <b>backdated</b> run whose window
+              is already closed. Then <b>Score now</b> grades closed windows into the ledger. This is the
+              launch-week loop; new editions land hidden for approval in step 3.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <GenerateForm assets={assets} />
+            <div className="border-t border-line pt-4">
+              <h3 className="text-sm font-bold text-navy">Score closed windows</h3>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Grade any prediction windows that have closed into the ledger (your public track record).
+                Generates no new reports — use it right after a backdated run, or any time a live window has
+                closed. Once live, the engine also scores closed windows on its own.
+              </p>
+              <ScoreNowButton />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Queue + recent runs — the engine's own logs for step 2. */}
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <Card>
             <CardHeader>
@@ -392,71 +181,245 @@ export default async function AdminPage() {
           </Card>
         </div>
 
-        {/* Box command log — outcome of the box-control commands (restart/pull/maintenance/logs/config). */}
-        <Card className="mt-4">
+        {/* === 3 · Approve to publish === */}
+        <Card id="sec-approve" className="mt-4 scroll-mt-24">
           <CardHeader>
-            <CardTitle className="text-base">Box command log</CardTitle>
-            <CardDescription>Recent box-control commands and their result — expand a row for the captured output (e.g. fetched logs).</CardDescription>
-          </CardHeader>
-          <CardContent className={engineCommands.length === 0 ? undefined : "px-0"}>
-            <CommandLog rows={engineCommands} />
-          </CardContent>
-        </Card>
-
-        {/* Pending approval — editions generated hidden by the engine's approval gate, awaiting publish */}
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Pending approval</CardTitle>
+            <CardTitle className="text-base">3 · Approve to publish</CardTitle>
             <CardDescription>
-              Editions generated behind the engine&rsquo;s approval gate (hidden). Preview each one, then <b>Approve</b> to publish it to the public site, sitemap and reader.
+              Editions the engine generated <b>hidden</b> behind its approval gate. Preview each one, then{" "}
+              <b>Approve</b> to publish it to the public site, sitemap and reader. (Independent of scoring —
+              either order is fine.)
             </CardDescription>
           </CardHeader>
           <CardContent className={pending.length === 0 ? undefined : "px-0"}>
-            {pending.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No editions awaiting approval.</p>
-            ) : (
-              <div className="divide-y divide-line border-t border-line">
-                {pending.map((e) => {
-                  const id = `${e.date}/${e.slug}`;
-                  return (
-                    <div key={id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 text-sm">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <b className="truncate">{e.instrument}</b>
-                          <span className="text-muted-foreground">{e.ticker}</span>
-                          {e.status && <Badge label={e.status} kind="status" />}
-                          {e.risk && <Badge label={e.risk} kind="risk" />}
-                        </div>
-                        <div className="mt-0.5 text-[11px] text-muted-foreground">
-                          {e.reportDate} · prediction window to {e.windowEnd || "—"}
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <Button asChild size="sm" variant="outline">
-                          <a href={`/reports/${id}`} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink data-icon="inline-start" />Preview
-                          </a>
-                        </Button>
-                        <Button asChild size="sm" variant="outline">
-                          <a href={`/api/report/${id}/free.pdf`} target="_blank" rel="noopener noreferrer">
-                            <FileText data-icon="inline-start" />PDF
-                          </a>
-                        </Button>
-                        <ApproveButton id={id} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <PendingApprovalList pending={pending} />
           </CardContent>
         </Card>
 
-        <h2 className="mt-6 mb-1 text-xl font-bold text-navy">Editions</h2>
-        <p className="mb-3 text-sm text-muted-foreground">
-          Search for an edition and toggle it to <b>Hidden</b> to unpublish it from the public site, sitemap and reader — the files stay in R2 and it can be restored.
-        </p>
-        <EditionsBrowser editions={catalog} />
+        {/* Editions browser — search published editions + unpublish (part of step 3). */}
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">All editions</CardTitle>
+            <CardDescription>
+              Search published editions; toggle one to <b>Hidden</b> to unpublish it from the public site,
+              sitemap and reader — the files stay in R2 and it can be restored.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <EditionsBrowser editions={catalog} />
+          </CardContent>
+        </Card>
+
+        {/* === Operate the box — advanced recovery / deploy controls + the command log (collapsed). === */}
+        <CollapsibleSection
+          id="sec-box"
+          title="Operate the box (advanced)"
+          description="Recovery + deploy controls you only need when something is stuck — Re-run publish, Fetch logs, Service check, Pull + restart, Set config — plus the Danger zone and the box command log."
+        >
+          <div className="flex flex-col gap-5">
+            <p className="text-xs text-muted-foreground">
+              Direct control of the cloud instance. Each command runs on the box&rsquo;s next ~30s poll; watch
+              the <b>Box command log</b> below for results. The red <b>Danger zone</b> holds irreversible resets
+              — see the manual before using them.
+            </p>
+            <BoxControls hideScoreNow />
+            <div className="border-t border-line pt-4">
+              <h3 className="text-sm font-bold text-navy">Box command log</h3>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Recent box-control commands and their result — expand a row for the captured output (e.g. fetched logs).
+              </p>
+              <div className={engineCommands.length === 0 ? undefined : "-mx-4 sm:-mx-0"}>
+                <CommandLog rows={engineCommands} />
+              </div>
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* === Reference — growth, members & traffic (demoted, collapsed). === */}
+        <CollapsibleSection
+          title="Reference — growth, members & traffic"
+          description="Business metrics, charts, member admin, feedback and analytics. Demoted below the engine since pre-launch focus is the track record."
+        >
+          <div className="flex flex-col gap-4">
+            {/* KPI row */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {kpis.map((k) => (
+                <Card key={k.label}>
+                  <CardContent className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <k.icon className="size-3.5" />
+                      <span className="text-[11px] font-semibold uppercase tracking-wide">{k.label}</span>
+                    </div>
+                    <div className="text-2xl font-extrabold text-navy">{k.value}</div>
+                    {k.sub && <div className="text-[11px] text-muted-foreground">{k.sub}</div>}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Preview tier */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Preview tier</CardTitle>
+                <CardDescription>You get Pro for free as an admin — switch to Free to see what non-subscribers see (your admin access is unaffected).</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminTierToggle current={ent.adminTier === "free" ? "free" : "pro"} />
+              </CardContent>
+            </Card>
+
+            {/* Charts */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">New members</CardTitle>
+                  <CardDescription>Sign-ups over the last 30 days</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <TrendChart data={stats.signups30d} label="Sign-ups" color="#0b2545" />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Pro downloads</CardTitle>
+                  <CardDescription>Pro report fetches over the last 30 days</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <TrendChart data={stats.downloads30d} label="Downloads" color="#9a6700" />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Free vs Pro</CardTitle>
+                  <CardDescription>Membership split{stats.membersCapped ? " (newest 100)" : ""}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {stats.members > 0 ? (
+                    <SplitDonut pro={stats.subscribers} free={Math.max(0, stats.members - stats.subscribers)} />
+                  ) : (
+                    <p className="py-12 text-center text-sm text-muted-foreground">No members yet.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Editions by asset class</CardTitle>
+                  <CardDescription>Published coverage</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {stats.editionsByClass.length > 0 ? (
+                    <ClassBars data={stats.editionsByClass} />
+                  ) : (
+                    <p className="py-12 text-center text-sm text-muted-foreground">No editions yet.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Top reports + Recent members */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Top reports by downloads</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0">
+                  {stats.topReports.length === 0 ? (
+                    <p className="px-6 pb-2 text-sm text-muted-foreground">No downloads logged yet.</p>
+                  ) : (
+                    <div className="divide-y divide-line border-t border-line">
+                      {stats.topReports.map((r) => (
+                        <div key={r.reportId} className="flex items-center justify-between px-6 py-2.5 text-sm">
+                          <span className="truncate">{titleById.get(r.reportId) ?? r.reportId}</span>
+                          <span className="font-semibold text-navy">{r.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Recent members</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0">
+                  {stats.recent.length === 0 ? (
+                    <p className="px-6 pb-2 text-sm text-muted-foreground">No members yet (or Clerk not configured).</p>
+                  ) : (
+                    <div className="divide-y divide-line border-t border-line">
+                      {stats.recent.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between gap-3 px-6 py-2.5 text-sm">
+                          <span className="truncate">{m.email}</span>
+                          <ProToggle email={m.email} subscribed={m.subscribed} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Manage access */}
+            <AdminActions />
+
+            {/* Member search */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Find a member</CardTitle>
+                <CardDescription>Search by email or name, then grant or revoke Pro inline. (Comp toggle only — paid subscriptions live in Clerk.)</CardDescription>
+              </CardHeader>
+              <CardContent><MemberSearch /></CardContent>
+            </Card>
+
+            {/* Activity log */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Activity log</CardTitle>
+                <CardDescription>Admin and billing actions, most recent first — searchable.</CardDescription>
+              </CardHeader>
+              <CardContent><AdminLog rows={auditLog} /></CardContent>
+            </Card>
+
+            {/* Feedback inbox */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Feedback &amp; feature requests</CardTitle>
+                <CardDescription>Submissions from the public form — triage by changing each one&rsquo;s status.</CardDescription>
+              </CardHeader>
+              <CardContent><FeedbackInbox rows={feedback} /></CardContent>
+            </Card>
+
+            {/* External dashboards */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Traffic &amp; performance</CardTitle>
+                <CardDescription>Visitors, Core Web Vitals and analytics live in these dashboards.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <a href={SITE.analyticsUrl} target="_blank" rel="noopener noreferrer">
+                    <BarChart3 data-icon="inline-start" />Vercel — Analytics &amp; Speed<ExternalLink data-icon="inline-end" />
+                  </a>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <a href={SITE.gaUrl} target="_blank" rel="noopener noreferrer">
+                    <LineChart data-icon="inline-start" />Google Analytics<ExternalLink data-icon="inline-end" />
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Note>
+              The member count + recent sign-ups come from Clerk (the newest 100 accounts feed the charts);
+              the Pro-subscriber count and MRR are derived from the same accounts&rsquo; subscription flag.
+              Full member and subscription management (refunds, cancellations, bans, roles) lives in the{" "}
+              <b>Clerk</b> dashboard.
+            </Note>
+          </div>
+        </CollapsibleSection>
       </div>
     </>
   );

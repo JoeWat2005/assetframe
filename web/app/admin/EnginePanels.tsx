@@ -1,12 +1,14 @@
+"use client";
 import type { GenerationRequest, EngineRun, EngineCommand } from "@/lib/engine";
 import CancelButton from "./CancelButton";
+import Paginated from "@/components/Paginated";
 
-// Server-rendered tables for the Engine console (no client JS beyond the Cancel button):
+// Client tables for the Engine console (Cancel button + client pagination):
 //   - RequestQueue: recent generation_requests with a status pill + Cancel for live rows.
 //   - RunLog: recent engine_runs (the OC instance logs) with an expandable error/log excerpt.
 //   - CommandLog: recent engine_commands (box-control: restart/pull/maintenance/logs/config) with
 //     an expandable result/log excerpt + Cancel for live rows.
-// Kept out of page.tsx purely to keep that file readable; all take already-fetched rows.
+// Each paginates (8/page) so the ~20 fetched rows stay mobile-friendly. Take already-fetched rows.
 
 // Friendly labels for the box-control verbs (keep in sync with actions.ts ENGINE_COMMANDS).
 const COMMAND_LABEL: Record<string, string> = {
@@ -52,13 +54,15 @@ function scopeSummary(scope: unknown): string {
 const LIVE = new Set(["queued", "running"]);
 
 export function RequestQueue({ rows }: { rows: GenerationRequest[] }) {
-  if (rows.length === 0) {
-    return <p className="px-6 pb-2 text-sm text-muted-foreground">No generation requests yet.</p>;
-  }
   return (
-    <div className="divide-y divide-line border-t border-line">
-      {rows.map((r) => (
-        <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 text-sm">
+    <Paginated
+      items={rows}
+      noun="requests"
+      containerClassName="divide-y divide-line border-t border-line"
+      emptyChildren={<p className="px-6 pb-2 text-sm text-muted-foreground">No generation requests yet.</p>}
+      keyOf={(r) => r.id}
+      render={(r) => (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 text-sm">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <StatusPill status={r.status} />
@@ -74,21 +78,23 @@ export function RequestQueue({ rows }: { rows: GenerationRequest[] }) {
           </div>
           {LIVE.has(r.status) && !r.cancelRequested && <CancelButton id={r.id} />}
         </div>
-      ))}
-    </div>
+      )}
+    />
   );
 }
 
 export function RunLog({ rows }: { rows: EngineRun[] }) {
-  if (rows.length === 0) {
-    return <p className="px-6 pb-2 text-sm text-muted-foreground">No engine runs logged yet.</p>;
-  }
   return (
-    <div className="divide-y divide-line border-t border-line">
-      {rows.map((r) => {
+    <Paginated
+      items={rows}
+      noun="runs"
+      containerClassName="divide-y divide-line border-t border-line"
+      emptyChildren={<p className="px-6 pb-2 text-sm text-muted-foreground">No engine runs logged yet.</p>}
+      keyOf={(r) => r.id}
+      render={(r) => {
         const detail = [r.errors, r.logExcerpt].filter(Boolean).join("\n\n");
         return (
-          <div key={r.id} className="px-6 py-2.5 text-sm">
+          <div className="px-6 py-2.5 text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <StatusPill status={r.status} />
@@ -111,21 +117,23 @@ export function RunLog({ rows }: { rows: EngineRun[] }) {
             )}
           </div>
         );
-      })}
-    </div>
+      }}
+    />
   );
 }
 
 export function CommandLog({ rows }: { rows: EngineCommand[] }) {
-  if (rows.length === 0) {
-    return <p className="px-6 pb-2 text-sm text-muted-foreground">No box commands yet.</p>;
-  }
   return (
-    <div className="divide-y divide-line border-t border-line">
-      {rows.map((r) => {
+    <Paginated
+      items={rows}
+      noun="commands"
+      containerClassName="divide-y divide-line border-t border-line"
+      emptyChildren={<p className="px-6 pb-2 text-sm text-muted-foreground">No box commands yet.</p>}
+      keyOf={(r) => r.id}
+      render={(r) => {
         const detail = [r.result, r.logExcerpt].filter(Boolean).join("\n\n");
         return (
-          <div key={r.id} className="px-6 py-2.5 text-sm">
+          <div className="px-6 py-2.5 text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <StatusPill status={r.status} />
@@ -152,7 +160,7 @@ export function CommandLog({ rows }: { rows: EngineCommand[] }) {
             )}
           </div>
         );
-      })}
-    </div>
+      }}
+    />
   );
 }
