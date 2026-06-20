@@ -255,6 +255,10 @@ const ENGINE_COMMANDS: Record<string, string> = {
   reset_ledger: "Reset the outcome ledger",
   clear_reports: "Clear working dirs (system refresh)",
   run_scoring: "Score closed windows now",
+  compute_due: "Check which assets are due",
+  service_check: "Health-check Neon / R2 / Upstash",
+  clear_r2: "Clear report files from R2",
+  clear_wake: "Clear the Upstash wake flag",
 };
 // Keys set_config may write to the engine .env. Mirrors engine_ops._SETTABLE_CONFIG_KEYS — only
 // keys the engine consumes, never secrets/credentials/URLs. (The box re-validates this list too.)
@@ -440,6 +444,23 @@ export async function setAssetEnabled(id: string, enabled: boolean): Promise<Res
     return { ok: true, message: `${cleaned} ${enabled ? "enabled" : "disabled"}.` };
   } catch {
     return { ok: false, message: "Update failed." };
+  }
+}
+
+// Clear the public catalog in Neon — deletes editions (cascades to open_calls + predictions) and
+// the scored_results. The Neon side of a full reset (pair with the box's clear_reports + reset_ledger).
+// Destructive; the UI confirms. Does NOT touch R2 files (use clear_r2) or the engine_assets universe.
+export async function clearCatalog(): Promise<Result> {
+  const ent = await requireAdmin();
+  if (!sql) return { ok: false, message: "Database not configured." };
+  try {
+    await sql.query(`DELETE FROM scored_results`);
+    await sql.query(`DELETE FROM editions`); // cascades to open_calls -> open_call_predictions
+    await logAudit({ actor: ent.email, action: "clear_catalog", target: "neon", detail: "editions + scored cleared" });
+    revalidateTag("content", "max");
+    return { ok: true, message: "Catalog cleared (editions, open calls, scored results)." };
+  } catch {
+    return { ok: false, message: "Couldn't clear the catalog." };
   }
 }
 

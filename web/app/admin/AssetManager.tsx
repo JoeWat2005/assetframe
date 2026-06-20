@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { upsertEngineAsset, deleteEngineAsset, setAssetEnabled, setRequireApproval } from "./actions";
+import { upsertEngineAsset, deleteEngineAsset, setAssetEnabled, setRequireApproval, sendEngineCommand } from "./actions";
 import type { EngineAsset } from "@/lib/engine-assets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,7 @@ export default function AssetManager({ assets, editingAsset }: { assets: EngineA
   const [form, setForm] = useState<Form>(editingAsset ?? BLANK);
 
   const requireApproval = assets.some((a) => a.publishPolicy === "approval_required");
+  const lastChecked = assets.map((a) => a.dueCheckedAt).filter(Boolean).sort().pop() || "";
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const run = (fn: () => Promise<Result>, confirmMsg?: string) =>
@@ -91,10 +92,21 @@ export default function AssetManager({ assets, editingAsset }: { assets: EngineA
         >
           {requireApproval ? "Switch to auto-publish" : "Require approval"}
         </Button>
-        <Button size="sm" className="ml-auto" disabled={pending} onClick={() => { setForm(BLANK); setShowAdd((s) => !s); }}>
+        <Button
+          size="sm" variant="outline" className="ml-auto" disabled={pending}
+          onClick={() => run(() => sendEngineCommand("compute_due"))}
+          title="Ask the engine to compute which assets are due to generate now (a dry-run on the box)."
+        >
+          Check schedule
+        </Button>
+        <Button size="sm" disabled={pending} onClick={() => { setForm(BLANK); setShowAdd((s) => !s); }}>
           {showAdd ? "Close" : "+ Add asset"}
         </Button>
       </div>
+      <p className="-mt-1 text-[11px] text-muted-foreground">
+        The <b>Scheduled</b> column shows what the engine will run on its next due check.{" "}
+        {lastChecked ? `Last checked ${lastChecked} UTC.` : "Not checked yet — click Check schedule."}
+      </p>
 
       {/* Universe table */}
       {assets.length === 0 ? (
@@ -108,6 +120,7 @@ export default function AssetManager({ assets, editingAsset }: { assets: EngineA
                 <th className="p-2.5 text-left">Instrument</th>
                 <th className="p-2.5 text-left">Class</th>
                 <th className="p-2.5 text-left">Cadence</th>
+                <th className="p-2.5 text-left">Scheduled</th>
                 <th className="p-2.5 text-left">Publish</th>
                 <th className="p-2.5 text-left">In daily run</th>
                 <th className="p-2.5 text-right">Remove</th>
@@ -120,6 +133,17 @@ export default function AssetManager({ assets, editingAsset }: { assets: EngineA
                   <td className="p-2.5 text-muted-foreground">{a.name}</td>
                   <td className="p-2.5">{a.assetClass}</td>
                   <td className="p-2.5 text-muted-foreground">{a.cadence}</td>
+                  <td className="p-2.5" title={a.dueReason || undefined}>
+                    {!a.enabled ? (
+                      <span className="text-[11px] text-muted-foreground">off</span>
+                    ) : a.due == null ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : a.due ? (
+                      <span className="rounded-full bg-[#dafbe1] px-2 py-0.5 text-[11px] font-bold text-[#1a7f37]">Due now</span>
+                    ) : (
+                      <span className="rounded-full bg-tile px-2 py-0.5 text-[11px] font-bold text-muted-foreground">Not due</span>
+                    )}
+                  </td>
                   <td className="p-2.5">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${a.publishPolicy === "auto" ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#fff7e6] text-[#9a6700]"}`}>
                       {a.publishPolicy === "auto" ? "auto" : "approval"}

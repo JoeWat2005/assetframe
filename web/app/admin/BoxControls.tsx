@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { sendEngineCommand } from "./actions";
+import { sendEngineCommand, clearCatalog } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +32,19 @@ export default function BoxControls() {
       if (confirmMsg && !window.confirm(confirmMsg)) return;
       try {
         const r = await sendEngineCommand(command, args);
+        setMsg(r);
+        if (r.ok) router.refresh();
+      } catch {
+        setMsg({ ok: false, message: "Action failed — not authorized?" });
+      }
+    });
+
+  // For web actions (not box commands) like clearing the Neon catalog.
+  const runAction = (fn: () => Promise<Result>, confirmMsg?: string) =>
+    start(async () => {
+      if (confirmMsg && !window.confirm(confirmMsg)) return;
+      try {
+        const r = await fn();
         setMsg(r);
         if (r.ok) router.refresh();
       } catch {
@@ -98,6 +111,40 @@ export default function BoxControls() {
           title="Clear the box's working dirs (reports/data/content/runs) — a dashboard system refresh, no SSH."
         >
           Clear reports
+        </Button>
+      </div>
+
+      {/* Services & data — Neon / R2 / Upstash. */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm" variant="outline" disabled={pending}
+          onClick={() => run("service_check")}
+          title="Check the box can reach Neon, R2 and Upstash. Result shows in the Box command log."
+        >
+          Service check
+        </Button>
+        <Button
+          size="sm" variant="outline" disabled={pending}
+          onClick={() => run("clear_wake")}
+          title="Clear a stuck Upstash wake flag."
+        >
+          Clear wake flag
+        </Button>
+        <Button
+          size="sm" variant="outline" disabled={pending}
+          onClick={() => run("clear_r2", undefined,
+            "Delete ALL report files from R2? They'd need re-publishing (Re-run publish, or regenerate). Cannot be undone.")}
+          title="Delete report objects from the R2 bucket (the private report files)."
+        >
+          Clear R2 files
+        </Button>
+        <Button
+          size="sm" variant="outline" disabled={pending}
+          onClick={() => runAction(clearCatalog,
+            "Clear the public catalog in Neon (all editions + scored results)? Pair with Reset ledger + Clear reports + Clear R2 for a full reset.")}
+          title="Delete editions + scored results from Neon — the public catalog (a full reset, Neon side)."
+        >
+          Clear catalog (Neon)
         </Button>
       </div>
 

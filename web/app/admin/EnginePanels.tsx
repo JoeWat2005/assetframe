@@ -19,6 +19,10 @@ const COMMAND_LABEL: Record<string, string> = {
   reset_ledger: "Reset ledger",
   clear_reports: "Clear working dirs",
   run_scoring: "Score closed windows",
+  compute_due: "Check which assets are due",
+  service_check: "Service health check",
+  clear_r2: "Clear R2 files",
+  clear_wake: "Clear Upstash wake flag",
 };
 
 // Status pill colours, reusing the same green/amber/red/grey palette as the rest of the admin.

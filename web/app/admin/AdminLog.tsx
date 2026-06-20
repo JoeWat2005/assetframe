@@ -22,6 +22,9 @@ const LABEL: Record<string, string> = {
   engine_cmd_set_config: "Box · set config", engine_cmd_cancel: "Box · cancel command",
   engine_cmd_reset_ledger: "Box · reset ledger", engine_cmd_clear_reports: "Box · clear reports",
   engine_cmd_run_scoring: "Box · score now", engine_cmd_sync_assets: "Box · sync assets",
+  engine_cmd_compute_due: "Box · check due", engine_cmd_service_check: "Box · service check",
+  engine_cmd_clear_r2: "Box · clear R2", engine_cmd_clear_wake: "Box · clear wake",
+  clear_catalog: "Catalog · clear (Neon)",
   // Asset universe
   asset_upsert: "Asset · save", asset_delete: "Asset · delete", asset_enable: "Asset · enable",
   asset_disable: "Asset · disable", asset_approval_mode: "Asset · approval mode",
