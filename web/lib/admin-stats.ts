@@ -31,7 +31,15 @@ function last30Days(): string[] {
 
 type Row = Record<string, unknown>;
 
-async function _getAdminStats(): Promise<AdminStats> {
+type ClerkStats = Pick<AdminStats, "members" | "subscribers" | "membersCapped" | "signups30d" | "recent">;
+type DataStats = Pick<AdminStats, "downloads30d" | "downloadsTotal" | "topReports" | "editionsByClass">;
+
+// Clerk-derived member stats. Deliberately NOT wrapped in unstable_cache: clerkClient() can throw
+// inside the cache's detached execution context (it resolves request/secret scope), and the old
+// code swallowed that in a bare `catch {}` — which silently zeroed the "New members", "Free vs Pro"
+// and "Recent members" charts even when Clerk had users. Fetched per request (one 100-user page,
+// cheap) and any failure is LOGGED (visible in Vercel logs) rather than hidden.
+async function getClerkStats(): Promise<ClerkStats> {
   const days = last30Days();
   const signupMap = new Map<string, number>(days.map((d) => [d, 0]));
   const recent: AdminStats["recent"] = [];
@@ -39,12 +47,6 @@ async function _getAdminStats(): Promise<AdminStats> {
   let subscribers = 0;
   let membersCapped = false;
 
-  // Bare-minimum Clerk read: ONE page of the newest accounts (not a full multi-page
-  // scan). Gives the member count (totalCount), the recent-members list, the 30-day
-  // signup sparkline, and the Pro-subscriber count. Clerk Billing is the source of truth for
-  // Pro and mirrors it onto publicMetadata.subscribed, so we count that flag here — the
-  // separate billing table is gone. The count is over the scanned page (newest 100), so it's
-  // capped exactly like the charts when there are more than 100 members (membersCapped).
   try {
     const cc = await clerkClient();
     let page;
@@ -52,12 +54,11 @@ async function _getAdminStats(): Promise<AdminStats> {
       // Newest first so "recent members" + the signup chart are right.
       page = await cc.users.getUserList({ limit: 100, orderBy: "-created_at" });
     } catch {
-      // Some Clerk instances reject the orderBy param — fall back to an unordered page
-      // rather than letting the whole stats block fail (the bug that zeroed the dashboard).
+      // Some Clerk instances reject the orderBy param — fall back to an unordered page.
       page = await cc.users.getUserList({ limit: 100 });
     }
     members = typeof page.totalCount === "number" ? page.totalCount : page.data.length;
-    membersCapped = members > page.data.length; // charts + recent + subscriber count cover the newest 100 only
+    membersCapped = members > page.data.length; // charts/recent/subscriber count cover the newest 100
     for (const u of page.data) {
       const created = new Date(Number(u.createdAt)).toISOString().slice(0, 10);
       if (signupMap.has(created)) signupMap.set(created, (signupMap.get(created) ?? 0) + 1);
@@ -67,11 +68,24 @@ async function _getAdminStats(): Promise<AdminStats> {
         recent.push({ id: u.id, email: u.primaryEmailAddress?.emailAddress ?? u.id, subscribed: sub });
       }
     }
-  } catch {
-    /* Clerk unavailable — the DB-backed stats below still render */
+  } catch (err) {
+    // Loud, not silent — so a misconfigured CLERK_SECRET_KEY or an SDK error is diagnosable.
+    console.error("[admin-stats] Clerk member fetch failed:", err instanceof Error ? err.message : err);
   }
 
-  // Downloads from the log (if a DB is configured and the table exists).
+  return {
+    members,
+    subscribers,
+    membersCapped,
+    signups30d: days.map((d) => ({ date: d, count: signupMap.get(d) ?? 0 })),
+    recent,
+  };
+}
+
+// DB- + catalog-derived stats (downloads, top reports, editions-by-class). These are safe to cache
+// (no Clerk/request scope), so a rapid admin reload doesn't re-query the download log each time.
+async function _getDataStats(): Promise<DataStats> {
+  const days = last30Days();
   const downloadMap = new Map<string, number>(days.map((d) => [d, 0]));
   let downloadsTotal = 0;
   let topReports: AdminStats["topReports"] = [];
@@ -96,7 +110,6 @@ async function _getAdminStats(): Promise<AdminStats> {
     }
   }
 
-  // Editions by asset class from the catalog.
   const classMap = new Map<string, number>();
   try {
     for (const e of await getCatalog()) {
@@ -108,17 +121,17 @@ async function _getAdminStats(): Promise<AdminStats> {
   }
 
   return {
-    members,
-    subscribers,
-    membersCapped,
-    signups30d: days.map((d) => ({ date: d, count: signupMap.get(d) ?? 0 })),
     downloads30d: days.map((d) => ({ date: d, count: downloadMap.get(d) ?? 0 })),
     downloadsTotal,
     topReports,
     editionsByClass: [...classMap.entries()].map(([assetClass, count]) => ({ assetClass, count })),
-    recent,
   };
 }
 
-// Cached so rapid admin reloads don't re-scan Clerk + re-query downloads each time.
-export const getAdminStats = unstable_cache(_getAdminStats, ["admin-stats"], { revalidate: 120, tags: ["content"] });
+const getDataStats = unstable_cache(_getDataStats, ["admin-data-stats"], { revalidate: 120, tags: ["content"] });
+
+// Combine the (uncached, loud-on-error) Clerk member stats with the cached DB/catalog stats.
+export async function getAdminStats(): Promise<AdminStats> {
+  const [clerk, data] = await Promise.all([getClerkStats(), getDataStats()]);
+  return { ...data, ...clerk };
+}

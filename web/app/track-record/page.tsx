@@ -39,43 +39,18 @@ export default async function TrackRecordPage() {
     [tr.stats.predictionsGraded, "Forecasts scored"],
   ];
 
-  // The full record is a Pro benefit. Free / signed-out visitors see the public
-  // headline accuracy (same numbers as the homepage) and an upgrade prompt.
-  if (!ent.subscribed) {
-    return (
-      <>
-        <Hero title="Track record" tag="Scored after the fact — the full record is part of AssetFrame Pro." />
-        <div className="mx-auto max-w-3xl px-5 py-10">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {headline.map(([n, l]) => stat(n, l))}
-          </div>
-
-          <Note>
-            The headline accuracy above is public. The full record — every open call, each scored
-            result, the per-prediction detail and the calibration table — is for AssetFrame Pro
-            subscribers. Every call is still published before its outcome and graded against the tape.
-          </Note>
-
-          {ent.signedIn ? (
-            <BuyButton>Subscribe {SITE.proPrice} to see the full record</BuyButton>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              <Link href="/sign-in" className="rounded-lg bg-navy px-5 py-2.5 font-bold text-white hover:bg-navy-700">
-                Sign in
-              </Link>
-              <Link href="/pricing" className="rounded-lg border border-navy px-5 py-2.5 font-bold text-navy hover:bg-tile">
-                See pricing
-              </Link>
-            </div>
-          )}
-        </div>
-      </>
-    );
-  }
+  // The PROOF is public — the headline accuracy, the registered open calls, a sample of recent
+  // scored results and the calibration table are visible to everyone so prospects can verify the
+  // "scored after the fact" claim before paying. The deep performance ANALYTICS and the full
+  // browsable scored ledger remain a Pro benefit (gated inline below).
 
   // Map symbol → asset class (from the catalog) so open calls can be filtered by asset.
   const assetByTicker: Record<string, string> = {};
   for (const e of editions) if (e.ticker) assetByTicker[e.ticker] = e.assetClass;
+  // Free visitors see the 5 most-recent scored results as proof; Pro sees the full ledger.
+  const recentScored = [...tr.scored]
+    .sort((a, b) => String(b.windowEnd ?? "").localeCompare(String(a.windowEnd ?? "")))
+    .slice(0, 5);
 
   return (
     <>
@@ -97,15 +72,33 @@ export default async function TrackRecordPage() {
           <Link href="/how-it-works" className="font-semibold text-navy underline underline-offset-2">How it works →</Link>
         </div>
 
-        <TrackRecordAnalytics
-          byInstrument={tr.byInstrument}
-          byAssetClass={tr.byAssetClass}
-          byPredictionType={tr.byPredictionType}
-          byRegime={tr.byRegime}
-          timeline={tr.timeline}
-          calibrationCurve={tr.calibrationCurve}
-          componentVsOutcome={tr.componentVsOutcome}
-        />
+        {/* Full performance analytics are a Pro benefit. Free visitors still get the proof below
+            (open calls, recent scored results, calibration) plus a clear, honest upsell. */}
+        {ent.subscribed ? (
+          <TrackRecordAnalytics
+            byInstrument={tr.byInstrument}
+            byAssetClass={tr.byAssetClass}
+            byPredictionType={tr.byPredictionType}
+            byRegime={tr.byRegime}
+            timeline={tr.timeline}
+            calibrationCurve={tr.calibrationCurve}
+            componentVsOutcome={tr.componentVsOutcome}
+          />
+        ) : (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#9a6700]/40 bg-[#fff7e6] px-4 py-3 text-sm">
+            <span className="text-[#7a5200]">
+              The proof is public — registered open calls, recent scored results and calibration are
+              all below. <b>AssetFrame Pro</b> adds the full performance analytics (by instrument,
+              asset class, prediction type and regime, the calibration curve and cumulative timeline)
+              and the complete browsable ledger.
+            </span>
+            {ent.signedIn ? (
+              <BuyButton>Unlock Pro {SITE.proPrice}</BuyButton>
+            ) : (
+              <Link href="/pricing" className="shrink-0 rounded-lg bg-navy px-4 py-2 font-bold text-white hover:bg-navy-700">See Pro</Link>
+            )}
+          </div>
+        )}
 
         <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Prediction calls</h2>
         <p className="mb-3 text-sm text-muted-foreground">Each call registers its predictions before the window. The badge tracks how many came true (hits/total) once the engine scores it — a majority feeds the homepage streak. Filter by asset or date, then open one to see every prediction.</p>
@@ -114,8 +107,20 @@ export default async function TrackRecordPage() {
         <h2 className="mt-8 mb-1 text-xl font-bold text-navy">Scored results</h2>
         {tr.scored.length === 0 ? (
           <Note>No reports scored yet — the first results land once the open calls above close. <b>Ledger starts here.</b></Note>
-        ) : (
+        ) : ent.subscribed ? (
           <ScoredResults rows={tr.scored} />
+        ) : (
+          <>
+            {/* Free: a sample of the most recent scored results — the proof. Pro = the full ledger. */}
+            <ScoredResults rows={recentScored} />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Showing the {recentScored.length} most recent of {tr.scored.length} scored{" "}
+              {tr.scored.length === 1 ? "result" : "results"}.{" "}
+              <Link href="/pricing" className="font-semibold text-navy underline underline-offset-2">
+                Unlock the full scored ledger with Pro →
+              </Link>
+            </p>
+          </>
         )}
 
         {tr.calibration && (

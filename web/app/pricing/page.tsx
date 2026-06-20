@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PricingTable } from "@clerk/nextjs";
 import { Hero, Note } from "@/components/ui";
+import { getEntitlement } from "@/lib/entitlements";
 import { SITE } from "@/site.config";
 
 export const metadata: Metadata = {
@@ -34,16 +36,34 @@ const PRO = [
   "Source audit + glossary of every chart abbreviation",
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  // Admins have complimentary Pro and switch Free/Pro in the admin console (no subscription).
+  // Never show them checkout — otherwise an admin could create a real paid subscription against
+  // an account that already has comp Pro (the bug in the screenshot).
+  const ent = await getEntitlement();
   return (
     <>
       <Hero title="Pricing" tag="Start free. Upgrade for the full intelligence." />
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-5">
-        {/* The single source of truth for plans + checkout. Clerk Billing renders the live
-            price, the 3-day free trial and the subscribe CTA for new users — and the current
-            plan with manage/cancel for subscribers — all in an in-page drawer. Signed-out
-            visitors are prompted to sign in on selection. */}
-        <PricingTable />
+        {ent.admin ? (
+          /* Admin accounts get comp Pro — no checkout, no billing. */
+          <div className="rounded-xl border-2 border-[#1a7f37] bg-[#dafbe1]/40 p-6">
+            <div className="text-lg font-bold text-navy">You have complimentary Pro (admin)</div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Admin accounts get full Pro access without a subscription. Switch between the Free and
+              Pro preview from the admin console — there&apos;s nothing to buy.
+            </p>
+            <Link href="/admin" className="mt-4 inline-block rounded-lg bg-navy px-5 py-2.5 font-bold text-white hover:bg-navy-700">
+              Open the admin console
+            </Link>
+          </div>
+        ) : (
+          /* The single source of truth for plans + checkout. Clerk Billing renders the live
+             price, the 3-day free trial and the subscribe CTA for new users — and the current
+             plan with manage/cancel for subscribers — all in an in-page drawer. Signed-out
+             visitors are prompted to sign in on selection. */
+          <PricingTable />
+        )}
 
         {/* Non-interactive feature comparison — no prices or buttons (those live in the table
             above) so the page never shows two competing pricing widgets. */}
