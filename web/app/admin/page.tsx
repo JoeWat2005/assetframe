@@ -252,50 +252,68 @@ export default async function AdminPage() {
               <Cpu className="size-4" />Engine
             </CardTitle>
             <CardDescription>
-              The generation engine runs on a scheduled cloud instance. Queue runs, pause the daily automation,
-              and review the instance&rsquo;s run history below.
+              Your report generator runs on a cloud box that checks in every ~30s. The daily batch fires
+              at <b>05:00 UTC</b> unless automation is paused. Everything below controls or inspects it.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-5">
-            {/* Instance status */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                  engineState.online ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]"
-                }`}
-              >
-                <span className={`size-1.5 rounded-full ${engineState.online ? "bg-[#1a7f37]" : "bg-[#cf222e]"}`} />
-                {engineState.online ? "Online" : "Offline"}
-              </span>
-              <span className="text-[11px] text-muted-foreground">
-                Last heartbeat: {engineState.lastHeartbeatAt ? `${engineState.lastHeartbeatAt} UTC` : "never"}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                Automation: <b className={engineState.automationPaused ? "text-[#9a6700]" : "text-[#1a7f37]"}>
-                  {engineState.automationPaused ? "Paused" : "Active"}
-                </b>
-              </span>
-              <PauseToggle paused={engineState.automationPaused} />
+          <CardContent className="flex flex-col gap-6">
+            {/* Status — one clear, plain-English row. */}
+            <div className="rounded-xl border border-line bg-tile/40 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                    engineState.online ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]"
+                  }`}
+                >
+                  <span className={`size-2 rounded-full ${engineState.online ? "bg-[#1a7f37]" : "bg-[#cf222e]"}`} />
+                  {engineState.online ? "Online" : "Offline"}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  Last check-in:{" "}
+                  <b className="text-navy">
+                    {engineState.lastHeartbeatAt ? `${engineState.lastHeartbeatAt.replace("T", " ").slice(0, 16)} UTC` : "never"}
+                  </b>
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  Daily automation:{" "}
+                  <b className={engineState.automationPaused ? "text-[#9a6700]" : "text-[#1a7f37]"}>
+                    {engineState.automationPaused ? "Paused" : "Active"}
+                  </b>
+                </span>
+                {engineState.currentRunId && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff7e6] px-3 py-1 text-xs font-bold text-[#9a6700]">
+                    <span className="size-2 animate-pulse rounded-full bg-[#9a6700]" />
+                    Running: {engineState.currentRunId}
+                  </span>
+                )}
+                <span className="ml-auto"><PauseToggle paused={engineState.automationPaused} /></span>
+              </div>
+              {!engineState.online && (
+                <p className="mt-2 text-xs text-[#cf222e]">
+                  The box hasn&rsquo;t checked in — scheduled and manual runs won&rsquo;t execute until it&rsquo;s back.
+                  Use <b>Restart poller</b> or <b>Pull + restart</b> below.
+                </p>
+              )}
             </div>
-            {!engineState.online && (
-              <p className="-mt-3 text-[11px] text-muted-foreground">
-                The engine has not checked in — scheduled and manual runs won&rsquo;t execute until it&rsquo;s back.
-              </p>
-            )}
 
-            {/* Generate */}
+            {/* 1. Generate */}
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-navy">Generate</h3>
+              <h3 className="text-sm font-bold text-navy">1 · Generate reports</h3>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Queue a run now — the whole due batch, or hand-pick assets. New editions land <b>hidden</b> for
+                your approval (see <b>Pending approval</b> below). The daily 05:00 run does this automatically.
+              </p>
               <GenerateForm assets={assets} />
             </div>
 
-            {/* Box control — allow-listed commands the OCI poller claims + runs (engine_commands).
-                Restart/pull self-exit + systemd relaunch; re-run publish recovers an unpublished run. */}
-            <div className="border-t border-line pt-4">
-              <h3 className="mb-1 text-sm font-semibold text-navy">Box control</h3>
-              <p className="mb-2 text-[11px] text-muted-foreground">
-                Operate the cloud instance directly: recover a stuck publish, deploy the latest code,
-                restart the poller, fetch logs, or set an allow-listed config value.
+            {/* 2. Box control — allow-listed commands the OCI poller claims + runs (engine_commands). */}
+            <div className="border-t border-line pt-5">
+              <h3 className="text-sm font-bold text-navy">2 · Operate the box <span className="font-normal text-muted-foreground">(maintenance)</span></h3>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Direct control of the cloud instance: <b>Re-run publish</b> recovers a run that generated but
+                didn&rsquo;t publish · <b>Fetch logs</b> pulls recent output · <b>Pull + restart</b> deploys the
+                latest code · <b>Restart poller</b> bounces it · <b>Set config</b> tweaks an allow-listed setting.
+                Each runs on the box&rsquo;s next ~30s poll; watch the <b>Box command log</b> below for results.
               </p>
               <BoxControls />
             </div>
