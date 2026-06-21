@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getCatalog, getTrending } from "@/lib/content";
 import { Hero } from "@/components/ui";
 import ReportsBrowser from "@/components/ReportsBrowser";
@@ -24,7 +25,18 @@ export default async function ReportsPage() {
       <Hero title="Reports" tag="Every published edition. Open one to read the Snapshot, or unlock the full Pro report." />
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-5">
         {editions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No editions published yet.</p>
+          <div className="rounded-xl border border-dashed border-line bg-tile/40 px-4 py-10 text-center">
+            <p className="text-sm font-medium text-navy">No editions published yet.</p>
+            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+              New editions publish each morning. Every call is then graded against the market and
+              added to the public track record.
+            </p>
+            <p className="mt-3 text-sm">
+              <Link href="/how-it-works" className="font-semibold text-navy underline-offset-4 hover:underline">
+                See how it works
+              </Link>
+            </p>
+          </div>
         ) : (
           <>
             {showTrending && (

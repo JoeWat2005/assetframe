@@ -132,7 +132,7 @@ export default function ReportsBrowser({ editions }: { editions: Edition[] }) {
         )}
       </div>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
         {results.length} report{results.length === 1 ? "" : "s"}
         {active ? " match your filters" : ""}
         {results.length > visible.length ? ` · showing ${visible.length}` : ""}
