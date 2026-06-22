@@ -25,6 +25,11 @@ export type EngineAsset = {
   due: boolean | null; // computed by the box's compute_due; null = not checked yet
   dueReason: string;
   dueCheckedAt: string; // "YYYY-MM-DD HH:MI" UTC, or ""
+  cadenceDay: string; // weekly target day "0".."6" (Mon=0) or "mon".."sun"; "" = default Monday
+  timeframes: string[]; // multi-timeframe tracks; [] = use forecastWindow
+  includeFundamentals: boolean | null; // null = engine default (equities only)
+  includeNews: boolean;
+  fundamentalsSource: string; // auto | twelvedata | none
 };
 
 const s = (v: unknown): string => (v == null ? "" : String(v));
@@ -33,21 +38,31 @@ const BASE_COLS = `id, name, instrument, ticker, provider_symbols, asset_class, 
               timezone, roll_utc, related, forecast_window, publish_policy, report_tier, enabled, sort_order`;
 const DUE_COLS = `, due, coalesce(due_reason, '') AS due_reason,
               to_char(due_checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS due_checked_at`;
+const MT_COLS = `, cadence_day, timeframes, include_fundamentals, include_news, fundamentals_source`;
+
+// jsonb `timeframes` can arrive as a parsed JS array or as a string; tolerate both.
+function asArr(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === "string" && v.trim().startsWith("[")) {
+    try { const a = JSON.parse(v); return Array.isArray(a) ? a.map(String) : []; } catch { return []; }
+  }
+  return [];
+}
 
 export async function getEngineAssets(): Promise<EngineAsset[]> {
   if (!sql) return [];
-  let rows: Record<string, unknown>[] = [];
-  try {
-    // Try the rich projection (with the due columns); fall back to the base one if the
-    // 1750000022000 migration hasn't been applied yet, so the table still renders.
-    rows = (await sql.query(`SELECT ${BASE_COLS}${DUE_COLS} FROM engine_assets ORDER BY sort_order, id`)) as Record<string, unknown>[];
-  } catch {
+  let rows: Record<string, unknown>[] | null = null;
+  // Richest projection first (due + multi-timeframe cols), degrading if a later migration hasn't
+  // been applied yet, so the table always renders.
+  for (const proj of [BASE_COLS + DUE_COLS + MT_COLS, BASE_COLS + DUE_COLS, BASE_COLS]) {
     try {
-      rows = (await sql.query(`SELECT ${BASE_COLS} FROM engine_assets ORDER BY sort_order, id`)) as Record<string, unknown>[];
+      rows = (await sql.query(`SELECT ${proj} FROM engine_assets ORDER BY sort_order, id`)) as Record<string, unknown>[];
+      break;
     } catch {
-      return []; // table not migrated yet
+      rows = null;
     }
   }
+  if (rows == null) return []; // table not migrated yet
   return rows.map((r) => ({
     id: s(r.id),
     name: s(r.name),
@@ -68,5 +83,10 @@ export async function getEngineAssets(): Promise<EngineAsset[]> {
     due: r.due == null ? null : Boolean(r.due),
     dueReason: s(r.due_reason),
     dueCheckedAt: s(r.due_checked_at),
+    cadenceDay: s(r.cadence_day),
+    timeframes: asArr(r.timeframes),
+    includeFundamentals: r.include_fundamentals == null ? null : Boolean(r.include_fundamentals),
+    includeNews: r.include_news == null ? true : Boolean(r.include_news),
+    fundamentalsSource: s(r.fundamentals_source) || "auto",
   }));
 }

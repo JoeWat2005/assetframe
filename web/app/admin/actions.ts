@@ -394,6 +394,8 @@ type AssetInput = {
   assetClass: string; sessionProfile: string; cadence: string; timezone: string;
   rollUtc?: number; related?: string; forecastWindow?: string; publishPolicy?: string;
   reportTier?: string; enabled?: boolean;
+  cadenceDay?: string; timeframes?: string[];
+  includeFundamentals?: boolean | null; includeNews?: boolean; fundamentalsSource?: string;
 };
 
 // Push config/assets.json on the box up to date with engine_assets (validated box-side).
@@ -433,19 +435,38 @@ export async function upsertEngineAsset(input: AssetInput): Promise<Result> {
   const providerSymbols: Record<string, string> = { yahoo };
   const eodhd = (input.eodhd || "").trim();
   if (eodhd) providerSymbols.eodhd = eodhd;
+  // multi-timeframe + per-asset fetch config (mirrors scripts/config_loader.py validation)
+  const timeframes = Array.isArray(input.timeframes)
+    ? Array.from(new Set(input.timeframes.filter((t) => FORECAST_WINDOWS.includes(t))))
+    : [];
+  const cadenceDay = ((): string | null => {
+    const v = String(input.cadenceDay ?? "").trim().toLowerCase();
+    if (!v) return null;
+    const n = Number(v);
+    if (Number.isInteger(n) && n >= 0 && n <= 6) return String(n);
+    return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].includes(v.slice(0, 3)) ? v.slice(0, 3) : null;
+  })();
+  const includeNews = input.includeNews !== false;
+  const includeFundamentals = input.includeFundamentals == null ? null : Boolean(input.includeFundamentals);
+  const fundamentalsSource = ["auto", "twelvedata", "none"].includes(input.fundamentalsSource ?? "")
+    ? input.fundamentalsSource! : "auto";
   try {
     await sql.query(
       `INSERT INTO engine_assets (id, name, instrument, ticker, provider_symbols, asset_class, session_profile,
-         cadence, timezone, roll_utc, related, forecast_window, publish_policy, report_tier, enabled, updated_at)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15, now())
+         cadence, timezone, roll_utc, related, forecast_window, publish_policy, report_tier, enabled,
+         cadence_day, timeframes, include_fundamentals, include_news, fundamentals_source, updated_at)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19,$20, now())
        ON CONFLICT (id) DO UPDATE SET name=excluded.name, instrument=excluded.instrument, ticker=excluded.ticker,
          provider_symbols=excluded.provider_symbols, asset_class=excluded.asset_class, session_profile=excluded.session_profile,
          cadence=excluded.cadence, timezone=excluded.timezone, roll_utc=excluded.roll_utc, related=excluded.related,
          forecast_window=excluded.forecast_window, publish_policy=excluded.publish_policy, report_tier=excluded.report_tier,
-         enabled=excluded.enabled, updated_at=now()`,
+         enabled=excluded.enabled, cadence_day=excluded.cadence_day, timeframes=excluded.timeframes,
+         include_fundamentals=excluded.include_fundamentals, include_news=excluded.include_news,
+         fundamentals_source=excluded.fundamentals_source, updated_at=now()`,
       [id, input.name.trim(), input.instrument.trim(), ticker, JSON.stringify(providerSymbols), input.assetClass,
        input.sessionProfile, input.cadence, input.timezone, roll, (input.related || "").trim(),
-       forecastWindow, publishPolicy, reportTier, enabled]
+       forecastWindow, publishPolicy, reportTier, enabled,
+       cadenceDay, JSON.stringify(timeframes), includeFundamentals, includeNews, fundamentalsSource]
     );
     await logAudit({ actor: ent.email, action: "asset_upsert", target: id, detail: `${ticker} (${input.assetClass})` });
     await enqueueSyncAssets();

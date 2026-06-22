@@ -23,11 +23,13 @@ type Form = {
   id: string; name: string; instrument: string; ticker: string; yahoo: string; eodhd: string;
   assetClass: string; sessionProfile: string; cadence: string; timezone: string;
   rollUtc: number; related: string; forecastWindow: string; publishPolicy: string; enabled: boolean;
+  cadenceDay: string; timeframes: string[]; includeFundamentals: boolean; includeNews: boolean;
 };
 const BLANK: Form = {
   id: "", name: "", instrument: "", ticker: "", yahoo: "", eodhd: "", assetClass: "crypto",
   sessionProfile: "crypto_24_7", cadence: "daily", timezone: "UTC", rollUtc: 22, related: "",
   forecastWindow: "rolling_24h", publishPolicy: "approval_required", enabled: true,
+  cadenceDay: "", timeframes: [], includeFundamentals: false, includeNews: true,
 };
 
 type Result = { ok: boolean; message: string };
@@ -63,6 +65,8 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
       assetClass: a.assetClass, sessionProfile: a.sessionProfile, cadence: a.cadence,
       timezone: a.timezone, rollUtc: a.rollUtc, related: a.related,
       forecastWindow: a.forecastWindow, publishPolicy: a.publishPolicy, enabled: a.enabled,
+      cadenceDay: a.cadenceDay, timeframes: a.timeframes,
+      includeFundamentals: a.includeFundamentals ?? (a.assetClass === "equity"), includeNews: a.includeNews,
     });
     setEditingId(a.id);
     setShowAdd(true);
@@ -228,11 +232,40 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
             <Dropdown label="publish policy" value={form.publishPolicy} onChange={(v) => set("publishPolicy", v)} options={["approval_required", "auto"]} />
             <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">roll_utc (0–23)</label><Input className="h-9" type="number" value={form.rollUtc} onChange={(e) => set("rollUtc", Number(e.target.value))} /></div>
             <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">related (comma list, optional)</label><Input className="h-9" value={form.related} onChange={(e) => set("related", e.target.value)} placeholder="ETH-USD" /></div>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">timeframes — multi-timeframe: ONE report, a prediction track per box (none = use the forecast window above)</label>
+              <div className="flex flex-wrap gap-2">
+                {FORECAST_WINDOWS.map((w) => {
+                  const on = form.timeframes.includes(w);
+                  return (
+                    <button
+                      key={w} type="button"
+                      onClick={() => set("timeframes", on ? form.timeframes.filter((t) => t !== w) : [...form.timeframes, w])}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${on ? "bg-navy text-white" : "bg-tile text-muted-foreground hover:bg-line"}`}
+                    >
+                      {w}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {form.cadence === "weekly" && (
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">cadence day (weekly): 0–6 (Mon=0) or mon–sun</label>
+                <Input className="h-9" value={form.cadenceDay} onChange={(e) => set("cadenceDay", e.target.value)} placeholder="fri" />
+              </div>
+            )}
           </div>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <Button size="sm" disabled={pending} onClick={submitAdd}>{pending ? "Saving…" : editingId ? "Save changes" : "Save asset"}</Button>
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <input type="checkbox" className="size-4 accent-navy" checked={form.enabled} onChange={(e) => set("enabled", e.target.checked)} /> enabled
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Pull equity fundamentals (P/E, margins, latest earnings) into the Pro report. No-op for non-equities.">
+              <input type="checkbox" className="size-4 accent-navy" checked={form.includeFundamentals} onChange={(e) => set("includeFundamentals", e.target.checked)} /> fundamentals
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Research news/catalysts in the brief (WebSearch). Off = technical-focus.">
+              <input type="checkbox" className="size-4 accent-navy" checked={form.includeNews} onChange={(e) => set("includeNews", e.target.checked)} /> news
             </label>
           </div>
         </div>
