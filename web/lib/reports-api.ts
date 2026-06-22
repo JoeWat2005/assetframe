@@ -146,17 +146,42 @@ export async function getProReportDetail(date: string, slug: string) {
   return { ...toSummary(e), proText, proPdfUrl, disclaimer: DISCLAIMER };
 }
 
-export async function getTrackRecordPayload() {
+// Normalise a friendly timeframe to a taxonomy horizon. weekly/monthly -> multi_session,
+// hourly -> intraday, daily -> next_session; an exact horizon passes through.
+function normHorizon(v: string): string {
+  const x = (v || "").trim().toLowerCase();
+  if (["weekly", "monthly", "multi", "multi_session", "week", "month"].includes(x)) return "multi_session";
+  if (["hourly", "intraday", "hour"].includes(x)) return "intraday";
+  if (["daily", "next_session", "session", "day"].includes(x)) return "next_session";
+  return x;
+}
+
+export async function getTrackRecordPayload(opts: { horizon?: string } = {}) {
   const tr: TrackRecord = await getTrackRecord();
   const coerceConf = (raw: string | number): number | null => {
     if (raw === "" || raw == null) return null;
     const n = Number(raw);
     return isNaN(n) ? null : n;
   };
+  const hz = opts.horizon ? normHorizon(opts.horizon) : "";
+  const match = (h?: string) => !hz || (h || "next_session") === hz;
+  const open = tr.open.filter((c) => match(c.horizon)).map((c) => ({ ...c, confidence: coerceConf(c.confidence) }));
+  const scored = tr.scored.filter((x) => match(x.horizon)).map((x) => ({ ...x, confidence: coerceConf(x.confidence) }));
+  // When filtered to one horizon, surface that horizon's headline stats (from byHorizon).
+  const hzEntry = hz ? (tr.byHorizon || []).find((b) => b.horizon === hz) : undefined;
+  const stats = hz
+    ? {
+        ...tr.stats, reportsScored: scored.length, openCalls: open.length,
+        predictionsGraded: hzEntry ? hzEntry.hits + hzEntry.misses : 0,
+        hitRate: hzEntry ? hzEntry.hitRate : null,
+      }
+    : tr.stats;
   return {
     ...tr,
-    open: tr.open.map((c) => ({ ...c, confidence: coerceConf(c.confidence) })),
-    scored: tr.scored.map((s) => ({ ...s, confidence: coerceConf(s.confidence) })),
+    stats,
+    open,
+    scored,
+    ...(hz ? { filteredByHorizon: hz } : {}),
     disclaimer: DISCLAIMER,
   };
 }

@@ -94,10 +94,12 @@ const handler = createMcpHandler(
       {
         title: "Get track record",
         description:
-          "AssetFrame's public track record: number of scored predictions, hit rate, current/longest streak, and per-confidence calibration.",
-        inputSchema: {},
+          "AssetFrame's public track record: scored predictions, hit rate, current/longest streak, per-confidence calibration, and a per-TIMEFRAME (horizon) breakdown (byHorizon). Optionally filter to one timeframe.",
+        inputSchema: {
+          timeframe: z.string().optional().describe("filter to a horizon: 'daily' | 'weekly' | 'hourly' (a.k.a. next_session | multi_session | intraday)"),
+        },
       },
-      async () => json(await getTrackRecordPayload())
+      async ({ timeframe }) => json(await getTrackRecordPayload({ horizon: timeframe }))
     );
 
     server.registerTool(

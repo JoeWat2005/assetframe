@@ -221,7 +221,14 @@ function buildOpenApi() {
           operationId: "getTrackRecord",
           summary: "Get the public track record",
           description:
-            "Return the public, append-only track record: aggregate stats (reports scored, open calls, predictions graded, hit rate, streaks), the open (not-yet-graded) calls, the scored results, and per-confidence calibration. **No API key required.**",
+            "Return the public, append-only track record: aggregate stats (reports scored, open calls, predictions graded, hit rate, streaks), the open (not-yet-graded) calls, the scored results, per-confidence calibration, and a per-TIMEFRAME breakdown (`byHorizon`). Optionally filter to one timeframe with `?timeframe=`. **No API key required.**",
+          parameters: [
+            {
+              name: "timeframe", in: "query", required: false,
+              description: "Filter to one horizon: daily | weekly | hourly (a.k.a. next_session | multi_session | intraday).",
+              schema: { type: "string", enum: ["daily", "weekly", "hourly", "next_session", "multi_session", "intraday"] },
+            },
+          ],
           responses: {
             "200": {
               description: "Track-record stats, open calls, scored results and calibration.",

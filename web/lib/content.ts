@@ -24,6 +24,7 @@ export type OpenCall = {
   confidence: string | number; windowEnd: string; n: number; nManual: number;
   hits: number; scored: boolean; // tracker: hits/n, scored flips true after the engine reruns
   predictions: SubCall[];
+  horizon?: string; // multi-timeframe horizon, derived from the report_id tag
 };
 export type ScoredRow = {
   instrument: string; view: string; confidence: string | number;
@@ -33,6 +34,7 @@ export type ScoredRow = {
   reportId?: string; hits?: string | number; misses?: string | number;
   // Normalized taxonomy fields (JSON-fallback + DB where columns exist).
   assetClass?: string; predType?: string;
+  horizon?: string; // multi-timeframe horizon, derived from the report_id tag
 };
 
 // ---- Derived track-record analytics (Task T12). All additive; empty arrays when the
@@ -49,6 +51,9 @@ export type PredTypePerf = {
 };
 export type RegimePerf = {
   regime: string; reportsScored: number; hits: number; misses: number; hitRate: number | null;
+};
+export type HorizonPerf = {
+  horizon: string; reportsScored: number; hits: number; misses: number; hitRate: number | null;
 };
 export type TimelinePoint = {
   reportId: string; instrument: string; windowEnd: string;
@@ -74,6 +79,7 @@ export type TrackRecord = {
   byAssetClass?: AssetClassPerf[];
   byPredictionType?: PredTypePerf[];
   byRegime?: RegimePerf[];
+  byHorizon?: HorizonPerf[];
   timeline?: TimelinePoint[];
   calibrationCurve?: CalibrationBin[];
   componentVsOutcome?: ComponentOutcome[];
@@ -279,11 +285,13 @@ async function _getTrackRecord(): Promise<TrackRecord> {
         n: Number(r.n) || 0, nManual: Number(r.n_manual) || 0,
         hits: Number(r.hits) || 0, scored: Boolean(r.scored),
         predictions: Array.isArray(r.predictions) ? (r.predictions as SubCall[]) : [],
+        horizon: horizonOf(s(r.report_id)),
       }));
       const scored: ScoredRow[] = scoredRows.map((r) => ({
         instrument: s(r.instrument), view: s(r.view), confidence: s(r.confidence),
         results: s(r.results), hitRate: s(r.hit_rate), windowEnd: s(r.window_end),
         assetClass: s(r.asset_class_key), predType: s(r.prediction_type),
+        reportId: s(r.report_id), horizon: horizonOf(s(r.report_id)),
       }));
       const hits = scoredRows.reduce((a, r) => a + (Number(r.hits) || 0), 0);
       const misses = scoredRows.reduce((a, r) => a + (Number(r.misses) || 0), 0);
@@ -295,13 +303,23 @@ async function _getTrackRecord(): Promise<TrackRecord> {
         hits: r.hits, misses: r.misses, windowEnd: s(r.window_end), ticker: s(r.ticker),
         assetClass: s(r.asset_class_key), predType: s(r.prediction_type), regime: s(r.market_regime),
       })));
+      // by-horizon (multi-timeframe): horizon is encoded in the report_id tag, so no DB column needed.
+      const hzAgg: Record<string, { reports: number; hits: number; misses: number }> = {};
+      for (const r of scoredRows) {
+        const b = (hzAgg[horizonOf(s(r.report_id))] ??= { reports: 0, hits: 0, misses: 0 });
+        b.reports++; b.hits += Number(r.hits) || 0; b.misses += Number(r.misses) || 0;
+      }
+      const byHorizon: HorizonPerf[] = Object.entries(hzAgg).map(([horizon, b]) => ({
+        horizon, reportsScored: b.reports, hits: b.hits, misses: b.misses,
+        hitRate: b.hits + b.misses ? Math.round((1000 * b.hits) / (b.hits + b.misses)) / 10 : null,
+      }));
       return {
         stats: {
           reportsScored: scored.length, openCalls: open.length, predictionsGraded: graded,
           hitRate: graded ? Math.round((1000 * hits) / graded) / 10 : null,
           ...streaks(open),
         },
-        open, scored, calibration: computeCalibration(scoredRows), ...aggregates,
+        open, scored, calibration: computeCalibration(scoredRows), ...aggregates, byHorizon,
       };
     } catch {
       /* fall through */
@@ -321,6 +339,14 @@ async function _getTrackRecord(): Promise<TrackRecord> {
       })))
     : {};
   return { ...derived, ...fallback, stats: { ...fallback.stats, ...streaks(fallback.open || []) } };
+}
+
+// Multi-timeframe horizon, derived from the report_id tag (AF-<date><TAG>-<TICKER>). The engine
+// tags non-primary timeframe tracks: "MS"=multi_session, "H"=intraday; no tag = next_session.
+export function horizonOf(reportId: string): string {
+  const mid = (reportId || "").split("-")[1] || "";
+  const tag = mid.replace(/[0-9]/g, "").toUpperCase();
+  return tag === "MS" ? "multi_session" : tag === "H" ? "intraday" : "next_session";
 }
 
 function computeCalibration(rows: Row[]): TrackRecord["calibration"] {
