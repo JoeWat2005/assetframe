@@ -124,9 +124,10 @@ export default async function AdminPage() {
           <CardHeader>
             <CardTitle className="text-base">1 · Asset universe</CardTitle>
             <CardDescription>
-              What the engine generates reports for. Confirm at least one instrument is <b>Enabled</b> and set
-              the approval policy before generating. <b>Check schedule</b> fills the Scheduled column. Edited
-              here and auto-synced to the box — validated first, so a bad entry can never break generation.
+              The instruments the engine writes reports for. <b>+ Add asset</b> to add one (fill the Basics —
+              the rest defaults from its asset class), or <b>Edit</b> a row to change it. Make sure at least one
+              is <b>Enabled</b>. Changes save straight to the engine — validated first, so a bad entry can&rsquo;t
+              break generation; <b>Check schedule</b> shows what will run next.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -214,7 +215,7 @@ export default async function AdminPage() {
         <CollapsibleSection
           id="sec-box"
           title="Operate the box (advanced)"
-          description="Recovery + deploy controls you only need when something is stuck — Re-run publish, Fetch logs, Service check, Pull + restart, Set config — plus the Danger zone and the box command log."
+          description="Hands-on controls for the cloud box — only needed when something's stuck or you're deploying. Grouped into Recover & inspect, Deploy & restart, and Change a setting, plus a red Danger zone and the box command log below."
         >
           <div className="flex flex-col gap-5">
             <p className="text-xs text-muted-foreground">

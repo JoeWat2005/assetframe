@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { upsertEngineAsset, deleteEngineAsset, setAssetEnabled, setRequireApproval, sendEngineCommand } from "./actions";
 import type { EngineAsset } from "@/lib/engine-assets";
@@ -18,6 +18,17 @@ const TIMEZONES = [
   "UTC", "Europe/London", "America/New_York", "America/Chicago", "America/Los_Angeles",
   "Asia/Tokyo", "Asia/Shanghai", "Asia/Hong_Kong", "Asia/Singapore", "Australia/Sydney",
 ];
+// Sensible engine defaults per asset class. When you pick a class on a NEW asset these prefill the
+// Advanced (session/timing) fields, so a non-expert never has to touch session/window math. They
+// stay fully editable in Advanced, and editing an existing asset never overwrites its real settings.
+const CLASS_DEFAULTS: Record<string, { sessionProfile: string; cadence: string; timezone: string; forecastWindow: string; rollUtc: number }> = {
+  crypto:    { sessionProfile: "crypto_24_7",   cadence: "daily",                  timezone: "UTC",              forecastWindow: "rolling_24h",          rollUtc: 22 },
+  equity:    { sessionProfile: "us_equity_rth", cadence: "trading_day",            timezone: "America/New_York", forecastWindow: "next_regular_session", rollUtc: 0 },
+  index:     { sessionProfile: "us_equity_rth", cadence: "trading_day",            timezone: "America/New_York", forecastWindow: "next_regular_session", rollUtc: 0 },
+  fx:        { sessionProfile: "fx_spot",       cadence: "daily",                  timezone: "UTC",              forecastWindow: "next_liquid_session",  rollUtc: 22 },
+  commodity: { sessionProfile: "fx_spot",       cadence: "weekday_or_market_open", timezone: "UTC",              forecastWindow: "next_liquid_session",  rollUtc: 22 },
+  futures:   { sessionProfile: "cme_futures",   cadence: "weekday_or_market_open", timezone: "America/Chicago",  forecastWindow: "next_session",         rollUtc: 22 },
+};
 
 type Form = {
   id: string; name: string; instrument: string; ticker: string; yahoo: string; eodhd: string;
@@ -50,6 +61,11 @@ function Dropdown({ value, onChange, options, label }: { value: string; onChange
   );
 }
 
+// Small grey section heading inside the add/edit form, so the fields read as labelled groups.
+function Section({ children }: { children: ReactNode }) {
+  return <div className="mb-1 mt-4 text-[11px] font-bold uppercase tracking-wide text-navy/70">{children}</div>;
+}
+
 export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -57,6 +73,7 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(BLANK);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Open the form pre-filled with an existing asset's real settings (edit). Upsert is keyed on id,
   // so saving updates it in place. The id is locked while editing (renaming = delete + re-add).
@@ -80,6 +97,12 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
   const mixedApproval = new Set(assets.map((a) => a.publishPolicy)).size > 1;
   const lastChecked = assets.map((a) => a.dueCheckedAt).filter(Boolean).sort().pop() || "";
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
+  // New assets: derive the internal id from the ticker, and prefill session/timing from the asset
+  // class so the Advanced block can stay closed. Editing an existing asset leaves its settings alone.
+  const setTicker = (v: string) =>
+    setForm((f) => ({ ...f, ticker: v, ...(editingId ? {} : { id: v.toLowerCase().replace(/[^a-z0-9]/g, "") }) }));
+  const setClass = (v: string) =>
+    setForm((f) => (editingId || !CLASS_DEFAULTS[v] ? { ...f, assetClass: v } : { ...f, assetClass: v, ...CLASS_DEFAULTS[v] }));
 
   const run = (fn: () => Promise<Result>, confirmMsg?: string) =>
     start(async () => {
@@ -216,63 +239,79 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
         </div>
       )}
 
-      {/* Add / edit form */}
+      {/* Add / edit form — grouped Basics / Schedule / Horizons / Content / Advanced so it reads
+          top-to-bottom and a non-expert can fill only the Basics (the rest defaults from the class). */}
       {showAdd && (
         <div className="rounded-xl border border-line bg-tile/30 p-4">
-          <div className="mb-3 text-sm font-bold text-navy">{editingId ? `Edit ${form.ticker || editingId}` : "Add a new asset"}</div>
+          <div className="text-sm font-bold text-navy">{editingId ? `Edit ${form.ticker || editingId}` : "Add a new asset"}</div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {editingId
+              ? "Change this instrument's settings, then Save changes."
+              : "Fill in the Basics — session and timing defaults for the asset class are filled in for you. Open Advanced only if you need to change them."}
+          </p>
+
+          <Section>Basics</Section>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">id (lowercase){editingId ? " · locked" : ""}</label><Input className="h-9" value={form.id} onChange={(e) => set("id", e.target.value)} placeholder="btc" readOnly={!!editingId} disabled={!!editingId} /></div>
-            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">ticker</label><Input className="h-9" value={form.ticker} onChange={(e) => set("ticker", e.target.value)} placeholder="BTC" /></div>
-            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Yahoo symbol (price feed)</label><Input className="h-9" value={form.yahoo} onChange={(e) => set("yahoo", e.target.value)} placeholder="BTC-USD" /></div>
-            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">EODHD symbol (optional)</label><Input className="h-9" value={form.eodhd} onChange={(e) => set("eodhd", e.target.value)} placeholder="GBPUSD.FOREX" /></div>
-            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">name</label><Input className="h-9" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Bitcoin" /></div>
-            <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">instrument (full name)</label><Input className="h-9" value={form.instrument} onChange={(e) => set("instrument", e.target.value)} placeholder="Bitcoin / USD (aggregate spot)" /></div>
-            <Dropdown label="asset class" value={form.assetClass} onChange={(v) => set("assetClass", v)} options={ASSET_CLASSES} />
-            <Dropdown label="session profile" value={form.sessionProfile} onChange={(v) => set("sessionProfile", v)} options={SESSION_PROFILES} />
-            <Dropdown label="cadence" value={form.cadence} onChange={(v) => set("cadence", v)} options={CADENCES} />
-            <Dropdown label="timezone" value={form.timezone} onChange={(v) => set("timezone", v)} options={TIMEZONES} />
-            <Dropdown label="forecast window" value={form.forecastWindow} onChange={(v) => set("forecastWindow", v)} options={FORECAST_WINDOWS} />
-            <Dropdown label="publish policy" value={form.publishPolicy} onChange={(v) => set("publishPolicy", v)} options={["approval_required", "auto"]} />
-            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">roll_utc (0–23)</label><Input className="h-9" type="number" value={form.rollUtc} onChange={(e) => set("rollUtc", Number(e.target.value))} /></div>
-            <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">related (comma list, optional)</label><Input className="h-9" value={form.related} onChange={(e) => set("related", e.target.value)} placeholder="ETH-USD" /></div>
-            <div className="sm:col-span-2 lg:col-span-3">
-              <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">timeframes — multi-timeframe: ONE report, a prediction track per box (none = use the forecast window above)</label>
-              <div className="flex flex-wrap gap-2">
-                {FORECAST_WINDOWS.map((w) => {
-                  const on = form.timeframes.includes(w);
-                  return (
-                    <button
-                      key={w} type="button"
-                      onClick={() => set("timeframes", on ? form.timeframes.filter((t) => t !== w) : [...form.timeframes, w])}
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${on ? "bg-navy text-white" : "bg-tile text-muted-foreground hover:bg-line"}`}
-                    >
-                      {w}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            {form.cadence === "weekly" && (
-              <div>
-                <label className="mb-1 block text-[11px] font-semibold text-muted-foreground">cadence day (weekly): 0–6 (Mon=0) or mon–sun</label>
-                <Input className="h-9" value={form.cadenceDay} onChange={(e) => set("cadenceDay", e.target.value)} placeholder="fri" />
-              </div>
-            )}
+            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Ticker</label><Input className="h-9" value={form.ticker} onChange={(e) => setTicker(e.target.value)} placeholder="BTC" /></div>
+            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Display name</label><Input className="h-9" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Bitcoin" /></div>
+            <Dropdown label="Asset class" value={form.assetClass} onChange={setClass} options={ASSET_CLASSES} />
+            <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Full instrument name</label><Input className="h-9" value={form.instrument} onChange={(e) => set("instrument", e.target.value)} placeholder="Bitcoin / USD (aggregate spot)" /></div>
+            <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Price symbol (Yahoo)</label><Input className="h-9" value={form.yahoo} onChange={(e) => set("yahoo", e.target.value)} placeholder="BTC-USD" /></div>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Button size="sm" disabled={pending} onClick={submitAdd}>{pending ? "Saving…" : editingId ? "Save changes" : "Save asset"}</Button>
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <input type="checkbox" className="size-4 accent-navy" checked={form.enabled} onChange={(e) => set("enabled", e.target.checked)} /> enabled
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            The <b>price symbol</b> is how the engine pulls candles — e.g. <span className="font-mono">BTC-USD</span>, <span className="font-mono">AAPL</span>, <span className="font-mono">GBPUSD=X</span>, <span className="font-mono">GC=F</span> (gold).
+            {!editingId && <> Saved under id <span className="font-mono">{form.id || "—"}</span> (from the ticker).</>}
+          </p>
+
+          <Section>Schedule &amp; publishing</Section>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Dropdown label="How often (cadence)" value={form.cadence} onChange={(v) => set("cadence", v)} options={CADENCES} />
+            {form.cadence === "weekly" && (
+              <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">Day of week (mon–sun)</label><Input className="h-9" value={form.cadenceDay} onChange={(e) => set("cadenceDay", e.target.value)} placeholder="fri" /></div>
+            )}
+            <Dropdown label="Publishing" value={form.publishPolicy} onChange={(v) => set("publishPolicy", v)} options={["approval_required", "auto"]} />
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            <b>Cadence</b> = how often a report generates. <b>Publishing</b>: <span className="font-mono">auto</span> goes live immediately; <span className="font-mono">approval_required</span> holds each one for you in step 3.
+          </p>
+
+          <Section>Forecast horizons</Section>
+          <p className="mb-1.5 text-[11px] text-muted-foreground">
+            One report can make several calls, each scored on its own window. <b>Click a chip to add it</b> — the first you pick (★) is the published headline; the rest are extra tracks. Pick none for a single call over the default window (in Advanced).
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {FORECAST_WINDOWS.map((w) => {
+              const i = form.timeframes.indexOf(w);
+              const on = i >= 0;
+              return (
+                <button
+                  key={w} type="button"
+                  onClick={() => set("timeframes", on ? form.timeframes.filter((t) => t !== w) : [...form.timeframes, w])}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${on ? "bg-navy text-white" : "bg-tile text-muted-foreground ring-1 ring-inset ring-line hover:bg-line"}`}
+                  title={on ? "Selected — click to remove" : "Click to add this horizon"}
+                >
+                  {on ? `${i === 0 ? "★ " : ""}${w}` : `+ ${w}`}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {form.timeframes.length === 0
+              ? "No extra horizons — a single call over the forecast window (Advanced)."
+              : `${form.timeframes.length} horizon track${form.timeframes.length > 1 ? "s" : ""} · ★ published headline = ${form.timeframes[0]}.`}
+          </p>
+
+          <Section>Report content</Section>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Include this instrument in the daily 05:00 run.">
+              <input type="checkbox" className="size-4 accent-navy" checked={form.enabled} onChange={(e) => set("enabled", e.target.checked)} /> Enabled (in daily run)
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Pull equity fundamentals (P/E, margins, latest earnings) into the Pro report. No-op for non-equities.">
-              <input type="checkbox" className="size-4 accent-navy" checked={form.includeFundamentals} onChange={(e) => set("includeFundamentals", e.target.checked)} /> fundamentals
-            </label>
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Research news/catalysts in the brief (WebSearch). Off = technical-focus.">
-              <input type="checkbox" className="size-4 accent-navy" checked={form.includeNews} onChange={(e) => set("includeNews", e.target.checked)} /> news
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Add P/E, margins and latest earnings to the Pro report. Equities only.">
+              <input type="checkbox" className="size-4 accent-navy" checked={form.includeFundamentals} onChange={(e) => set("includeFundamentals", e.target.checked)} /> Fundamentals
             </label>
             {form.includeFundamentals && (
-              <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Where equity fundamentals come from: auto = follow the global data provider; twelvedata = always fetch from Twelve Data; none = never fetch.">
-                source
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                from
                 <Select value={form.fundamentalsSource} onValueChange={(v) => set("fundamentalsSource", v)}>
                   <SelectTrigger className="h-8 w-[124px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -281,6 +320,37 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
                 </Select>
               </label>
             )}
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Research news / catalysts in the brief via web search. Off = technical-only.">
+              <input type="checkbox" className="size-4 accent-navy" checked={form.includeNews} onChange={(e) => set("includeNews", e.target.checked)} /> News &amp; catalysts
+            </label>
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            <b>Fundamentals</b> (equities) adds valuation, margins &amp; earnings to Pro; <b>from</b> sets where they come from (<span className="font-mono">auto</span> follows the global feed, <span className="font-mono">twelvedata</span> forces it, <span className="font-mono">none</span> skips). <b>News</b> researches catalysts.
+          </p>
+
+          <button
+            type="button" onClick={() => setAdvancedOpen((s) => !s)}
+            className="mt-4 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-navy/70 hover:text-navy"
+          >
+            <span>{advancedOpen ? "▾" : "▸"}</span> Advanced — data feed &amp; session timing
+          </button>
+          {advancedOpen && (
+            <>
+              <p className="mb-2 mt-1 text-[11px] text-muted-foreground">Defaults come from the asset class above — only change these if you know you need to.</p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <Dropdown label="session profile" value={form.sessionProfile} onChange={(v) => set("sessionProfile", v)} options={SESSION_PROFILES} />
+                <Dropdown label="forecast window (default horizon)" value={form.forecastWindow} onChange={(v) => set("forecastWindow", v)} options={FORECAST_WINDOWS} />
+                <Dropdown label="timezone" value={form.timezone} onChange={(v) => set("timezone", v)} options={TIMEZONES} />
+                <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">roll hour (UTC, 0–23)</label><Input className="h-9" type="number" value={form.rollUtc} onChange={(e) => set("rollUtc", Number(e.target.value))} /></div>
+                <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">EODHD symbol (optional)</label><Input className="h-9" value={form.eodhd} onChange={(e) => set("eodhd", e.target.value)} placeholder="GBPUSD.FOREX" /></div>
+                <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">related tickers (comma list, optional)</label><Input className="h-9" value={form.related} onChange={(e) => set("related", e.target.value)} placeholder="ETH-USD" /></div>
+              </div>
+            </>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button size="sm" disabled={pending} onClick={submitAdd}>{pending ? "Saving…" : editingId ? "Save changes" : "Save asset"}</Button>
+            <Button size="sm" variant="outline" disabled={pending} onClick={() => { setShowAdd(false); setEditingId(null); setForm(BLANK); setAdvancedOpen(false); }}>Cancel</Button>
           </div>
         </div>
       )}
