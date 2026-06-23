@@ -24,12 +24,14 @@ type Form = {
   assetClass: string; sessionProfile: string; cadence: string; timezone: string;
   rollUtc: number; related: string; forecastWindow: string; publishPolicy: string; enabled: boolean;
   cadenceDay: string; timeframes: string[]; includeFundamentals: boolean; includeNews: boolean;
+  fundamentalsSource: string;
 };
 const BLANK: Form = {
   id: "", name: "", instrument: "", ticker: "", yahoo: "", eodhd: "", assetClass: "crypto",
   sessionProfile: "crypto_24_7", cadence: "daily", timezone: "UTC", rollUtc: 22, related: "",
   forecastWindow: "rolling_24h", publishPolicy: "approval_required", enabled: true,
   cadenceDay: "", timeframes: [], includeFundamentals: false, includeNews: true,
+  fundamentalsSource: "auto",
 };
 
 type Result = { ok: boolean; message: string };
@@ -67,6 +69,7 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
       forecastWindow: a.forecastWindow, publishPolicy: a.publishPolicy, enabled: a.enabled,
       cadenceDay: a.cadenceDay, timeframes: a.timeframes,
       includeFundamentals: a.includeFundamentals ?? (a.assetClass === "equity"), includeNews: a.includeNews,
+      fundamentalsSource: a.fundamentalsSource,
     });
     setEditingId(a.id);
     setShowAdd(true);
@@ -267,6 +270,17 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Research news/catalysts in the brief (WebSearch). Off = technical-focus.">
               <input type="checkbox" className="size-4 accent-navy" checked={form.includeNews} onChange={(e) => set("includeNews", e.target.checked)} /> news
             </label>
+            {form.includeFundamentals && (
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Where equity fundamentals come from: auto = follow the global data provider; twelvedata = always fetch from Twelve Data; none = never fetch.">
+                source
+                <Select value={form.fundamentalsSource} onValueChange={(v) => set("fundamentalsSource", v)}>
+                  <SelectTrigger className="h-8 w-[124px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>{["auto", "twelvedata", "none"].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectGroup>
+                  </SelectContent>
+                </Select>
+              </label>
+            )}
           </div>
         </div>
       )}
