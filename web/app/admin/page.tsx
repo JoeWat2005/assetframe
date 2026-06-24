@@ -78,7 +78,7 @@ export default async function AdminPage() {
       <Hero title="Admin" tag="Engine control plane — visible to admins only." />
       <div className="mx-auto max-w-[1800px] px-4 py-8 sm:px-6 lg:px-8">
         {/* === Engine status bar (promoted to the top so it's the first thing you see) === */}
-        <div className="rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10">
+        <div className={`rounded-xl px-4 py-3 ring-1 ${engineState.online ? "bg-card ring-foreground/10" : "bg-[#fff5f5] ring-[#cf222e]/40"}`}>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
@@ -111,7 +111,7 @@ export default async function AdminPage() {
           {!engineState.online && (
             <p className="mt-2 text-xs text-[#cf222e]">
               The box hasn&rsquo;t checked in — scheduled and manual runs won&rsquo;t execute until it&rsquo;s back.
-              Open the manual&rsquo;s Troubleshooting, or use <b>Restart poller</b> in <b>Operate the box</b> below.
+              Open the manual&rsquo;s Troubleshooting, or use <b>Restart engine</b> in <b>Operate the box</b> below.
             </p>
           )}
         </div>
@@ -148,7 +148,7 @@ export default async function AdminPage() {
           <CardContent className="flex flex-col gap-5">
             <GenerateForm assets={assets} />
             <div className="border-t border-line pt-4">
-              <h3 className="text-sm font-bold text-navy">Score closed windows</h3>
+              <h3 className="text-sm font-bold text-navy">Score now</h3>
               <p className="mb-2 text-xs text-muted-foreground">
                 Grade any prediction windows that have closed into the ledger (your public track record).
                 Generates no new reports — use it right after a backdated run, or any time a live window has

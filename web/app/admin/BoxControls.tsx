@@ -117,7 +117,7 @@ export default function BoxControls({ hideScoreNow = false }: { hideScoreNow?: b
           <Action label="Re-publish reports" disabled={pending} onClick={() => run("run_maintenance")}
             desc="Re-upload the latest reports to R2 + database. Use if a run generated but failed to publish." />
           {!hideScoreNow && (
-            <Action label="Score closed windows" disabled={pending} onClick={() => run("run_scoring")}
+            <Action label="Score now" disabled={pending} onClick={() => run("run_scoring")}
               desc="Grade any prediction windows that have closed into the ledger. Makes no new reports." />
           )}
           <Action label="Fetch recent logs" disabled={pending} onClick={() => run("tail_logs", { lines: 200 })}

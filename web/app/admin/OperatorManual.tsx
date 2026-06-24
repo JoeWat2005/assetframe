@@ -8,7 +8,7 @@ import { BookOpen, ChevronDown } from "lucide-react";
 // #sec-generate / #sec-approve), so reading a step and doing it are one click apart.
 //
 // Content is hand-rendered JSX (no markdown dependency) and is kept ACCURATE to the real controls:
-// Set config has exactly 3 keys; Grant/Revoke Pro is comp-only (paid subs → Clerk dashboard); the
+// Change a setting has 5 keys; Grant/Revoke Pro is comp-only (paid subs → Clerk dashboard); the
 // approval toggle is global (per-asset policy lives in Add/Edit); cancellation is co-operative.
 
 const KEY = "af-admin-manual-collapsed";
@@ -214,19 +214,19 @@ export default function OperatorManual() {
               <li><B>Editions browser</B> — search published editions; toggle <B>Hidden</B> to unpublish (files stay in R2; restorable).</li>
             </Ref>
             <Ref title="Operate the box (no data loss)">
-              <li><B>Re-run publish</B> — re-runs export → R2 → Neon <i>without</i> regenerating. Fixes a generated-but-unpublished run.</li>
-              <li><B>Fetch logs</B> — pulls ~200 recent poller lines into the Box command log.</li>
-              <li><B>Service check</B> — pings Neon, R2 and Upstash from the box.</li>
+              <li><B>Re-publish reports</B> — re-runs export → R2 → Neon <i>without</i> regenerating. Fixes a generated-but-unpublished run.</li>
+              <li><B>Fetch recent logs</B> — pulls ~200 recent poller lines into the Box command log.</li>
+              <li><B>Check services</B> — pings Neon, R2 and Upstash from the box.</li>
               <li><B>Clear wake flag</B> — clears a stuck wake nudge.</li>
-              <li><B>Pull + restart</B> — deploy latest code + deps, then restart. <B>Restart poller</B> — bounce the process (picks up config).</li>
-              <li><B>Set config</B> — writes ONE allow-listed key: <code className="text-[11px]">ASSETFRAME_AUTHOR_BRIEFS</code>, <code className="text-[11px]">ADVISOR_DATA_PROVIDER</code>, <code className="text-[11px]">ASSETFRAME_RUN_TIMEOUT</code> (integer 60–86400), or <code className="text-[11px]">ASSETFRAME_BRIEF_MODEL</code> (the Claude model that writes briefs — e.g. <code className="text-[11px]">claude-sonnet-4-6</code> for value, <code className="text-[11px]">claude-haiku-4-5-20251001</code> for cheapest, <code className="text-[11px]">claude-opus-4-8</code> for best). Never secrets. Applies on the next Restart.</li>
+              <li><B>Deploy latest code</B> — deploy latest code + deps, then restart. <B>Restart engine</B> — bounce the process (picks up config).</li>
+              <li><B>Change a setting</B> — writes ONE engine setting: <code className="text-[11px]">ASSETFRAME_AUTHOR_BRIEFS</code>, <code className="text-[11px]">ADVISOR_DATA_PROVIDER</code>, <code className="text-[11px]">ASSETFRAME_RUN_TIMEOUT</code> (integer 60–86400), or <code className="text-[11px]">ASSETFRAME_BRIEF_MODEL</code> (the Claude model that writes briefs — e.g. <code className="text-[11px]">claude-sonnet-4-6</code> for value, <code className="text-[11px]">claude-haiku-4-5-20251001</code> for cheapest, <code className="text-[11px]">claude-opus-4-8</code> for best), or <code className="text-[11px]">ASSETFRAME_RETENTION_DAYS</code> (days of local reports/runs to keep on the box; 0 = forever). Never secrets. Applies on the next Restart.</li>
             </Ref>
             <Ref title="Danger zone (irreversible)" danger>
               <li><B>Reset ledger</B> — empties the outcome ledger (the track-record source). Ledger only.</li>
               <li><B>Clear reports</B> — wipes the box&rsquo;s working dirs. Ledger untouched.</li>
               <li><B>Clear R2 files</B> — deletes report files from R2 (need re-publishing).</li>
               <li><B>Clear catalog (Neon)</B> — deletes editions + scored results from the public catalog.</li>
-              <li><B>Full reset (all four)</B> — does all of the above in a safe order (Neon first; stops if that fails, so no orphans). Use only for a clean start before launch.</li>
+              <li><B>Full reset (everything)</B> — does all of the above in a safe order (Neon first; stops if that fails, so no orphans). Use only for a clean start before launch.</li>
             </Ref>
           </div>
 
@@ -234,17 +234,17 @@ export default function OperatorManual() {
           <div className="mt-2 space-y-2.5">
             <Fix symptom="Box is Offline (status red).">
               Runs won&rsquo;t execute until it checks back in. Give it a minute (a blip self-heals) →{" "}
-              <B>Restart poller</B> (systemd relaunches it in seconds) → still offline,{" "}
-              <B>Pull + restart</B> → confirm with <B>Service check</B> and a fresh check-in.
+              <B>Restart engine</B> (systemd relaunches it in seconds) → still offline,{" "}
+              <B>Deploy latest code</B> → confirm with <B>Check services</B> and a fresh check-in.
             </Fix>
             <Fix symptom="A run is stuck in running / nothing is queuing.">
               Confirm Online + recent check-in first. A queued run that never starts is often a stuck wake
               flag — <B>Clear wake flag</B>. <B>Cancel</B> a queued/running request in the queue (it stops at
-              the next safe point — there&rsquo;s no force-kill). <B>Fetch logs</B> for the error. &ldquo;All
+              the next safe point — there&rsquo;s no force-kill). <B>Fetch recent logs</B> for the error. &ldquo;All
               due&rdquo; with nothing enabled silently does nothing.
             </Fix>
             <Fix symptom="A run finished but nothing published.">
-              It generated locally but export → R2 → Neon failed (often transient). Click <B>Re-run publish</B> — it re-publishes without regenerating.
+              It generated locally but export → R2 → Neon failed (often transient). Click <B>Re-publish reports</B> — it re-publishes without regenerating.
             </Fix>
             <Fix symptom="Nothing is in Pending approval after a run.">
               Either the run failed (check Recent engine runs), or the asset&rsquo;s policy is <B>Auto-publish</B>
@@ -259,7 +259,7 @@ export default function OperatorManual() {
               can&rsquo;t run the migration itself; surface it to engineering.
             </Fix>
             <Fix symptom="I want a clean slate before launch.">
-              Use <B>Full reset (all four)</B> — it clears Neon catalog + box reports + ledger + R2 in a safe
+              Use <B>Full reset (everything)</B> — it clears Neon catalog + box reports + ledger + R2 in a safe
               order so nothing is orphaned. Then redo the first-run checklist.
             </Fix>
           </div>
@@ -286,7 +286,7 @@ export default function OperatorManual() {
             <Term t="Backdate (as-of)">generate a report dated to the past so its window is already closed and scorable now.</Term>
             <Term t="The box / poller">the Oracle Cloud VM running the engine; polls the queue every ~30s. No inbound ports.</Term>
             <Term t="Wake flag">a low-latency nudge that makes the box poll sooner after you queue work.</Term>
-            <Term t="Re-run publish">re-runs export → R2 → Neon for a run that generated but didn&rsquo;t publish.</Term>
+            <Term t="Re-publish reports">re-runs export → R2 → Neon for a run that generated but didn&rsquo;t publish.</Term>
             <Term t="Automation paused">the automatic 05:00 UTC batch is off; manual runs still work.</Term>
           </dl>
         </div>
