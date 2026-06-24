@@ -4,7 +4,7 @@ import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileTex
 import { getAllEditions, getHiddenEditions } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
-import { getEngineState, getGenerationRequests, getEngineRuns, getEngineCommands, getBacktestResults } from "@/lib/engine";
+import { getEngineState, getGenerationRequests, getEngineRuns, getEngineCommands, getBacktestResults, getBacktestPredictions } from "@/lib/engine";
 import { getEngineAssets } from "@/lib/engine-assets";
 import { Hero, Note } from "@/components/ui";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -44,9 +44,9 @@ export default async function AdminPage() {
   if (!ent.signedIn) redirect("/sign-in");
   if (!ent.admin) redirect("/account");
 
-  const [stats, catalog, pending, auditLog, feedback, engineState, genRequests, engineRuns, engineCommands, engineAssets, backtestResults] = await Promise.all([
+  const [stats, catalog, pending, auditLog, feedback, engineState, genRequests, engineRuns, engineCommands, engineAssets, backtestResults, backtestPredictions] = await Promise.all([
     getAdminStats(), getAllEditions(), getHiddenEditions(), getAuditLog(), getFeedback(),
-    getEngineState(), getGenerationRequests(), getEngineRuns(), getEngineCommands(), getEngineAssets(), getBacktestResults(),
+    getEngineState(), getGenerationRequests(), getEngineRuns(), getEngineCommands(), getEngineAssets(), getBacktestResults(), getBacktestPredictions(),
   ]);
   const titleById = new Map(catalog.map((e) => [`${e.date}/${e.slug}`, e.instrument]));
 
@@ -171,7 +171,7 @@ export default async function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <BacktestResults rows={backtestResults} />
+            <BacktestResults rows={backtestResults} predictions={backtestPredictions} />
           </CardContent>
         </Card>
 

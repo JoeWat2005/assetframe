@@ -109,6 +109,20 @@ export type BacktestResult = {
   createdAt: string; // "YYYY-MM-DD HH:MI" UTC
 };
 
+// A single SANDBOX BACKTEST prediction row — the full per-prediction list the engine syncs into
+// Neon's backtest_predictions, keyed to each backtest_results.report_id. Admin-only; never read by
+// the public site. `outcome` ∈ Y (Hit) | N (Miss) | NT (No-trigger) | MANUAL | null — MANUAL/null
+// for a manual prediction means an admin still needs to grade it by hand.
+export type BacktestPrediction = {
+  reportId: string;
+  predId: string;
+  ptype: string; // e.g. "close_above" — underscores become spaces in the UI
+  ptext: string;
+  manual: boolean;
+  outcome: string | null; // Y | N | NT | MANUAL | null
+  sort: number;
+};
+
 const s = (v: unknown): string => (v == null ? "" : String(v));
 const numOrNull = (v: unknown): number | null => {
   if (v == null) return null;
@@ -293,6 +307,36 @@ export async function getBacktestResults(limit = 300): Promise<BacktestResult[]>
       hitRate: numOrNull(r.hit_rate),
       scoredAt: s(r.scored_at),
       createdAt: s(r.created_at),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// The full per-prediction list for every sandbox backtest result, keyed to backtest_results.report_id
+// (admin-only). Ordered by report_id then sort so the BacktestResults card can group + render each
+// report's predictions in engine order. Returns [] when the DB / table isn't there yet (so the admin
+// page renders before the backtest_predictions migration is applied). Test data only — never public.
+export async function getBacktestPredictions(limit = 5000): Promise<BacktestPrediction[]> {
+  if (!sql) return [];
+  try {
+    const rows = (await sql.query(
+      `SELECT report_id, coalesce(pred_id, '') AS pred_id, coalesce(ptype, '') AS ptype,
+              coalesce(ptext, '') AS ptext, coalesce(manual, false) AS manual,
+              outcome, coalesce(sort, 0) AS sort
+         FROM backtest_predictions
+        ORDER BY report_id, sort
+        LIMIT $1`,
+      [limit]
+    )) as Record<string, unknown>[];
+    return rows.map((r) => ({
+      reportId: s(r.report_id),
+      predId: s(r.pred_id),
+      ptype: s(r.ptype),
+      ptext: s(r.ptext),
+      manual: Boolean(r.manual),
+      outcome: r.outcome == null ? null : s(r.outcome),
+      sort: Number(r.sort) || 0,
     }));
   } catch {
     return [];
