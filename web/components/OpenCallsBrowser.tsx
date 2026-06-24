@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import type { OpenCall } from "@/lib/content";
 import {
   ASSET_CATEGORIES, CONFIDENCE_BANDS, CONFIDENCE_BAND_LABEL,
-  assetCategory, confidenceBand,
+  assetCategory, confidenceBand, reportUrl,
 } from "@/lib/taxonomy";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -163,6 +164,7 @@ export default function OpenCallsBrowser({
         ) : (
           visible.map((c) => {
             const isOpen = expanded.has(c.reportId);
+            const url = reportUrl(c.reportId);
             const panelId = `call-${c.reportId}`;
             const won = c.scored && c.hits * 2 > c.n; // strict majority → counts to the streak
             const trackColor = !c.scored ? "#9a6700" : won ? "#1a7f37" : "#57606a";
@@ -231,6 +233,14 @@ export default function OpenCallsBrowser({
                     <p className="mt-2 text-xs text-muted-foreground">
                       Graded Hit / Miss / No-trigger against the tape after {c.windowEnd} UTC.
                     </p>
+                    {url && (
+                      <Link
+                        href={url}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-navy underline underline-offset-2 hover:text-navy/80"
+                      >
+                        Read the full report →
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>

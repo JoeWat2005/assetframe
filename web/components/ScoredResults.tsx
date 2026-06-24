@@ -1,6 +1,8 @@
 "use client";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { ScoredRow } from "@/lib/content";
+import { reportUrl } from "@/lib/taxonomy";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,
@@ -63,11 +65,12 @@ export default function ScoredResults({ rows }: { rows: ScoredRow[] }) {
               // those are ungraded, not failures. Show a neutral "—", never a red bare "%".
               const known = r.hitRate !== "" && r.hitRate != null && Number.isFinite(Number(r.hitRate));
               const good = known && Number(r.hitRate) >= 50;
+              const url = reportUrl(r.reportId);
               const pill = !known ? "bg-tile text-muted-foreground"
                 : good ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#ffebe9] text-[#cf222e]";
               return (
                 <tr key={`${r.instrument}-${r.windowEnd}-${safePage * PAGE + i}`} className="border-t border-line">
-                  <td className="p-3"><b>{r.instrument}</b></td><td className="p-3">{r.view}</td>
+                  <td className="p-3">{url ? <Link href={url} className="font-bold text-navy underline underline-offset-2 hover:text-navy/80">{r.instrument}</Link> : <b>{r.instrument}</b>}</td><td className="p-3">{r.view}</td>
                   <td className="p-3">{r.confidence}</td><td className="p-3">{r.results}</td>
                   <td className="p-3"><span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${pill}`}>{known ? `${r.hitRate}%` : "—"}</span></td>
                   <td className="p-3">{r.windowEnd}</td>

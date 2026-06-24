@@ -17,6 +17,21 @@ export function assetCategory(assetClass: string): AssetCategory | "Other" {
   return "Other";
 }
 
+/**
+ * Build the public article URL for a report_id (`AF-<YYYYMMDD>[tag]-<SLUG>`) → `/reports/<YYYY-MM-DD>/<SLUG>`.
+ * Returns null when the id can't be parsed, so callers can omit the link. Any horizon tag (`…MS` / `…H`)
+ * or backdate `HHMM` after the date is dropped — every track of a report links to its one published edition.
+ */
+export function reportUrl(reportId?: string | null): string | null {
+  const parts = (reportId || "").split("-");
+  if (parts.length < 3 || parts[0] !== "AF") return null;
+  const ymd = (parts[1] || "").slice(0, 8); // leading YYYYMMDD, dropping any HHMM / MS / H tag
+  if (!/^\d{8}$/.test(ymd)) return null;
+  const slug = parts.slice(2).join("-"); // the edition slug (the sanitized ticker)
+  if (!slug) return null;
+  return `/reports/${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}/${encodeURIComponent(slug)}`;
+}
+
 export const DIRECTIONS = ["Bullish", "Bearish", "Neutral"] as const;
 export type Direction = (typeof DIRECTIONS)[number];
 
