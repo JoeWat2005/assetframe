@@ -80,7 +80,10 @@ export async function setMyAdminTier(tier: "pro" | "free"): Promise<Result> {
 export async function setEditionHidden(id: string, hidden: boolean): Promise<Result> {
   const ent = await requireAdmin();
   if (!sql) return { ok: false, message: "Database not configured." };
-  if (!/^\d{4}-\d{2}-\d{2}\/[A-Za-z0-9_-]+$/.test(id)) return { ok: false, message: "Bad edition id." };
+  // Edition ids are `<YYYY-MM-DD>/<slug>`. Allow the full real slug charset (incl. '.') so a dotted
+  // or edge ticker (e.g. BRK.B) can still be toggled — the engine sanitizes slugs, and the UPDATE is
+  // parameterized, so this is just shape validation, not the security boundary.
+  if (!/^\d{4}-\d{2}-\d{2}\/[A-Za-z0-9._-]+$/.test(id)) return { ok: false, message: "Bad edition id." };
   try {
     await sql.query(`UPDATE editions SET hidden = $2 WHERE id = $1`, [id, hidden]);
     await logAudit({

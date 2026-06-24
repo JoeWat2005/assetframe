@@ -1,5 +1,5 @@
 "use client";
-import type { GenerationRequest, EngineRun, EngineCommand } from "@/lib/engine";
+import type { GenerationRequest, EngineRun, EngineRunResults, EngineRunAsset, EngineCommand } from "@/lib/engine";
 import CancelButton from "./CancelButton";
 import Paginated from "@/components/Paginated";
 
@@ -39,6 +39,57 @@ const STATUS_STYLES: Record<string, string> = {
 function StatusPill({ status }: { status: string }) {
   const cls = STATUS_STYLES[status] ?? "bg-tile text-muted-foreground";
   return <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cls}`}>{status || "—"}</span>;
+}
+
+// Per-asset job statuses the engine writes into results.assets[].status (mirrors run_daily.py).
+// Anything not in OK_STATUSES is a degraded/failed asset even when the overall run says "done".
+const OK_STATUSES = new Set(["generated", "forecast_only"]);
+const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String).filter(Boolean) : []);
+const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+// Colour the per-ticker chips: green for a success, amber for a degraded/failed asset.
+function assetChipClass(status: string): string {
+  return OK_STATUSES.has(status) ? "bg-[#dafbe1] text-[#1a7f37]" : "bg-[#fff7e6] text-[#9a6700]";
+}
+
+// Decide whether a "done" run actually hid a partial failure, and build the one-line summary.
+// Returns null when results are absent (older runs), the run isn't "done", or everything succeeded —
+// in those cases the plain status pill is signal enough. Never throws on a null/old-shape results.
+type RunSignal = { headline: string; assets: EngineRunAsset[] };
+function partialFailure(status: string, results: EngineRunResults | null): RunSignal | null {
+  if (status !== "done" || !results || typeof results !== "object") return null;
+  const needsBrief = arr(results.needs_brief);
+  const briefRejected = arr(results.brief_rejected);
+  const briefStandAside = arr(results.brief_stand_aside);
+  const jobErrors = Array.isArray(results.job_errors) ? results.job_errors : [];
+  const assets = Array.isArray(results.assets) ? results.assets : [];
+  // Tickers that ended in a non-OK status not already covered by the named buckets above
+  // (e.g. qa_failed, data_error, scaffold_error).
+  const failedAssets = assets.filter((a) => a && a.status && !OK_STATUSES.has(String(a.status)));
+  const generated = num(results.generated);
+  const due = num(results.assets_due) ?? num(results.assets_selected);
+  const shortfall = generated != null && due != null && generated < due;
+
+  if (
+    !shortfall && !needsBrief.length && !briefRejected.length &&
+    !briefStandAside.length && !jobErrors.length && !failedAssets.length
+  ) {
+    return null; // clean done — no amber needed
+  }
+
+  const parts: string[] = [];
+  if (generated != null && due != null) parts.push(`${generated} of ${due} generated`);
+  if (needsBrief.length) parts.push(`needs brief: ${needsBrief.join(", ")}`);
+  if (briefRejected.length) parts.push(`brief rejected: ${briefRejected.join(", ")}`);
+  if (briefStandAside.length) parts.push(`stood aside: ${briefStandAside.join(", ")}`);
+  // QA / data / scaffold failures surfaced from per-asset statuses (deduped against the buckets above).
+  const named = new Set([...needsBrief, ...briefRejected, ...briefStandAside].map((t) => t.toUpperCase()));
+  const otherFailed = failedAssets
+    .map((a) => String(a.ticker ?? a.asset_id ?? "?"))
+    .filter((t) => !named.has(t.toUpperCase()));
+  if (otherFailed.length) parts.push(`failed: ${otherFailed.join(", ")}`);
+
+  return { headline: parts.join(" · ") || "partial failure", assets };
 }
 
 // Render a scope jsonb ({"all_due":true} | {"assets":[...]}) as a short human summary.
@@ -93,11 +144,21 @@ export function RunLog({ rows }: { rows: EngineRun[] }) {
       keyOf={(r) => r.id}
       render={(r) => {
         const detail = [r.errors, r.logExcerpt].filter(Boolean).join("\n\n");
+        // A "done" run can still hide a partial failure (an asset that QA-failed / needs a brief /
+        // was rejected while the rest succeeded). Surface it in amber instead of a plain green pill.
+        const signal = partialFailure(r.status, r.results);
         return (
           <div className="px-6 py-2.5 text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <StatusPill status={r.status} />
+                {signal && (
+                  <span
+                    className="inline-block size-2 shrink-0 rounded-full bg-[#bf8700]"
+                    title="Run finished but some assets degraded — see the per-asset summary below."
+                    aria-hidden
+                  />
+                )}
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{r.trigger || "—"}</span>
                 <span className="truncate font-medium text-navy">{r.id}</span>
               </div>
@@ -105,6 +166,27 @@ export function RunLog({ rows }: { rows: EngineRun[] }) {
                 {r.startedAt || "—"}{r.finishedAt ? ` → ${r.finishedAt}` : ""}
               </span>
             </div>
+            {signal && (
+              <>
+                <p className="mt-1 text-[11px] font-semibold text-[#9a6700]">{signal.headline}</p>
+                {signal.assets.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {signal.assets.map((a, i) => {
+                      const st = String(a.status ?? "—");
+                      return (
+                        <span
+                          key={`${a.asset_id ?? a.ticker ?? i}`}
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${assetChipClass(st)}`}
+                          title={st}
+                        >
+                          {String(a.ticker ?? a.asset_id ?? "?")} · {st}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
             {detail && (
               <details className="mt-1">
                 <summary className="cursor-pointer text-[11px] font-semibold text-navy">

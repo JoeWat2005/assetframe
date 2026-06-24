@@ -264,8 +264,12 @@ export default function OperatorManual() {
               It generated locally but export → R2 → Neon failed (often transient). Click <B>Re-publish reports</B> — it re-publishes without regenerating.
             </Fix>
             <Fix symptom="Nothing is in Pending approval after a run.">
-              Either the run failed (check Recent engine runs), or the asset&rsquo;s policy is <B>Auto-publish</B>
-              (it went straight live — check the editions browser), or no asset was due/enabled.
+              Most often the asset <B>degraded mid-run</B> — its brief was rejected, it needs a brief, QA
+              failed, or its feed was degraded — so nothing was produced even though the run still shows
+              <B>done</B>. Open <B>Recent engine runs</B>, expand the run, and check the per-asset statuses
+              (an amber dot flags a partial failure); then re-run just that asset from <B>Generate</B>.
+              Otherwise: the asset&rsquo;s policy is <B>Auto-publish</B> (it went straight live — check the
+              editions browser), the run failed outright (red status), or no asset was due/enabled.
             </Fix>
             <Fix symptom="The track record isn't growing.">
               Predictions only score after the window closes (BTC ~24h). To grow it now, <B>Backdate</B> a run

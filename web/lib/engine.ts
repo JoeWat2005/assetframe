@@ -32,12 +32,40 @@ export type GenerationRequest = {
   finishedAt: string;
 };
 
+// The compact per-asset summary the engine writes into engine_runs.results (see the engine's
+// scripts/engine_ops.summarize_manifest). Older runs predate this column and have results=null, and
+// the shape may drift, so every field is optional — consumers must guard. The per-asset `status`
+// vocabulary mirrors run_daily.py: generated | forecast_only (success) and needs_brief |
+// brief_rejected | brief_stand_aside | qa_failed | data_error | scaffold_error | writer_unavailable |
+// brief_failed (degraded).
+export type EngineRunAsset = {
+  asset_id?: string | null;
+  ticker?: string | null;
+  status?: string | null;
+  report_id?: string | null;
+};
+export type EngineRunResults = {
+  run_id?: string | null;
+  mode?: string | null;
+  run_date?: string | null;
+  assets_selected?: number | null;
+  assets_due?: number | null;
+  generated?: number | null;
+  needs_brief?: string[] | null;
+  brief_rejected?: string[] | null;
+  brief_stand_aside?: string[] | null;
+  assets?: EngineRunAsset[] | null;
+  job_errors?: { ticker?: string | null; errors?: unknown }[] | null;
+  score?: { scored?: number; skipped?: number; errors?: number } | null;
+  token_cost?: unknown;
+};
+
 export type EngineRun = {
   id: string;
   trigger: string; // schedule | manual
   scope: unknown;
   status: string; // running | done | failed
-  results: unknown; // per-asset manifest summary
+  results: EngineRunResults | null; // per-asset manifest summary (null on older runs)
   errors: string;
   logExcerpt: string;
   startedAt: string; // "YYYY-MM-DD HH:MI" UTC
@@ -161,7 +189,8 @@ export async function getEngineRuns(limit = 20): Promise<EngineRun[]> {
       trigger: s(r.trigger),
       scope: r.scope ?? null,
       status: s(r.status),
-      results: r.results ?? null,
+      // jsonb summary written by the engine; tolerate null (older runs) and the old/unknown shape.
+      results: (r.results ?? null) as EngineRunResults | null,
       errors: s(r.errors),
       logExcerpt: s(r.log_excerpt),
       startedAt: s(r.started_at),

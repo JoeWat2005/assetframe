@@ -11,7 +11,9 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => null)) as { id?: unknown } | null;
     const id = typeof body?.id === "string" ? body.id : "";
-    if (sql && /^\d{4}-\d{2}-\d{2}\/[A-Za-z0-9_-]+$/.test(id)) {
+    // Same `<date>/<slug>` edition-id shape as setEditionHidden — allow the full slug charset
+    // (incl. '.') so a dotted/edge ticker counts a view. Parameterized + best-effort, not a boundary.
+    if (sql && /^\d{4}-\d{2}-\d{2}\/[A-Za-z0-9._-]+$/.test(id)) {
       await sql.query(
         `INSERT INTO report_views (edition_id, day, count) VALUES ($1, CURRENT_DATE, 1)
          ON CONFLICT (edition_id, day) DO UPDATE SET count = report_views.count + 1`,

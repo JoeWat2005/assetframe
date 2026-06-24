@@ -14,6 +14,7 @@ const ASSET_CLASSES = ["crypto", "equity", "fx", "futures", "index", "commodity"
 const SESSION_PROFILES = ["crypto_24_7", "fx_spot", "us_equity_rth", "cme_futures"];
 const CADENCES = ["daily", "weekday", "trading_day", "weekday_or_market_open", "weekly", "monthly"];
 const FORECAST_WINDOWS = ["rolling_24h", "next_liquid_session", "next_regular_session", "next_session", "next_week", "next_5_sessions"];
+const REPORT_TIERS = ["official", "watchlist", "staged", "backtest"];
 // Human labels for the forecast-window enums shown on the horizon chips (enum kept in the tooltip).
 const HORIZON_LABELS: Record<string, string> = {
   rolling_24h: "Next 24 hours", next_liquid_session: "Next liquid session",
@@ -39,14 +40,16 @@ const CLASS_DEFAULTS: Record<string, { sessionProfile: string; cadence: string; 
 type Form = {
   id: string; name: string; instrument: string; ticker: string; yahoo: string; eodhd: string;
   assetClass: string; sessionProfile: string; cadence: string; timezone: string;
-  rollUtc: number; related: string; forecastWindow: string; publishPolicy: string; enabled: boolean;
+  rollUtc: number; related: string; forecastWindow: string; publishPolicy: string;
+  reportTier: string; enabled: boolean;
   cadenceDay: string; timeframes: string[]; includeFundamentals: boolean; includeNews: boolean;
   fundamentalsSource: string;
 };
 const BLANK: Form = {
   id: "", name: "", instrument: "", ticker: "", yahoo: "", eodhd: "", assetClass: "crypto",
   sessionProfile: "crypto_24_7", cadence: "daily", timezone: "UTC", rollUtc: 22, related: "",
-  forecastWindow: "rolling_24h", publishPolicy: "approval_required", enabled: true,
+  forecastWindow: "rolling_24h", publishPolicy: "approval_required", reportTier: "official",
+  enabled: true,
   cadenceDay: "", timeframes: [], includeFundamentals: false, includeNews: true,
   fundamentalsSource: "auto",
 };
@@ -89,7 +92,8 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
       yahoo: a.providerSymbols?.yahoo ?? "", eodhd: a.providerSymbols?.eodhd ?? "",
       assetClass: a.assetClass, sessionProfile: a.sessionProfile, cadence: a.cadence,
       timezone: a.timezone, rollUtc: a.rollUtc, related: a.related,
-      forecastWindow: a.forecastWindow, publishPolicy: a.publishPolicy, enabled: a.enabled,
+      forecastWindow: a.forecastWindow, publishPolicy: a.publishPolicy,
+      reportTier: a.reportTier || "official", enabled: a.enabled,
       cadenceDay: a.cadenceDay, timeframes: a.timeframes,
       includeFundamentals: a.includeFundamentals ?? (a.assetClass === "equity"), includeNews: a.includeNews,
       fundamentalsSource: a.fundamentalsSource,
@@ -352,6 +356,7 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
                 <Dropdown label="session profile" value={form.sessionProfile} onChange={(v) => set("sessionProfile", v)} options={SESSION_PROFILES} />
                 <Dropdown label="forecast window (default horizon)" value={form.forecastWindow} onChange={(v) => set("forecastWindow", v)} options={FORECAST_WINDOWS} />
                 <Dropdown label="timezone" value={form.timezone} onChange={(v) => set("timezone", v)} options={TIMEZONES} />
+                <Dropdown label="report tier" value={form.reportTier} onChange={(v) => set("reportTier", v)} options={REPORT_TIERS} />
                 <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">roll hour (UTC, 0–23)</label><Input className="h-9" type="number" value={form.rollUtc} onChange={(e) => set("rollUtc", Number(e.target.value))} /></div>
                 <div><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">EODHD symbol (optional)</label><Input className="h-9" value={form.eodhd} onChange={(e) => set("eodhd", e.target.value)} placeholder="GBPUSD.FOREX" /></div>
                 <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold text-muted-foreground">related tickers (comma list, optional)</label><Input className="h-9" value={form.related} onChange={(e) => set("related", e.target.value)} placeholder="ETH-USD" /></div>
