@@ -61,12 +61,13 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
         already closed, then click <b>Score now</b>.
       </p>
 
-      {/* Mode: all-due vs hand-pick */}
+      {/* Mode: all-due vs hand-pick. Secondary weight (vs the solid primary CTA) so the segmented
+          control reads as a selector, not a competing call-to-action. */}
       <div className="inline-flex w-fit overflow-hidden rounded-lg border border-line">
-        <Button size="sm" variant={allDue ? "default" : "ghost"} className="rounded-none" disabled={pending} onClick={() => setAllDue(true)}>
+        <Button size="sm" variant={allDue ? "secondary" : "ghost"} className="rounded-none" disabled={pending} onClick={() => setAllDue(true)}>
           All due
         </Button>
-        <Button size="sm" variant={!allDue ? "default" : "ghost"} className="rounded-none border-l border-line" disabled={pending} onClick={() => setAllDue(false)}>
+        <Button size="sm" variant={!allDue ? "secondary" : "ghost"} className="rounded-none border-l border-line" disabled={pending} onClick={() => setAllDue(false)}>
           Pick assets
         </Button>
       </div>
@@ -112,10 +113,27 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
         </div>
       )}
 
-      {/* Backdate (as-of) — for testing the ledger immediately. */}
-      <div className="rounded-lg border border-line bg-tile/30 px-3 py-2.5">
-        <label className="block text-xs font-semibold text-navy">Backdate (optional — test the ledger now)</label>
-        <p className="mb-2 text-[11px] text-muted-foreground">
+      {/* Primary action — the everyday flow. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Button disabled={!canSubmit} onClick={submit}>
+          {pending ? "Queuing…" : asOf ? "Queue backdated run" : "Queue run"}
+        </Button>
+        {msg && <span className={`text-sm ${msg.ok ? "text-[#1a7f37]" : "text-[#cf222e]"}`}>{msg.message}</span>}
+      </div>
+
+      {/* Backdate (as-of) — launch-week seeding tool, tucked behind a collapsed disclosure so it
+          never competes with the everyday flow. Collapsed = empty as-of = a normal "now" run.
+          onToggle resets asOf to "" whenever the panel is closed. */}
+      <details
+        className="rounded-lg border border-line bg-tile/30 px-3 py-2.5"
+        onToggle={(e) => {
+          if (!(e.currentTarget as HTMLDetailsElement).open) setAsOf("");
+        }}
+      >
+        <summary className="cursor-pointer text-xs font-semibold text-navy">
+          Seed / test the track record (advanced)
+        </summary>
+        <p className="mb-2 mt-2 text-[11px] text-muted-foreground">
           Generate the report as if it were a <b>past</b> UTC date/time, so its prediction window is
           already closed. Then <b>Score now</b> grades it straight into the ledger. Leave blank to run
           for now. Pick a time a few days back (e.g. 3 days ago) for crypto.
@@ -135,14 +153,7 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
             </Button>
           )}
         </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" disabled={!canSubmit} onClick={submit}>
-          {pending ? "Queuing…" : asOf ? "Queue backdated run" : "Queue run"}
-        </Button>
-        {msg && <span className={`text-sm ${msg.ok ? "text-[#1a7f37]" : "text-[#cf222e]"}`}>{msg.message}</span>}
-      </div>
+      </details>
     </div>
   );
 }

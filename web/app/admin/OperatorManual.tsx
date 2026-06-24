@@ -1,6 +1,6 @@
 "use client";
 import { useSyncExternalStore } from "react";
-import { BookOpen, ChevronDown } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight } from "lucide-react";
 
 // The operator manual — the spine of the admin page. Open by default on a first visit, then
 // remembers if you collapse it (localStorage), so it greets a new admin but stays out of the way
@@ -45,6 +45,21 @@ function B({ children }: { children: React.ReactNode }) {
 }
 function UL({ children }: { children: React.ReactNode }) {
   return <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">{children}</ul>;
+}
+// A nested, collapsed-by-default reference block. The summary is styled to match the H sub-headings
+// above, so the heavier reference material (control reference, troubleshooting, glossary) stays one
+// click away instead of greeting a first-timer as a wall of text. Closed by default — progressive
+// disclosure within the already-open manual.
+function Section({ summary, children }: { summary: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <details className="group mt-5 first:mt-0">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-bold tracking-tight text-navy [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+        {summary}
+      </summary>
+      {children}
+    </details>
+  );
 }
 function Jump({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -140,12 +155,13 @@ export default function OperatorManual() {
             </li>
             <li>
               <B>2 · Generate your first report.</B> In{" "}
-              <Jump href="#sec-generate">2 · Generate, backdate &amp; score</Jump>, pick <B>All due</B> or{" "}
+              <Jump href="#sec-generate">2 · Generate &amp; score</Jump>, pick <B>All due</B> or{" "}
               <B>Pick assets</B>, then <B>Queue run</B>. Watch the <B>Generation queue</B> for{" "}
               queued → running → done. Takes a few minutes; the box must be Online.
             </li>
             <li>
-              <B>3 · Seed the track record with a backdated run.</B> Still in section 2, set <B>Backdate</B>
+              <B>3 · Seed the track record with a backdated run.</B> Still in section 2, open{" "}
+              <B>Seed / test the track record (advanced)</B> and set <B>Backdate</B>
               to a UTC time a few days ago (~3 days back is safe for crypto so the ~24h window is well
               closed) and <B>Queue backdated run</B>.
             </li>
@@ -189,7 +205,7 @@ export default function OperatorManual() {
             to build a multi-day record quickly.
           </P>
 
-          <H>Control reference — every button</H>
+          <Section summary="Control reference — every button">
           <div className="mt-2 grid gap-x-6 gap-y-3 sm:grid-cols-2">
             <Ref title="Status bar">
               <li><B>Online / Offline + Last check-in</B> — the box&rsquo;s heartbeat. Offline means runs won&rsquo;t execute until it&rsquo;s back.</li>
@@ -202,7 +218,7 @@ export default function OperatorManual() {
               <li><B>+ Add asset / Edit</B> — define an instrument; validated before it syncs, so a bad entry can&rsquo;t break generation.</li>
               <li><B>Enabled / Disabled</B> — include/exclude from the daily run. At least one must be enabled.</li>
             </Ref>
-            <Ref title="2 · Generate, backdate &amp; score">
+            <Ref title="2 · Generate &amp; score">
               <li><B>All due</B> — queue a run for every instrument the engine considers due.</li>
               <li><B>Pick assets</B> — hand-pick from the enabled universe (they generate in parallel).</li>
               <li><B>Backdate (as-of)</B> — generate as if it were a past UTC time so the window is already closed. Blank = run for now.</li>
@@ -229,8 +245,9 @@ export default function OperatorManual() {
               <li><B>Full reset (everything)</B> — does all of the above in a safe order (Neon first; stops if that fails, so no orphans). Use only for a clean start before launch.</li>
             </Ref>
           </div>
+          </Section>
 
-          <H>Troubleshooting</H>
+          <Section summary="Troubleshooting">
           <div className="mt-2 space-y-2.5">
             <Fix symptom="Box is Offline (status red).">
               Runs won&rsquo;t execute until it checks back in. Give it a minute (a blip self-heals) →{" "}
@@ -263,6 +280,7 @@ export default function OperatorManual() {
               order so nothing is orphaned. Then redo the first-run checklist.
             </Fix>
           </div>
+          </Section>
 
           <H>Members &amp; billing (reference)</H>
           <UL>
@@ -276,7 +294,7 @@ export default function OperatorManual() {
             <li><B>Revalidate content</B> (in Manage access) — force-refresh cached published content if the public site looks stale.</li>
           </UL>
 
-          <H>Glossary</H>
+          <Section summary="Glossary">
           <dl className="mt-2 grid gap-x-6 gap-y-1.5 text-sm leading-relaxed text-muted-foreground sm:grid-cols-2">
             <Term t="Edition">one generated report for one instrument on one date. Hidden until approved.</Term>
             <Term t="Due">an asset whose schedule (cadence + roll_utc) says it should generate now.</Term>
@@ -289,6 +307,7 @@ export default function OperatorManual() {
             <Term t="Re-publish reports">re-runs export → R2 → Neon for a run that generated but didn&rsquo;t publish.</Term>
             <Term t="Automation paused">the automatic 05:00 UTC batch is off; manual runs still work.</Term>
           </dl>
+          </Section>
         </div>
       )}
     </div>

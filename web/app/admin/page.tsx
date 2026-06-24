@@ -138,11 +138,11 @@ export default async function AdminPage() {
         {/* === 2 · Generate, backdate & score === */}
         <Card id="sec-generate" className="mt-4 scroll-mt-24">
           <CardHeader>
-            <CardTitle className="text-base">2 · Generate, backdate &amp; score</CardTitle>
+            <CardTitle className="text-base">2 · Generate &amp; score</CardTitle>
             <CardDescription>
-              Queue a run now — the whole due batch, hand-picked assets, or a <b>backdated</b> run whose window
-              is already closed. Then <b>Score now</b> grades closed windows into the ledger. This is the
-              launch-week loop; new editions land hidden for approval in step 3.
+              Pick <b>All due</b> or specific assets and <b>Queue run</b> to generate reports now — new editions
+              land hidden for your approval in step 3. <b>Score now</b> grades any prediction windows that have
+              closed into the ledger. (To seed the track record before a window closes, use <b>Backdate</b> inside Queue run.)
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
@@ -164,7 +164,7 @@ export default async function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Generation queue</CardTitle>
-              <CardDescription>Recent requests — cancel a queued or running one to stop it at the next safe point.</CardDescription>
+              <CardDescription>Runs you&rsquo;ve requested. Cancel a queued or running one to stop it at the next safe point.</CardDescription>
             </CardHeader>
             <CardContent className={genRequests.length === 0 ? undefined : "px-0"}>
               <RequestQueue rows={genRequests} />
@@ -174,7 +174,7 @@ export default async function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Recent engine runs</CardTitle>
-              <CardDescription>Run history from the cloud instance — expand a row for its error / log excerpt.</CardDescription>
+              <CardDescription>What the engine actually did, newest first — expand a row to see its log or error.</CardDescription>
             </CardHeader>
             <CardContent className={engineRuns.length === 0 ? undefined : "px-0"}>
               <RunLog rows={engineRuns} />
@@ -242,6 +242,7 @@ export default async function AdminPage() {
           description="Business metrics, charts, member admin, feedback and analytics. Demoted below the engine since pre-launch focus is the track record."
         >
           <div className="flex flex-col gap-4">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Business metrics</div>
             {/* KPI row */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {kpis.map((k) => (
@@ -348,7 +349,7 @@ export default async function AdminPage() {
                 </CardHeader>
                 <CardContent className="px-0">
                   {stats.recent.length === 0 ? (
-                    <p className="px-6 pb-2 text-sm text-muted-foreground">No members yet (or Clerk not configured).</p>
+                    <p className="px-6 pb-2 text-sm text-muted-foreground">No members yet.</p>
                   ) : (
                     <div className="divide-y divide-line border-t border-line">
                       {stats.recent.map((m) => (
@@ -363,6 +364,7 @@ export default async function AdminPage() {
               </Card>
             </div>
 
+            <div className="mt-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Members &amp; access</div>
             {/* Manage access */}
             <AdminActions />
 

@@ -14,6 +14,12 @@ const ASSET_CLASSES = ["crypto", "equity", "fx", "futures", "index", "commodity"
 const SESSION_PROFILES = ["crypto_24_7", "fx_spot", "us_equity_rth", "cme_futures"];
 const CADENCES = ["daily", "weekday", "trading_day", "weekday_or_market_open", "weekly", "monthly"];
 const FORECAST_WINDOWS = ["rolling_24h", "next_liquid_session", "next_regular_session", "next_session", "next_week", "next_5_sessions"];
+// Human labels for the forecast-window enums shown on the horizon chips (enum kept in the tooltip).
+const HORIZON_LABELS: Record<string, string> = {
+  rolling_24h: "Next 24 hours", next_liquid_session: "Next liquid session",
+  next_regular_session: "Next regular session", next_session: "Next session",
+  next_week: "Next week", next_5_sessions: "Next 5 sessions",
+};
 const TIMEZONES = [
   "UTC", "Europe/London", "America/New_York", "America/Chicago", "America/Los_Angeles",
   "Asia/Tokyo", "Asia/Shanghai", "Asia/Hong_Kong", "Asia/Singapore", "Australia/Sydney",
@@ -127,7 +133,7 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
     <div className="flex flex-col gap-3">
       {/* Global approval toggle + add */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">New reports:</span>
+        <span className="text-xs text-muted-foreground">New reports <span className="opacity-70">(all assets)</span>:</span>
         <span
           title={mixedApproval ? "Some assets require approval, some auto-publish. Use the toggle to make them all the same, or set per-asset in each row." : undefined}
           className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${mixedApproval ? "bg-tile text-muted-foreground" : requireApproval ? "bg-[#fff7e6] text-[#9a6700]" : "bg-[#dafbe1] text-[#1a7f37]"}`}
@@ -157,6 +163,11 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
         The <b>Scheduled</b> column shows what the engine will run on its next due check.{" "}
         {lastChecked ? `Last checked ${lastChecked} UTC.` : "Not checked yet — click Check schedule."}
       </p>
+      {mixedApproval && (
+        <p className="-mt-1 text-[11px] text-[#9a6700]">
+          Your assets currently use <b>different</b> publish policies — the button above sets them all the same; to change just one, use its <b>Edit</b> row.
+        </p>
+      )}
 
       {assets.length > 0 && !assets.some((a) => a.enabled) && (
         <p className="rounded-lg border border-[#9a6700]/40 bg-[#fff7e6] px-3 py-2 text-xs text-[#7a5200]">
@@ -166,7 +177,7 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
 
       {/* Universe table */}
       {assets.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No assets yet — add one below. (If this is unexpected, the engine-assets migration may not be applied.)</p>
+        <p className="rounded-xl border border-dashed border-line bg-tile/40 px-4 py-6 text-center text-sm text-muted-foreground">No assets yet — click <b>+ Add asset</b> to add your first instrument.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-line bg-white">
           <table className="w-full text-sm">
@@ -290,7 +301,7 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
                   className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${on ? "bg-navy text-white" : "bg-tile text-muted-foreground ring-1 ring-inset ring-line hover:bg-line"}`}
                   title={on ? "Selected — click to remove" : "Click to add this horizon"}
                 >
-                  {on ? `${i === 0 ? "★ " : ""}${w}` : `+ ${w}`}
+                  {on ? `${i === 0 ? "★ " : ""}${HORIZON_LABELS[w] ?? w}` : `+ ${HORIZON_LABELS[w] ?? w}`}
                 </button>
               );
             })}
@@ -298,7 +309,7 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
           <p className="mt-1 text-[11px] text-muted-foreground">
             {form.timeframes.length === 0
               ? "No extra horizons — a single call over the forecast window (Advanced)."
-              : `${form.timeframes.length} horizon track${form.timeframes.length > 1 ? "s" : ""} · ★ published headline = ${form.timeframes[0]}.`}
+              : `${form.timeframes.length} horizon track${form.timeframes.length > 1 ? "s" : ""} · ★ published headline = ${HORIZON_LABELS[form.timeframes[0]] ?? form.timeframes[0]}.`}
           </p>
 
           <Section>Report content</Section>

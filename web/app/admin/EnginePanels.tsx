@@ -59,7 +59,7 @@ export function RequestQueue({ rows }: { rows: GenerationRequest[] }) {
       items={rows}
       noun="requests"
       containerClassName="divide-y divide-line border-t border-line"
-      emptyChildren={<p className="px-6 pb-2 text-sm text-muted-foreground">No generation requests yet.</p>}
+      emptyChildren={<p className="mx-6 mb-2 rounded-xl border border-dashed border-line bg-tile/40 px-4 py-8 text-center text-sm text-muted-foreground">No requests yet — they&apos;ll appear here when a generation is started.</p>}
       keyOf={(r) => r.id}
       render={(r) => (
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 text-sm">
@@ -89,7 +89,7 @@ export function RunLog({ rows }: { rows: EngineRun[] }) {
       items={rows}
       noun="runs"
       containerClassName="divide-y divide-line border-t border-line"
-      emptyChildren={<p className="px-6 pb-2 text-sm text-muted-foreground">No engine runs logged yet.</p>}
+      emptyChildren={<p className="mx-6 mb-2 rounded-xl border border-dashed border-line bg-tile/40 px-4 py-8 text-center text-sm text-muted-foreground">No runs yet — they&apos;ll appear here after a generation.</p>}
       keyOf={(r) => r.id}
       render={(r) => {
         const detail = [r.errors, r.logExcerpt].filter(Boolean).join("\n\n");
@@ -128,7 +128,7 @@ export function CommandLog({ rows }: { rows: EngineCommand[] }) {
       items={rows}
       noun="commands"
       containerClassName="divide-y divide-line border-t border-line"
-      emptyChildren={<p className="px-6 pb-2 text-sm text-muted-foreground">No box commands yet.</p>}
+      emptyChildren={<p className="mx-6 mb-2 rounded-xl border border-dashed border-line bg-tile/40 px-4 py-8 text-center text-sm text-muted-foreground">No commands yet — they&apos;ll appear here once you run one.</p>}
       keyOf={(r) => r.id}
       render={(r) => {
         const detail = [r.result, r.logExcerpt].filter(Boolean).join("\n\n");

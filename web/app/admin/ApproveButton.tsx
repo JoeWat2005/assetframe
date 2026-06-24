@@ -1,6 +1,8 @@
 "use client";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { setEditionHidden } from "./actions";
 
 // Approve (publish) an edition that was generated hidden behind the engine's approval gate.
@@ -15,14 +17,15 @@ export default function ApproveButton({ id }: { id: string }) {
       if (r.ok) router.refresh();
     });
   return (
-    <button
+    <Button
       type="button"
+      size="sm"
       disabled={pending}
       onClick={approve}
       title="Approve — publish this edition to the public site"
-      className="shrink-0 rounded-full bg-[#dafbe1] px-2.5 py-0.5 text-[11px] font-bold text-[#1a7f37] transition hover:bg-[#bff0cb] disabled:opacity-50"
     >
-      {pending ? "…" : "Approve"}
-    </button>
+      <Check data-icon="inline-start" />
+      {pending ? "Approving…" : "Approve"}
+    </Button>
   );
 }

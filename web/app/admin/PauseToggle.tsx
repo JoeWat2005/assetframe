@@ -11,6 +11,7 @@ export default function PauseToggle({ paused }: { paused: boolean }) {
   const [pending, start] = useTransition();
   const toggle = () =>
     start(async () => {
+      if (!paused && !window.confirm("Pause daily automation? The 05:00 run will stop generating reports until you resume — manual runs still work.")) return;
       const r = await setAutomationPaused(!paused);
       if (r.ok) router.refresh();
     });

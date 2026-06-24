@@ -16,7 +16,7 @@ export default function PendingApprovalList({ pending }: { pending: Edition[] })
       noun="awaiting approval"
       pageSize={8}
       containerClassName="divide-y divide-line border-t border-line"
-      emptyChildren={<p className="px-6 pb-2 text-sm text-muted-foreground">No editions awaiting approval.</p>}
+      emptyChildren={<p className="mx-6 mb-2 rounded-xl border border-dashed border-line bg-tile/40 px-4 py-8 text-center text-sm text-muted-foreground">All caught up — nothing is waiting for your approval.</p>}
       keyOf={(e) => `${e.date}/${e.slug}`}
       render={(e) => {
         const id = `${e.date}/${e.slug}`;
