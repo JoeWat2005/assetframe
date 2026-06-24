@@ -1,0 +1,163 @@
+"use client";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import type { BacktestResult } from "@/lib/engine";
+import { clearBacktestResults } from "./actions";
+import { Button } from "@/components/ui/button";
+
+type Result = { ok: boolean; message: string };
+
+// Per-prediction outcome chip styling — reused verbatim from OpenCallsBrowser's VERDICTS so the
+// sandbox table reads with the same Hit / Miss / No-trigger language as the public track record.
+const VERDICTS: Record<string, { label: string; cls: string }> = {
+  Y: { label: "Hit", cls: "bg-[#dafbe1] text-[#1a7f37]" },
+  N: { label: "Miss", cls: "bg-[#ffebe9] text-[#cf222e]" },
+  NT: { label: "No-trigger", cls: "bg-tile text-[#57606a]" },
+};
+
+// Parse the packed `results` string ("P1=Y P2=N P3=NT") into per-prediction chips. Tolerant of
+// missing labels / odd spacing — anything we can't read is shown raw so nothing is silently dropped.
+function parseResults(packed: string): { id: string; code: string }[] {
+  return (packed || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((tok, i) => {
+      const eq = tok.indexOf("=");
+      if (eq === -1) return { id: `P${i + 1}`, code: tok.toUpperCase() };
+      return { id: tok.slice(0, eq) || `P${i + 1}`, code: tok.slice(eq + 1).toUpperCase() };
+    });
+}
+
+function VerdictChip({ code }: { code: string }) {
+  const m = VERDICTS[code] ?? { label: code || "—", cls: "bg-tile text-[#57606a]" };
+  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.cls}`}>{m.label}</span>;
+}
+
+// Admin BACKTEST RESULTS (sandbox). Read-only list of graded sandbox runs the engine synced into
+// Neon's backtest_results — isolated test data that never touches the public ledger or editions.
+export default function BacktestResults({ rows }: { rows: BacktestResult[] }) {
+  const router = useRouter();
+  const [msg, setMsg] = useState<Result | null>(null);
+  const [pending, start] = useTransition();
+
+  // Overall hit rate across the graded predictions (sum hits / sum hits+misses), shown in the
+  // summary line. No-triggers don't count toward the denominator (consistent with hit_rate).
+  const summary = useMemo(() => {
+    let hits = 0;
+    let denom = 0;
+    for (const r of rows) {
+      hits += r.hits;
+      denom += r.hits + r.misses;
+    }
+    return { n: rows.length, rate: denom > 0 ? hits / denom : null };
+  }, [rows]);
+
+  const clear = () =>
+    start(async () => {
+      if (!window.confirm("Clear ALL sandbox backtest results? This wipes the admin view and resets the box's sandbox sim trees. The public ledger, editions and track record are untouched. Continue?")) return;
+      try {
+        const r = await clearBacktestResults();
+        setMsg(r);
+        if (r.ok) router.refresh();
+      } catch {
+        setMsg({ ok: false, message: "Action failed — not authorized?" });
+      }
+    });
+
+  const pct = (v: number | null) => (v == null ? "—" : `${Math.round(v * 100)}%`);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-muted-foreground">
+        These are <b>isolated sandbox test runs</b> from <b>Run sandbox backtest</b> above — they never
+        touch the public ledger, editions, R2 or track record. Use them to sanity-check how the engine
+        would have graded a past window.
+      </p>
+
+      {rows.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-line bg-tile/30 px-4 py-8 text-center text-sm text-muted-foreground">
+          No backtest results yet — run a <b>Sandbox backtest</b> above.
+        </p>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              <b className="text-navy">{summary.n}</b> graded result{summary.n === 1 ? "" : "s"} ·{" "}
+              overall hit rate <b className="text-navy">{pct(summary.rate)}</b>
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={clear}
+              className="border-[#cf222e]/40 text-[#cf222e] hover:bg-[#ffebe9]"
+            >
+              {pending ? "Clearing…" : "Clear backtest results"}
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-line bg-white">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="border-b border-line text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-3 py-2">Instrument</th>
+                  <th className="px-3 py-2">View / thesis</th>
+                  <th className="px-3 py-2">Conf.</th>
+                  <th className="px-3 py-2">Horizon</th>
+                  <th className="px-3 py-2">Window end</th>
+                  <th className="px-3 py-2">Predictions</th>
+                  <th className="px-3 py-2 text-right">Hit rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.reportId} className="border-b border-line last:border-0 align-top">
+                    <td className="px-3 py-2.5">
+                      <div className="font-bold text-ink">{r.instrument || r.ticker || "—"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {[r.ticker, r.assetClass].filter(Boolean).join(" · ")}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 max-w-[260px]">
+                      <span className="text-ink">{r.view || "—"}</span>
+                    </td>
+                    <td className="px-3 py-2.5 tabular-nums">{r.confidence ?? "—"}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground">{r.horizon || "—"}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">
+                      {r.windowEnd || "—"}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {(() => {
+                        const preds = parseResults(r.results);
+                        if (preds.length === 0) return <span className="text-muted-foreground">—</span>;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {preds.map((p, i) => (
+                              <span key={`${p.id}-${i}`} className="inline-flex items-center gap-1">
+                                <span className="text-[10px] font-semibold text-muted-foreground">{p.id}</span>
+                                <VerdictChip code={p.code} />
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className="font-mono font-semibold tabular-nums text-navy">{pct(r.hitRate)}</span>
+                      <div className="text-[11px] text-muted-foreground">
+                        {r.hits}/{r.hits + r.misses}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {msg && <span className={`text-sm ${msg.ok ? "text-[#1a7f37]" : "text-[#cf222e]"}`}>{msg.message}</span>}
+    </div>
+  );
+}

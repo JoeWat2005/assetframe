@@ -89,7 +89,32 @@ export type EngineCommand = {
   finishedAt: string;
 };
 
+// A graded SANDBOX BACKTEST result row — admin-only test data the engine syncs into Neon's
+// backtest_results after a backtest. Never read by the public site (the live ledger is separate).
+// `results` is a packed per-prediction string like "P1=Y P2=N P3=NT" (Y=Hit, N=Miss, NT=No-trigger).
+export type BacktestResult = {
+  reportId: string;
+  ticker: string;
+  instrument: string;
+  assetClass: string;
+  view: string;
+  confidence: number | null;
+  horizon: string;
+  windowEnd: string; // "YYYY-MM-DD HH:MM" or whatever the engine stored
+  results: string; // packed "P1=Y P2=N …"
+  hits: number;
+  misses: number;
+  hitRate: number | null; // 0..1
+  scoredAt: string;
+  createdAt: string; // "YYYY-MM-DD HH:MI" UTC
+};
+
 const s = (v: unknown): string => (v == null ? "" : String(v));
+const numOrNull = (v: unknown): number | null => {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
 // Default singleton when the DB / table isn't there yet: paused=false, offline (no heartbeat).
 const DEFAULT_STATE: EngineState = {
@@ -229,6 +254,45 @@ export async function getEngineCommands(limit = 20): Promise<EngineCommand[]> {
       createdAt: s(r.created_at),
       startedAt: s(r.started_at),
       finishedAt: s(r.finished_at),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// Recent SANDBOX BACKTEST results (admin-only), newest window first. Returns [] when the DB / table
+// isn't there yet, so the admin page renders before the backtest_results migration is applied. This
+// is test data only — the public site never reads it.
+export async function getBacktestResults(limit = 300): Promise<BacktestResult[]> {
+  if (!sql) return [];
+  try {
+    const rows = (await sql.query(
+      `SELECT report_id, coalesce(ticker, '') AS ticker, coalesce(instrument, '') AS instrument,
+              coalesce(asset_class, '') AS asset_class, coalesce(view, '') AS view,
+              confidence, coalesce(horizon, '') AS horizon, coalesce(window_end, '') AS window_end,
+              coalesce(results, '') AS results, coalesce(hits, 0) AS hits, coalesce(misses, 0) AS misses,
+              hit_rate, coalesce(scored_at, '') AS scored_at,
+              to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI') AS created_at
+         FROM backtest_results
+        ORDER BY window_end DESC
+        LIMIT $1`,
+      [limit]
+    )) as Record<string, unknown>[];
+    return rows.map((r) => ({
+      reportId: s(r.report_id),
+      ticker: s(r.ticker),
+      instrument: s(r.instrument),
+      assetClass: s(r.asset_class),
+      view: s(r.view),
+      confidence: numOrNull(r.confidence),
+      horizon: s(r.horizon),
+      windowEnd: s(r.window_end),
+      results: s(r.results),
+      hits: Number(r.hits) || 0,
+      misses: Number(r.misses) || 0,
+      hitRate: numOrNull(r.hit_rate),
+      scoredAt: s(r.scored_at),
+      createdAt: s(r.created_at),
     }));
   } catch {
     return [];

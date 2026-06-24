@@ -4,7 +4,7 @@ import { ExternalLink, BarChart3, LineChart, Users, CreditCard, Percent, FileTex
 import { getAllEditions, getHiddenEditions } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
-import { getEngineState, getGenerationRequests, getEngineRuns, getEngineCommands } from "@/lib/engine";
+import { getEngineState, getGenerationRequests, getEngineRuns, getEngineCommands, getBacktestResults } from "@/lib/engine";
 import { getEngineAssets } from "@/lib/engine-assets";
 import { Hero, Note } from "@/components/ui";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import AssetManager from "./AssetManager";
 import PendingApprovalList from "./PendingApprovalList";
 import OperatorManual from "./OperatorManual";
 import ScoreNowButton from "./ScoreNowButton";
+import BacktestResults from "./BacktestResults";
 import CollapsibleSection from "./CollapsibleSection";
 import { RequestQueue, RunLog, CommandLog } from "./EnginePanels";
 import { getAuditLog } from "@/lib/audit";
@@ -43,9 +44,9 @@ export default async function AdminPage() {
   if (!ent.signedIn) redirect("/sign-in");
   if (!ent.admin) redirect("/account");
 
-  const [stats, catalog, pending, auditLog, feedback, engineState, genRequests, engineRuns, engineCommands, engineAssets] = await Promise.all([
+  const [stats, catalog, pending, auditLog, feedback, engineState, genRequests, engineRuns, engineCommands, engineAssets, backtestResults] = await Promise.all([
     getAdminStats(), getAllEditions(), getHiddenEditions(), getAuditLog(), getFeedback(),
-    getEngineState(), getGenerationRequests(), getEngineRuns(), getEngineCommands(), getEngineAssets(),
+    getEngineState(), getGenerationRequests(), getEngineRuns(), getEngineCommands(), getEngineAssets(), getBacktestResults(),
   ]);
   const titleById = new Map(catalog.map((e) => [`${e.date}/${e.slug}`, e.instrument]));
 
@@ -156,6 +157,21 @@ export default async function AdminPage() {
               </p>
               <ScoreNowButton />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Backtest results (sandbox) — graded test runs from the Sandbox backtest panel above.
+            Admin-only, isolated test data that never touches the public ledger/editions. */}
+        <Card id="sec-backtest" className="mt-4 scroll-mt-24">
+          <CardHeader>
+            <CardTitle className="text-base">Backtest results (sandbox)</CardTitle>
+            <CardDescription>
+              Graded outcomes from <b>Run sandbox backtest</b> above. These are <b>isolated test runs</b> —
+              they never touch the public ledger, editions, R2 or track record.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BacktestResults rows={backtestResults} />
           </CardContent>
         </Card>
 

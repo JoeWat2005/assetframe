@@ -26,6 +26,7 @@ const COMMAND_LABEL: Record<string, string> = {
   clear_r2: "Clear R2 files",
   clear_wake: "Clear Upstash wake flag",
   run_backtest: "Run sandbox backtest",
+  clear_sandbox: "Clear sandbox",
 };
 
 // Status pill colours, reusing the same green/amber/red/grey palette as the rest of the admin.

@@ -25,6 +25,7 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
   const [btSelected, setBtSelected] = useState<Set<string>>(new Set());
   const [btQ, setBtQ] = useState("");
   const [btAsOf, setBtAsOf] = useState(""); // REQUIRED "YYYY-MM-DDTHH:MM" (UTC) — must be a closed window
+  const [btDays, setBtDays] = useState(1); // how many days to simulate (1 = just the as-of day; up to 14)
   const [btMsg, setBtMsg] = useState<Result | null>(null);
   const [btPending, btStart] = useTransition();
 
@@ -78,11 +79,12 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
   const btSubmit = () =>
     btStart(async () => {
       try {
-        const r = await sendEngineCommand("run_backtest", { assets: [...btSelected], as_of: btAsOf });
+        const r = await sendEngineCommand("run_backtest", { assets: [...btSelected], as_of: btAsOf, days: btDays });
         setBtMsg(r);
         if (r.ok) {
           setBtSelected(new Set());
           setBtAsOf("");
+          setBtDays(1);
           router.refresh();
         }
       } catch {
@@ -269,6 +271,31 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
           <p className="mt-1 text-[11px] text-[#9a6700]/90">
             Pick a time a few days ago — the prediction window must have <b>already closed</b> for a
             backtest to score.
+          </p>
+        </div>
+
+        {/* Days to simulate — 1 = just the as-of day; >1 walks back day-by-day, generating a full
+            report each day (so it costs API tokens + time). */}
+        <div className="mt-3">
+          <label htmlFor="bt-days" className="mb-1 block text-[11px] font-semibold text-[#9a6700]">
+            Days to simulate
+          </label>
+          <input
+            id="bt-days"
+            type="number"
+            min={1}
+            max={14}
+            aria-label="Days to simulate"
+            value={btDays}
+            onChange={(e) => {
+              const n = Math.round(Number(e.target.value));
+              setBtDays(Number.isFinite(n) ? Math.max(1, Math.min(14, n)) : 1);
+            }}
+            className="h-9 w-24 rounded-lg border border-[#bf8700]/40 bg-white px-2 text-sm"
+          />
+          <p className="mt-1 text-[11px] text-[#9a6700]/90">
+            1 = just the as-of day; e.g. 7 = the week before it. Each day generates a full report —
+            uses API tokens + a few minutes.
           </p>
         </div>
 

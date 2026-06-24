@@ -289,6 +289,7 @@ const ENGINE_COMMANDS: Record<string, string> = {
   clear_r2: "Clear report files from R2",
   clear_wake: "Clear the Upstash wake flag",
   run_backtest: "Run sandbox backtest (isolated, no publish)",
+  clear_sandbox: "Clear sandbox (reset the box's backtest sim trees)",
 };
 // Keys set_config may write to the engine .env. Mirrors engine_ops._SETTABLE_CONFIG_KEYS — only
 // keys the engine consumes, never secrets/credentials/URLs. (The box re-validates this list too.)
@@ -353,8 +354,12 @@ export async function sendEngineCommand(
     // "YYYY-MM-DDTHH:MM" or with a space (same shape as the generation backdate).
     const v = String(args?.as_of ?? "").trim().replace("T", " ").slice(0, 16);
     if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return { ok: false, message: "Pick a valid as-of date/time (a few days ago)." };
-    cleanArgs = { assets, as_of: v };
-    detail = `${assets.join(", ")} as-of ${v} UTC`;
+    // Optional multi-day sweep: 1 = just the as-of day; >1 walks back day-by-day, generating a
+    // full report each day. Coerce to an int and clamp 1..14 so a bad value can't run forever.
+    const daysNum = Math.round(Number(args?.days));
+    const days = Number.isFinite(daysNum) ? Math.max(1, Math.min(14, daysNum)) : 1;
+    cleanArgs = { assets, as_of: v, days };
+    detail = `${assets.join(", ")} as-of ${v} UTC${days > 1 ? ` ×${days}d` : ""}`;
   }
 
   try {
@@ -542,6 +547,35 @@ export async function clearCatalog(): Promise<Result> {
     return { ok: true, message: "Catalog cleared (editions, open calls, scored results)." };
   } catch {
     return { ok: false, message: "Couldn't clear the catalog." };
+  }
+}
+
+// Clear the sandbox BACKTEST results — admin-only test data that never touches the public site.
+// Wipes the Neon backtest_results table (what the admin "Backtest results" card reads) AND enqueues
+// a `clear_sandbox` box command so the box resets its own sandbox sim trees — keeping the two in
+// sync. Destructive but harmless to production: the live ledger, editions, R2 and track record are
+// untouched. The UI confirms first.
+export async function clearBacktestResults(): Promise<Result> {
+  const ent = await requireAdmin();
+  if (!sql) return { ok: false, message: "Database not configured." };
+  try {
+    await sql.query(`DELETE FROM backtest_results`);
+    // Also reset the box's sandbox sim trees so a fresh backtest starts clean. Best-effort — the
+    // Neon rows are cleared either way; the box command is queued for its next poll.
+    try {
+      await sql.query(
+        `INSERT INTO engine_commands (id, command, args, requested_by, status)
+         VALUES ($1, 'clear_sandbox', '{}'::jsonb, $2, 'queued')`,
+        [randomUUID(), ent.email ?? null]
+      );
+      await signalEngineWake();
+    } catch {
+      /* engine_commands not migrated yet — Neon results still cleared */
+    }
+    await logAudit({ actor: ent.email, action: "clear_sandbox", target: "backtest_results", detail: "sandbox backtest results cleared" });
+    return { ok: true, message: "Cleared the sandbox backtest results (box resetting its sim trees)." };
+  } catch {
+    return { ok: false, message: "Couldn't clear the backtest results — has the migration been applied?" };
   }
 }
 
