@@ -255,7 +255,7 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
         {/* REQUIRED as-of — a backtest needs a window that has already closed. */}
         <div className="mt-3">
           <label htmlFor="bt-asof" className="mb-1 block text-[11px] font-semibold text-[#9a6700]">
-            As-of date/time (UTC) — required
+            Most recent day to simulate (UTC) — required
           </label>
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -269,8 +269,8 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
             <span className="text-[11px] text-[#9a6700]/90">UTC</span>
           </div>
           <p className="mt-1 text-[11px] text-[#9a6700]/90">
-            Pick a time a few days ago — the prediction window must have <b>already closed</b> for a
-            backtest to score.
+            The <b>newest</b> day of the backtest — &ldquo;Days&rdquo; counts <b>backward</b> from here. Pick
+            <b> ~2–3 days ago</b> (not today): the prediction window must have <b>already closed</b> to score.
           </p>
         </div>
 
@@ -294,8 +294,8 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
             className="h-9 w-24 rounded-lg border border-[#bf8700]/40 bg-white px-2 text-sm"
           />
           <p className="mt-1 text-[11px] text-[#9a6700]/90">
-            1 = just the as-of day; e.g. 7 = the week before it. Each day generates a full report —
-            uses API tokens + a few minutes.
+            Counts <b>backward</b> from the day above: <b>1</b> = just that day; <b>7</b> = that day + the 6
+            before it (a week). Each day generates a full report — uses API tokens + a few minutes.
           </p>
         </div>
 
