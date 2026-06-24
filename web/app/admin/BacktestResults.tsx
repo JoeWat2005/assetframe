@@ -144,7 +144,7 @@ export default function BacktestResults({ rows }: { rows: BacktestResult[] }) {
                       })()}
                     </td>
                     <td className="px-3 py-2.5 text-right">
-                      <span className="font-mono font-semibold tabular-nums text-navy">{pct(r.hitRate)}</span>
+                      <span className="font-mono font-semibold tabular-nums text-navy">{pct(r.hits + r.misses > 0 ? r.hits / (r.hits + r.misses) : null)}</span>
                       <div className="text-[11px] text-muted-foreground">
                         {r.hits}/{r.hits + r.misses}
                       </div>

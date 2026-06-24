@@ -284,18 +284,18 @@ export default function GenerateForm({ assets }: { assets: Asset[] }) {
             id="bt-days"
             type="number"
             min={1}
-            max={14}
+            max={90}
             aria-label="Days to simulate"
             value={btDays}
             onChange={(e) => {
               const n = Math.round(Number(e.target.value));
-              setBtDays(Number.isFinite(n) ? Math.max(1, Math.min(14, n)) : 1);
+              setBtDays(Number.isFinite(n) ? Math.max(1, Math.min(90, n)) : 1);
             }}
             className="h-9 w-24 rounded-lg border border-[#bf8700]/40 bg-white px-2 text-sm"
           />
           <p className="mt-1 text-[11px] text-[#9a6700]/90">
-            Counts <b>backward</b> from the day above: <b>1</b> = just that day; <b>7</b> = that day + the 6
-            before it (a week). Each day generates a full report — uses API tokens + a few minutes.
+            Counts <b>backward</b> from the day above: <b>1</b> = just that day; <b>7</b> = a week, <b>30</b> =
+            a month (up to 90). Each day generates a full report — more days = more API calls + minutes.
           </p>
         </div>
 

@@ -355,9 +355,9 @@ export async function sendEngineCommand(
     const v = String(args?.as_of ?? "").trim().replace("T", " ").slice(0, 16);
     if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return { ok: false, message: "Pick a valid as-of date/time (a few days ago)." };
     // Optional multi-day sweep: 1 = just the as-of day; >1 walks back day-by-day, generating a
-    // full report each day. Coerce to an int and clamp 1..14 so a bad value can't run forever.
+    // full report each day. Coerce to an int and clamp 1..90 so a bad value can't run forever.
     const daysNum = Math.round(Number(args?.days));
-    const days = Number.isFinite(daysNum) ? Math.max(1, Math.min(14, daysNum)) : 1;
+    const days = Number.isFinite(daysNum) ? Math.max(1, Math.min(90, daysNum)) : 1;
     cleanArgs = { assets, as_of: v, days };
     detail = `${assets.join(", ")} as-of ${v} UTC${days > 1 ? ` ×${days}d` : ""}`;
   }
