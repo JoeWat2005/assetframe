@@ -296,7 +296,7 @@ const ENGINE_COMMANDS: Record<string, string> = {
 const SETTABLE_CONFIG_KEYS = [
   "ASSETFRAME_AUTHOR_BRIEFS", "ADVISOR_DATA_PROVIDER", "ASSETFRAME_RUN_TIMEOUT", "ASSETFRAME_BRIEF_MODEL",
   "ASSETFRAME_RETENTION_DAYS", "ASSETFRAME_BRIEF_BATCH", "ASSETFRAME_CRITIC_MODEL",
-  "ASSETFRAME_BRIEF_CONCURRENCY",
+  "ASSETFRAME_BRIEF_CONCURRENCY", "ASSETFRAME_BRIEF_WEB_MAX_USES",
 ];
 
 // Enqueue an allow-listed box command. Validates the verb + args, inserts a 'queued'
@@ -337,6 +337,10 @@ export async function sendEngineCommand(
     // Concurrent briefs on the synchronous path (1 = safe on Anthropic Tier 1).
     if (key === "ASSETFRAME_BRIEF_CONCURRENCY" && !(/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 16)) {
       return { ok: false, message: "ASSETFRAME_BRIEF_CONCURRENCY must be an integer 1–16." };
+    }
+    // Web searches per news-on brief (input-cost dial).
+    if (key === "ASSETFRAME_BRIEF_WEB_MAX_USES" && !(/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 15)) {
+      return { ok: false, message: "ASSETFRAME_BRIEF_WEB_MAX_USES must be an integer 1–15 (web searches per brief)." };
     }
     // Local reports/runs retention in days (0 = keep everything). Bounded so a typo can't be wild.
     if (key === "ASSETFRAME_RETENTION_DAYS" && !(/^\d+$/.test(value) && Number(value) >= 0 && Number(value) <= 3650)) {

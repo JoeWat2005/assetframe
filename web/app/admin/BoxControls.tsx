@@ -17,7 +17,7 @@ import {
 const SETTABLE_KEYS = [
   "ASSETFRAME_AUTHOR_BRIEFS", "ADVISOR_DATA_PROVIDER", "ASSETFRAME_RUN_TIMEOUT", "ASSETFRAME_BRIEF_MODEL",
   "ASSETFRAME_RETENTION_DAYS", "ASSETFRAME_BRIEF_BATCH", "ASSETFRAME_CRITIC_MODEL",
-  "ASSETFRAME_BRIEF_CONCURRENCY",
+  "ASSETFRAME_BRIEF_CONCURRENCY", "ASSETFRAME_BRIEF_WEB_MAX_USES",
 ];
 // One-line help shown under the value box when a key is selected, so the operator knows the shape.
 const CONFIG_KEY_HINTS: Record<string, string> = {
@@ -29,6 +29,7 @@ const CONFIG_KEY_HINTS: Record<string, string> = {
   ASSETFRAME_BRIEF_BATCH: "1 = author + critique all briefs via the Message Batches API (no rate limit, 50% cheaper, scales); 0 = synchronous per-asset (the fallback). Restart the poller after changing.",
   ASSETFRAME_CRITIC_MODEL: "Claude model for the adversarial critic, e.g. claude-haiku-4-5-20251001 (cheap/fast default).",
   ASSETFRAME_BRIEF_CONCURRENCY: "Concurrent briefs on the synchronous path (1 = safe on Anthropic Tier 1; raise on a higher tier). Ignored when batch is on.",
+  ASSETFRAME_BRIEF_WEB_MAX_USES: "Web searches per news-on brief (1–15, default 6). Lower = cheaper (less input), higher = deeper research. Does not change the model.",
 };
 
 // One box action: a plain-English button with a short caption underneath, so a non-technical
