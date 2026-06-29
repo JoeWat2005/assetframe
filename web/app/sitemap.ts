@@ -11,6 +11,7 @@ const ROUTES: { path: string; changeFrequency: Freq; priority: number }[] = [
   { path: "", changeFrequency: "daily", priority: 1.0 },
   { path: "/reports", changeFrequency: "daily", priority: 0.9 },
   { path: "/track-record", changeFrequency: "daily", priority: 0.9 },
+  { path: "/status", changeFrequency: "daily", priority: 0.4 },
   { path: "/pricing", changeFrequency: "weekly", priority: 0.8 },
   { path: "/how-it-works", changeFrequency: "weekly", priority: 0.7 },
   { path: "/developers", changeFrequency: "weekly", priority: 0.7 },

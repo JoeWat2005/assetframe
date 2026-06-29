@@ -1,0 +1,110 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Hero } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { getEngineState } from "@/lib/engine";
+import { getCatalog, getTrackRecord } from "@/lib/content";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "System status",
+  description:
+    "Live status of the AssetFrame engine and the public track record — whether the engine is publishing, when the last edition shipped, and how the scored calls stand.",
+  alternates: { canonical: "/status" },
+};
+
+function StatusPill({ online, paused }: { online: boolean; paused: boolean }) {
+  const [label, cls] = paused
+    ? ["Paused", "bg-[#fff7e6] text-[#9a6700]"]
+    : online
+      ? ["Operational", "bg-[#dafbe1] text-[#1a7f37]"]
+      : ["Catching up", "bg-[#fff7e6] text-[#9a6700]"];
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${cls}`}>
+      <span className="size-2 rounded-full bg-current" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+// "2026-06-26 14:03 UTC" from an ISO string, or a dash. Computed server-side (this page is dynamic).
+function fmtUtc(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="p-5">
+      <CardContent className="px-0">
+        <div className="text-2xl font-bold text-navy">{value}</div>
+        <div className="mt-1 text-sm text-muted-foreground">{label}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default async function StatusPage() {
+  const [state, catalog, track] = await Promise.all([getEngineState(), getCatalog(), getTrackRecord()]);
+  const latest = [...catalog].sort((a, b) => b.date.localeCompare(a.date))[0];
+  const stats = track.stats;
+  const rate = typeof stats.hitRate === "number" ? `${stats.hitRate.toFixed(1)}%` : "—";
+
+  return (
+    <>
+      <Hero title="System status" tag="The engine, live — and the record, in the open." />
+      <div className="mx-auto max-w-3xl px-5 py-10">
+        <div className="flex flex-wrap items-center justify-between gap-3" data-animate="up">
+          <div>
+            <div className="text-sm font-semibold text-muted-foreground">Engine</div>
+            <div className="mt-1"><StatusPill online={state.online} paused={state.automationPaused} /></div>
+          </div>
+          <div className="text-right text-sm text-muted-foreground">
+            Last heartbeat<br />
+            <span className="font-mono text-foreground">{fmtUtc(state.lastHeartbeatAt)}</span>
+          </div>
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground" data-animate="up">
+          {state.automationPaused
+            ? "Automated publishing is paused. Editions resume when it's switched back on."
+            : state.online
+              ? "The engine is reporting in and publishing on schedule. New editions are scored against the tape after their window closes."
+              : "The engine hasn't reported a heartbeat recently — it may be between runs or restarting. Published editions and the track record below are unaffected."}
+        </p>
+
+        <h2 className="mt-10 mb-4 text-xl font-bold text-navy" data-animate="up">Latest publication</h2>
+        <div className="grid gap-4 sm:grid-cols-2" data-animate="up">
+          <Stat label="Most recent edition" value={latest ? latest.date : "—"} />
+          <Stat label="Instrument" value={latest ? latest.instrument : "—"} />
+        </div>
+
+        <h2 className="mt-10 mb-4 text-xl font-bold text-navy" data-animate="up">Track record</h2>
+        <div className="grid gap-4 sm:grid-cols-3" data-animate="up">
+          <Stat label="Reports scored" value={String(stats.reportsScored)} />
+          <Stat label="Predictions graded" value={String(stats.predictionsGraded)} />
+          <Stat label="Hit rate" value={rate} />
+        </div>
+
+        <p className="mt-6 text-sm leading-relaxed text-muted-foreground" data-animate="up">
+          Every call is registered before the session and graded against the price tape afterwards,
+          into a public append-only ledger. The full record — every call, win and loss — is on the
+          track-record page.
+        </p>
+
+        <div className="mt-8 flex flex-wrap gap-3" data-animate="up">
+          <Button asChild>
+            <Link href="/track-record">See the full track record</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/reports">Browse reports</Link>
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
