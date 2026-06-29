@@ -38,16 +38,12 @@ export default function PushToggle() {
   // On mount, work out the current state from the existing service-worker subscription.
   useEffect(() => {
     if (!VAPID_PUBLIC_KEY) return; // handled by the not-configured render below
-    if (!supported) {
-      setState("unsupported");
-      return;
-    }
-    if (Notification.permission === "denied") {
-      setState("blocked");
-      return;
-    }
     let cancelled = false;
+    // All state transitions run inside the async task (not synchronously in the effect body) so
+    // they never trigger a cascading render mid-commit; the cancelled guard covers unmount.
     (async () => {
+      if (!supported) { if (!cancelled) setState("unsupported"); return; }
+      if (Notification.permission === "denied") { if (!cancelled) setState("blocked"); return; }
       try {
         const reg = await navigator.serviceWorker.register("/sw.js");
         const existing = await reg.pushManager.getSubscription();

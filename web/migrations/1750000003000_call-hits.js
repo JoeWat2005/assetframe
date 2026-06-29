@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Per-call result tracker: hits (predictions that came true) + scored flag.
 // While a call is open both stay at their defaults (0 / false); after the scoring
 // engine reruns, sync fills hits and flips scored, so the UI shows e.g. 4/5.

@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Lightweight per-day view counter for the "Popular this week" rail. One row per
 // (edition, day); the reader increments it (deduped per session client-side). Trending =
 // sum of the last 7 days. edition_id matches editions.id ('YYYY-MM-DD/SLUG').

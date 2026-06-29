@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useResetOnChange } from "@/lib/use-reset-on-change";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import type { OpenCall } from "@/lib/content";
@@ -74,10 +75,10 @@ export default function OpenCallsBrowser({
   const confidenceOptions = useMemo<[string, string][]>(() => {
     const seen = new Set(open.map((c) => confidenceBand(c.confidence)));
     return [["all", "Any confidence"], ...CONFIDENCE_BANDS.filter((b) => seen.has(b)).map((b) => [b, CONFIDENCE_BAND_LABEL[b]] as [string, string])];
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);  
   const dateOptions = useMemo<[string, string][]>(
     () => [["all", "All dates"], ...Array.from(new Set(open.map(dateOf))).filter(Boolean).sort().reverse().map((d) => [d, d] as [string, string])],
-    [open] // eslint-disable-line react-hooks/exhaustive-deps
+    [open]  
   );
 
   const filtered = useMemo(() => {
@@ -105,16 +106,17 @@ export default function OpenCallsBrowser({
     return arr;
   }, [filtered, sort]);
 
-  useEffect(() => { setShown(PAGE); }, [q, category, confidence, date, sort]);
+  useResetOnChange(`${q}|${category}|${confidence}|${date}|${sort}`, () => setShown(PAGE));
 
-  // Drop expanded rows that are no longer visible (so they don't reopen on return).
-  useEffect(() => {
-    const visible = new Set(filtered.map((c) => c.reportId));
+  // Drop expanded rows that are no longer visible (so they don't reopen on return). Done during
+  // render, keyed on the visible id set — same result as an effect, without the cascading render.
+  useResetOnChange(filtered.map((c) => c.reportId).join(","), () =>
     setExpanded((prev) => {
+      const visible = new Set(filtered.map((c) => c.reportId));
       for (const id of prev) if (!visible.has(id)) return new Set([...prev].filter((x) => visible.has(x)));
       return prev;
-    });
-  }, [filtered]);
+    })
+  );
 
   const toggle = (id: string) =>
     setExpanded((prev) => {

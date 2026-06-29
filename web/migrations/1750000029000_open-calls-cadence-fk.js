@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Repoint the open_calls -> editions foreign key from the DAILY-format generated column
 // `report_ref` (AF-YYYYMMDD-slug, from 1750000014000) to the engine's REAL cadence-aware
 // `report_id` (AF-YYYYMMDD / AF-YYYYWww / AF-YYYYMM -TICKER, added in 1750000026000).

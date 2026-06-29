@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Programmatic API key store. Each key is identified by a sha256 hex hash stored in
 // key_hash (high-entropy random secret → sha256 is sufficient). The full key is NEVER
 // persisted — only the hash and a short display prefix. key_hash has a UNIQUE constraint

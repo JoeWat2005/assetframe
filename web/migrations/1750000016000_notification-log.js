@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Idempotency log for outbound notifications. One row per (ref, recipient, channel):
 //   - push:          ref = edition id,             recipient = push endpoint
 //   - email_digest:  ref = publish date YYYY-MM-DD, recipient = email

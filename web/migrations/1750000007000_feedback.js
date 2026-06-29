@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Feature-request / feedback inbox. One row per submission from the public /feedback form.
 // Triaged in the admin dashboard. email + clerk_user_id are optional (anonymous feedback is
 // allowed); user_agent is light context for spam triage, not analytics.

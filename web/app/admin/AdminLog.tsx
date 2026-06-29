@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useResetOnChange } from "@/lib/use-reset-on-change";
 import type { AuditRow } from "@/lib/audit";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,13 +50,16 @@ export default function AdminLog({ rows }: { rows: AuditRow[] }) {
   const [range, setRange] = useState("all");
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(0);
+  // Capture "now" once at mount (a lazy initializer is pure-exempt) so the range filter's cutoff
+  // is computed without calling Date.now() during render. Refreshes on remount/navigation.
+  const [now] = useState(() => Date.now());
   const actions = useMemo(() => Array.from(new Set(rows.map((r) => r.action))).sort(), [rows]);
 
   const cutoff = useMemo(() => {
     if (range === "all") return 0;
     const hours = range === "24h" ? 24 : range === "7d" ? 168 : 720;
-    return Date.now() - hours * 3_600_000;
-  }, [range]);
+    return now - hours * 3_600_000;
+  }, [range, now]);
 
   const filtered = useMemo(
     () =>
@@ -78,7 +82,7 @@ export default function AdminLog({ rows }: { rows: AuditRow[] }) {
     return arr;
   }, [filtered, sort]);
 
-  useEffect(() => { setPage(0); }, [q, action, range, sort]);
+  useResetOnChange(`${q}|${action}|${range}|${sort}`, () => setPage(0));
 
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE));
   const safePage = Math.min(page, pageCount - 1);

@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Adds the unique key the incremental sync needs to UPSERT scored_results by report_id.
 //
 // Background: scripts/sync-db.mjs used to `DELETE FROM scored_results` then re-INSERT every row

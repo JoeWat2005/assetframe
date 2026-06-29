@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useResetOnChange } from "@/lib/use-reset-on-change";
 import type { Edition } from "@/lib/content";
 import { filterEditions, sortEditions, type SortKey } from "@/lib/search";
 import {
@@ -101,7 +102,7 @@ export default function ReportsBrowser({ editions }: { editions: Edition[] }) {
   }, [editions, q, category, direction, confidence, risk, date, sort]);
 
   // Reset the visible window whenever the result set changes (new filter/search).
-  useEffect(() => { setShown(PAGE); }, [q, category, direction, confidence, risk, date, sort]);
+  useResetOnChange(`${q}|${category}|${direction}|${confidence}|${risk}|${date}|${sort}`, () => setShown(PAGE));
 
   const active = q || category !== "all" || direction !== "all" || confidence !== "all" || risk !== "all" || date !== "all";
   const clearAll = () => {

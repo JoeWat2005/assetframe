@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Engine operations tables — the contract between the web app and the Oracle Cloud VM that
 // runs the Python engine. The VM has no inbound ports, so all coordination happens through
 // these three Neon tables (the VM polls + writes; the web app reads + enqueues):

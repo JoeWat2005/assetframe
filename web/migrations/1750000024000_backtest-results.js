@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Admin-only SANDBOX backtest results. Populated by the box's backtest sync from ledger/sim
 // (scripts/sync_backtest.py) after a `run_backtest`. This table is ISOLATED from production: the
 // public site never reads it; editions / open_calls / scored_results are never touched by a

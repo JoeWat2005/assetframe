@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Track-record analytics (Task T12). Purely additive, nullable columns so a re-sync can
 // populate richer per-call + per-edition taxonomy without touching existing rows:
 //   open_call_predictions += pred_type, verdict, setup_side   (per sub-prediction detail)

@@ -83,7 +83,8 @@ export default function Header() {
   // past the fold. Every other page: it's visible at the top, hides as you scroll down
   // (more reading room), and comes back as you scroll up. rAF-throttled, passive.
   useEffect(() => {
-    setShown(!isHome);
+    // Initial state is set by the immediate apply() below (from the real scroll position), so no
+    // separate setShown(!isHome) is needed here — it would just be overwritten on the same tick.
     let lastY = window.scrollY;
     let ticking = false;
     const apply = () => {

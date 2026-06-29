@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Social engagement metrics (Task T17) — MARKETING-ONLY distribution data.
 //
 // One row per captured metrics snapshot for a published-and-distributed post

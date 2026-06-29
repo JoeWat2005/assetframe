@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Normalise open-call predictions: replace the denormalised open_calls.predictions
 // jsonb column with a child table (one row per sub-call P1..Pn), linked by report_id.
 

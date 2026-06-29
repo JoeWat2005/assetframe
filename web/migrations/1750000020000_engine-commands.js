@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Engine command queue — the second web->box control channel (after generation_requests).
 //
 // The OCI VM has no inbound ports, so admin "control the box" actions (restart the poller, pull

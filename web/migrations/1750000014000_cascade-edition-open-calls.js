@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Referential integrity for report data: link open_calls to their edition so deleting an
 // edition cascade-removes its (pending) open call — and, via the existing FK on
 // open_call_predictions(report_id) -> open_calls, its predictions too.

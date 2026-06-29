@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Denormalize the scored row's taxonomy onto scored_results so the public track-record
 // breakdowns (by asset class / prediction type / market regime) group directly off the
 // scored row — instead of joining editions for asset_class_key/prediction_type/market_regime,

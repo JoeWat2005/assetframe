@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Baseline schema: editions, open_calls, scored_results.
 // Idempotent (IF NOT EXISTS) so it reconciles a database that was first created
 // by the old sync-db schema bootstrap without erroring.

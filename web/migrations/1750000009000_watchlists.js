@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Per-user followed instruments. A signed-in user "follows" a symbol from a report card or
 // the reader; the new-edition cron emails followers when a fresh edition for that symbol
 // publishes. unique(user, symbol) keeps follows idempotent.

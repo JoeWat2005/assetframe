@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useResetOnChange } from "@/lib/use-reset-on-change";
 import type { Edition } from "@/lib/content";
 import { ASSET_CATEGORIES, assetCategory } from "@/lib/taxonomy";
 import { Input } from "@/components/ui/input";
@@ -56,7 +57,7 @@ export default function EditionsBrowser({ editions }: { editions: Edition[] }) {
     return arr;
   }, [filtered, sort]);
 
-  useEffect(() => { setPage(0); }, [q, vis, category, sort]);
+  useResetOnChange(`${q}|${vis}|${category}|${sort}`, () => setPage(0));
 
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE));
   const safePage = Math.min(page, pageCount - 1);

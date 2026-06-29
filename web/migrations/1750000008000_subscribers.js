@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Email audience for the newsletter + new-edition alerts. Double opt-in: a row starts
 // 'pending' with a confirm_token, flips to 'confirmed' when the link is clicked, and
 // 'unsubscribed' via the one-click unsub_token (UK PECR/GDPR). topics scopes which alerts

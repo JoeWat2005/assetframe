@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Admin + billing audit log. One row per privileged or billing action (grant/revoke Pro,
 // content revalidation, and webhook grant/revoke/unresolved), giving the admin dashboard a
 // searchable activity trail. Holds no new PII beyond the email already stored in Clerk.

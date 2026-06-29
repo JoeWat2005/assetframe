@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Per-prediction detail for SANDBOX backtests (admin-only). Captured by score_report at score time
 // (it has both the prediction text and the graded outcome) into data/predictions/sim/scored/, then
 // synced by scripts/sync_backtest.py. Lets the admin expand a backtest result into the full list of

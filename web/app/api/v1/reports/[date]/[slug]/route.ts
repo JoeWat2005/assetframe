@@ -2,7 +2,7 @@ import { getReportDetail } from "@/lib/reports-api";
 import { apiJsonPrivate, apiPreflight } from "@/lib/http";
 import { isValidReportRef } from "@/lib/report-key";
 import { requireApiKey } from "@/lib/api-auth";
-import { rateLimitResponseWithHeaders, getRequestIp } from "@/lib/rate-limit";
+import { rateLimitResponseWithHeaders } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 

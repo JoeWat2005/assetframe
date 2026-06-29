@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Button } from "@/components/ui/button";
@@ -16,23 +16,33 @@ const GA_ID =
 // cookies, so under UK/EU rules it must be consented to first). The banner is shown
 // only when a GA id is configured — Clerk's auth cookies are strictly necessary and
 // need no consent, so with no GA there's nothing to ask about.
-export default function ConsentAnalytics() {
-  const [mounted, setMounted] = useState(false);
-  const [consent, setConsent] = useState<"granted" | "denied" | null>(null);
+function readConsent(): "granted" | "denied" | null {
+  try {
+    const v = localStorage.getItem(KEY);
+    return v === "granted" || v === "denied" ? v : null;
+  } catch {
+    return null; // storage blocked — treat as undecided
+  }
+}
+function subscribeConsent(cb: () => void) {
+  window.addEventListener("af-consent", cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener("af-consent", cb);
+    window.removeEventListener("storage", cb);
+  };
+}
 
-  useEffect(() => {
-    setMounted(true);
-    try {
-      const v = localStorage.getItem(KEY);
-      if (v === "granted" || v === "denied") setConsent(v);
-    } catch {
-      /* storage blocked — treat as undecided */
-    }
-  }, []);
+export default function ConsentAnalytics() {
+  // mounted: false during SSR + the first client (hydration) render, true after — with no effect
+  // and no setState, so there's no hydration flash and no react-hooks/set-state-in-effect.
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  // consent: read straight from localStorage; re-reads when decide() or another tab changes it.
+  const consent = useSyncExternalStore(subscribeConsent, readConsent, () => null);
 
   const decide = (v: "granted" | "denied") => {
     try { localStorage.setItem(KEY, v); } catch {}
-    setConsent(v);
+    window.dispatchEvent(new Event("af-consent"));
   };
 
   return (

@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Durable Lemon Squeezy subscription -> Clerk-user mapping. The webhook resolves the
 // account from this table on EVERY event, so revokes/refunds find the right user even
 // after they change their email (email-only resolution fails open on revoke). Also stores

@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Per-cadence track record + a real report_id on editions.
 //   scored_results.scored_cadence -- "daily" | "weekly" | "monthly" (group the track record by period)
 //   editions.scored_cadence       -- same, for the edition row

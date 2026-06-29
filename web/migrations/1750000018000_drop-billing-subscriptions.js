@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Drop the dead `billing_subscriptions` table. It mapped Lemon Squeezy subscriptions to Clerk
 // users; under Clerk Billing nothing writes to it (Clerk is the source of truth for Pro, mirrored
 // onto publicMetadata.subscribed by the billing webhook). Removing it so there are no stray

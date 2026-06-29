@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Adds the engine's computed DUE status to engine_assets so the admin dashboard can show which
 // instruments are scheduled to generate. Written by the box's `compute_due` command (which runs
 // run_daily --mode dry_run and writes each asset's decision/reason back). Nullable = "not checked

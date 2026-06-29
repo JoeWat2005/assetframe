@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // engine_assets — the dashboard-editable asset universe (what the engine generates reports for).
 //
 // This is the WEB's source of truth for the universe. The admin edits rows here (add/enable/disable/

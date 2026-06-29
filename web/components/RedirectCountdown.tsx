@@ -20,6 +20,9 @@ export default function RedirectCountdown({ seconds = 5, to = "/" }: { seconds?:
     if (stopped) return; // cancelled — no timers, the user stays put
     let cancelled = false;
     let done = false;
+    // Capture the ref object once so cleanup closes over THIS run's timers (not whatever
+    // timers.current is at cleanup time) — the react-hooks ref-in-cleanup guard.
+    const t = timers.current;
     const go = () => {
       if (cancelled || done) return;
       done = true;
@@ -28,15 +31,15 @@ export default function RedirectCountdown({ seconds = 5, to = "/" }: { seconds?:
 
     const interval = window.setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
     const safety = window.setTimeout(go, seconds * 1000 + 150); // never strand the user
-    timers.current.interval = interval;
-    timers.current.safety = safety;
+    t.interval = interval;
+    t.safety = safety;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!reduce && barRef.current) {
       import("gsap")
         .then(({ gsap }) => {
           if (cancelled || !barRef.current) return;
-          timers.current.tween = gsap.fromTo(
+          t.tween = gsap.fromTo(
             barRef.current,
             { scaleX: 1 },
             { scaleX: 0, duration: seconds, ease: "none", transformOrigin: "left center", onComplete: go }
@@ -49,7 +52,7 @@ export default function RedirectCountdown({ seconds = 5, to = "/" }: { seconds?:
       cancelled = true;
       window.clearInterval(interval);
       window.clearTimeout(safety);
-      timers.current.tween?.kill();
+      t.tween?.kill();
     };
   }, [router, seconds, to, stopped]);
 

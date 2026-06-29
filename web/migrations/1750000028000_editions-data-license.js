@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Data-license provenance on editions (additive, nullable). The engine records which price
 // provider produced an edition and under what license terms, so the public reader can show a
 // subtle provenance line:

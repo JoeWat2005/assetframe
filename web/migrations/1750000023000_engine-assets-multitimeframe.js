@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Multi-timeframe + per-asset fetch config for engine_assets (mirrors scripts/config_loader.py):
 //   cadence_day          -- weekly-cadence target day: "0".."6" (Mon=0) or "mon".."sun"; null = Monday
 //   timeframes           -- list of forecast windows -> ONE prediction track each ([] = [forecast_window])

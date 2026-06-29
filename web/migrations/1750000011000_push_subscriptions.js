@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+ 
 // Web Push subscriptions (Task T16). One row per browser/device push endpoint.
 // `clerk_user_id` is nullable so the schema can hold anonymous subscriptions, but the
 // save server-action requires login today (so in practice it's always set). `topics`
