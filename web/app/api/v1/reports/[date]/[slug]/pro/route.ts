@@ -1,5 +1,5 @@
 import { getProReportDetail } from "@/lib/reports-api";
-import { apiJson, apiPreflight } from "@/lib/http";
+import { apiJsonPrivate, apiPreflight } from "@/lib/http";
 import { isValidReportRef } from "@/lib/report-key";
 import { requireProApiKey } from "@/lib/api-auth";
 import { rateLimitResponseWithHeaders } from "@/lib/rate-limit";
@@ -19,11 +19,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ date: string; s
 
   const { date, slug } = await ctx.params;
   if (!isValidReportRef(date, slug)) {
-    return apiJson({ error: "not_found", message: "No published Pro report for that date/slug." }, { status: 404 });
+    return apiJsonPrivate({ error: "not_found", message: "No published Pro report for that date/slug." }, { status: 404 });
   }
   const data = await getProReportDetail(date, slug);
-  if (!data) return apiJson({ error: "not_found", message: "No published Pro report for that date/slug." }, { status: 404 });
-  return apiJson(data);
+  if (!data) return apiJsonPrivate({ error: "not_found", message: "No published Pro report for that date/slug." }, { status: 404 });
+  return apiJsonPrivate(data);
 }
 
 export function OPTIONS() {

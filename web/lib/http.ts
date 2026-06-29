@@ -17,20 +17,35 @@ export function htmlPage(title: string, body: string) {
   );
 }
 
-// Tiny helpers for the public read-only REST API (/api/v1/*). Free catalog data, so wide-open
-// CORS GETs are fine. Short browser cache + CDN cache keeps it cheap.
+// JSON helpers for the read-only REST API (/api/v1/*). Wide-open CORS GETs are fine — auth is a Bearer
+// API key (never a cookie), so a browser can't auto-attach it cross-origin.
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// PUBLIC/free data (catalog list, track record). Short browser + CDN cache keeps it cheap.
 export function apiJson(data: unknown, init?: { status?: number }) {
   return new Response(JSON.stringify(data, null, 2), {
     status: init?.status ?? 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "public, max-age=60, s-maxage=300",
+      ...CORS,
+    },
+  });
+}
+
+// GATED / per-API-key responses (report detail, Pro analysis, the metered data endpoints). MUST NOT be
+// CDN-cached: Authorization is not part of the cache key, so a `public, s-maxage` response could be
+// replayed to a different or anonymous caller (paid-content leak). Always private + no-store.
+export function apiJsonPrivate(data: unknown, init?: { status?: number }) {
+  return new Response(JSON.stringify(data, null, 2), {
+    status: init?.status ?? 200,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "private, no-store",
       ...CORS,
     },
   });

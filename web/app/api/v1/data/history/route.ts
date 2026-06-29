@@ -1,4 +1,4 @@
-import { apiJson, apiPreflight } from "@/lib/http";
+import { apiJsonPrivate, apiPreflight } from "@/lib/http";
 import { requireApiKey } from "@/lib/api-auth";
 import { rateLimitResponseWithHeaders } from "@/lib/rate-limit";
 import { getHistory } from "@/lib/market-data";
@@ -18,15 +18,15 @@ export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
   const symbol = (sp.get("symbol") || "").trim();
   if (!SYM.test(symbol)) {
-    return apiJson({ error: "bad_request", message: "Provide ?symbol= (e.g. AAPL, BTC-USD, GC=F)." }, { status: 400 });
+    return apiJsonPrivate({ error: "bad_request", message: "Provide ?symbol= (e.g. AAPL, BTC-USD, GC=F)." }, { status: 400 });
   }
   const daysRaw = parseInt(sp.get("days") || "30", 10);
   const days = Number.isFinite(daysRaw) ? Math.max(1, Math.min(365, daysRaw)) : 30;
   const interval: "1h" | "1d" = sp.get("interval") === "1h" ? "1h" : "1d";
   try {
-    return apiJson(await getHistory(symbol, { days, interval }));
+    return apiJsonPrivate(await getHistory(symbol, { days, interval }));
   } catch {
-    return apiJson({ error: "unavailable", message: `No history for "${symbol}" from any provider.` }, { status: 502 });
+    return apiJsonPrivate({ error: "unavailable", message: `No history for "${symbol}" from any provider.` }, { status: 502 });
   }
 }
 

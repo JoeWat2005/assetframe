@@ -1,4 +1,4 @@
-import { apiJson, apiPreflight } from "@/lib/http";
+import { apiJsonPrivate, apiPreflight } from "@/lib/http";
 import { requireApiKey } from "@/lib/api-auth";
 import { rateLimitResponseWithHeaders } from "@/lib/rate-limit";
 import { getQuote } from "@/lib/market-data";
@@ -18,15 +18,15 @@ export async function GET(req: Request) {
 
   const symbol = (new URL(req.url).searchParams.get("symbol") || "").trim();
   if (!SYM.test(symbol)) {
-    return apiJson(
+    return apiJsonPrivate(
       { error: "bad_request", message: "Provide ?symbol= (e.g. BTC-USD, AAPL, GBPUSD=X, GC=F, ^GSPC)." },
       { status: 400 }
     );
   }
   try {
-    return apiJson(await getQuote(symbol));
+    return apiJsonPrivate(await getQuote(symbol));
   } catch {
-    return apiJson({ error: "unavailable", message: `No quote for "${symbol}" from any provider.` }, { status: 502 });
+    return apiJsonPrivate({ error: "unavailable", message: `No quote for "${symbol}" from any provider.` }, { status: 502 });
   }
 }
 
