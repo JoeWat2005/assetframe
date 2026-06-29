@@ -160,9 +160,9 @@ export async function _getTrackRecord(): Promise<TrackRecord> {
         openRows = (await sql.query(`${OPEN_CALLS_HEAD} ${predAgg("")} ${OPEN_CALLS_FROM}`)) as Row[];
       }
 
-      // Scored rows, enriched with edition taxonomy (asset_class_key / prediction_type /
-      // market_regime) via the same report_id derivation used elsewhere. Best-effort: if
-      // those columns aren't migrated, retry without them so scoring data still loads.
+      // Scored rows. Taxonomy (asset_class / pred_type / market_regime) lives on scored_results;
+      // the editions LEFT JOIN is kept only to enrich each row with e.ticker. Best-effort: if a
+      // column isn't migrated yet, retry without the enrichment so scoring data still loads.
       // DISTINCT ON (sr.id): the editions join can match ONE scored row to TWO editions (the
       // exact report_id match AND a legacy null-report_id row whose derived id collides), which
       // would double-count that row's hits/misses. Collapse to one edition per scored row,
@@ -179,13 +179,13 @@ export async function _getTrackRecord(): Promise<TrackRecord> {
       let scoredRows: Row[];
       try {
         scoredRows = (await sql.query(
-          // Taxonomy comes from scored_results (denormalized by the engine — see
-          // migration 1750000030000); fall back to the editions columns for any rows synced
-          // before that change. Aliases are unchanged so the downstream mapping is untouched.
+          // Taxonomy comes solely from scored_results (denormalized by the engine — migration
+          // 1750000030000); the editions taxonomy columns were dropped in 1750000031000. Aliases
+          // are unchanged so the downstream mapping is untouched.
           `${SCORED_BASE}, coalesce(sr.scored_cadence, '') AS scored_cadence, e.ticker AS ticker,
-              coalesce(nullif(sr.asset_class, ''),   e.asset_class_key, '') AS asset_class_key,
-              coalesce(nullif(sr.pred_type, ''),     e.prediction_type, '') AS prediction_type,
-              coalesce(nullif(sr.market_regime, ''), e.market_regime, '')   AS market_regime
+              coalesce(sr.asset_class, '')   AS asset_class_key,
+              coalesce(sr.pred_type, '')     AS prediction_type,
+              coalesce(sr.market_regime, '') AS market_regime
            ${SCORED_JOIN}`
         )) as Row[];
       } catch {

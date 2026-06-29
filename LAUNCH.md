@@ -120,10 +120,18 @@ now requires type-to-confirm).
   then retire the 30s Neon poll + the Upstash wake/heartbeat (Upstash → rate-limiting only). Do
   this with the live server so the SSE/Access flow is e2e-tested. Contract + IDs are in the
   control-plane memory.
-- 🔒 **Tier-2 schema flush.** Optional cleanliness: collapse the 30 migrations → one baseline +
-  drop the genuinely-dead editions columns (`direction_view`, `social_context`, `report_ref`).
-  Destructive across Neon + box + R2 — coordinate all three; KEEP `confidence_band` (it's a live
-  notification hook). Not launch-blocking (dead cols are harmless NULLs).
+- **Schema flush — the dead-column drop now SHIPS as a migration.** Web migration
+  `1750000031000` drops the 6 dead/superseded editions columns (`asset_class_key` /
+  `prediction_type` / `market_regime` — superseded by `scored_results`; `direction_view` /
+  `social_context` — unread; `report_ref` + its index — replaced by `report_id`) and VALIDATEs the
+  `open_calls` FK; the coupled `sync-db.mjs` + `content-db.ts` changes ship with it. **DEPLOY
+  ORDER: deploy the engine (new sync-db) with or before the web `migrate up`** so the old upsert
+  never references a dropped column (if it does, sync-db's missing-column guard just skips the
+  edition and self-heals on the engine deploy). KEPT: `confidence_band` (live notification hook),
+  `asset_class` (display class). Validated on a throwaway Neon branch off prod. **Still optional /
+  coordinated (NOT done):** the DATA flush — wiping the test catalog (a Neon-only clear just
+  re-syncs from the box, so pair it with box `clear_reports` + `reset_ledger` + `clear_r2`) — and
+  collapsing the 31 migrations → one baseline (cosmetic; only meaningful on a fresh-DB rebuild).
 - ☐ **F8 visual polish (design pass with you):** landing candle animation richness, reviews
   carousel + B2B section, how-it-works scroll-reveal timeline, sign-in animations; minor a11y/SEO
   nits (twitter-image, legal-page heading order, table `scope`/labels, FAQ "what's coming").
