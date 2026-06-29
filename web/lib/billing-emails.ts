@@ -10,7 +10,7 @@ import { SITE } from "@/site.config";
 
 export type BillingEmailVars = {
   date?: string; // a friendly YYYY-MM-DD (trial end / renewal / access-ends date)
-  price: string; // SITE.proPrice, e.g. "$9.99/month"
+  price: string; // SITE.proPrice, e.g. "$19.99/month"
 };
 
 const manageUrl = `${SITE.url}/account/subscription`;

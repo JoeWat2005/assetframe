@@ -8,7 +8,7 @@ import { SITE } from "@/site.config";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "AssetFrame pricing — a free Snapshot on every edition, or Pro at $9.99/month (3-day free trial) for conditional setups, the price ladder, the calibrated confidence score, the full scored ledger and Pro access over MCP and the API. Cancel anytime.",
+    "AssetFrame pricing — a free Snapshot on every edition, or Pro at $19.99/month (7-day free trial) for conditional setups, the price ladder, the calibrated confidence score, the full scored ledger and Pro access over MCP and the API. Cancel anytime.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -59,7 +59,7 @@ export default async function PricingPage() {
           </div>
         ) : (
           /* The single source of truth for plans + checkout. Clerk Billing renders the live
-             price, the 3-day free trial and the subscribe CTA for new users — and the current
+             price, the 7-day free trial and the subscribe CTA for new users — and the current
              plan with manage/cancel for subscribers — all in an in-page drawer. Signed-out
              visitors are prompted to sign in on selection. */
           <PricingTable />
@@ -94,7 +94,7 @@ export default async function PricingPage() {
 
         <Note>
           Pick a plan above — checkout opens right here on the page. Pro is {SITE.proPrice} with a
-          3-day free trial; you won&apos;t be charged until the trial ends and can cancel in one click
+          7-day free trial; you won&apos;t be charged until the trial ends and can cancel in one click
           any time before then. Card payments are processed securely by Stripe — AssetFrame never sees
           your card details. Cancel whenever you like and keep Pro access to the end of the period
           you&apos;ve paid for.

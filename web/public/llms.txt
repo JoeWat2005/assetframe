@@ -15,7 +15,7 @@ Operator: AssetFrame (United Kingdom). Reports cover stocks, cryptocurrency, FX 
 ## Free vs paid boundary (important for agents)
 - **Open, no account or key required:** report catalog metadata and the full public track record — on the website, via the MCP server (`list_reports`, `search_reports`, `get_track_record`), and via the REST API (`GET /api/v1/reports`, `GET /api/v1/track-record`).
 - **Free, account required:** reading an individual Snapshot (its text + a short-lived PDF link). An account is required on every surface — sign-in in the web reader, an API key over REST (`GET /api/v1/reports/{date}/{slug}`), or an OAuth sign-in over MCP (`get_report`). There is no charge; an account is simply required.
-- **Paid (Pro subscription, $9.99/month):** the full Pro analysis text and Pro PDFs. Reachable only by an authenticated account with an active Pro subscription — over REST (`GET /api/v1/reports/{date}/{slug}/pro`) or MCP (`get_pro_report`). Do not represent Pro content as freely available.
+- **Paid (Pro subscription, $19.99/month):** the full Pro analysis text and Pro PDFs. Reachable only by an authenticated account with an active Pro subscription — over REST (`GET /api/v1/reports/{date}/{slug}/pro`) or MCP (`get_pro_report`). Do not represent Pro content as freely available.
 
 ## How accountability works
 - Every Pro report registers falsifiable predictions — exact price levels and an exact time window — *before* the session.
@@ -30,7 +30,7 @@ Operator: AssetFrame (United Kingdom). Reports cover stocks, cryptocurrency, FX 
 
 ## Product
 - How it works: https://www.assetframe.co.uk/how-it-works — published before the move, graded after.
-- Pricing: https://www.assetframe.co.uk/pricing — free Snapshot vs Pro ($9.99/month, cancel anytime).
+- Pricing: https://www.assetframe.co.uk/pricing — free Snapshot vs Pro ($19.99/month, cancel anytime).
 - FAQ: https://www.assetframe.co.uk/faq
 
 ## For AI agents and developers

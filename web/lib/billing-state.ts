@@ -147,7 +147,7 @@ export function decideBillingEmail(
   if (state.subStatus === "cancelled") {
     return once("cancelled", `${subId}:${state.endsAt ?? ""}`);
   }
-  // Welcome — first time we grant access (every new subscription starts with the 3-day trial).
+  // Welcome — first time we grant access (every new subscription starts with the 7-day trial).
   if (state.subscribed && state.subStatus === "active" && prev.subscribed !== true) {
     return once("welcome", subId || "welcome");
   }

@@ -6,7 +6,7 @@
 - Access: requires a free account to read.
 
 ## Pro
-- Price: $9.99 / month (cancel anytime; 3-day free trial)
+- Price: $19.99 / month (cancel anytime; 7-day free trial)
 - Includes: everything in the Snapshot, plus conditional long & short setups with risk:reward, the price ladder with distances and key-level cards, a scenario matrix, an event-risk timeline, technicals, sentiment and positioning where sourced, a trade-quality scorecard, the full source audit, and the append-only outcome ledger.
 - Billing: subscriptions managed by Clerk; card payments processed securely by Stripe. AssetFrame never sees card details.
 
