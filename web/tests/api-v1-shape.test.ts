@@ -38,6 +38,9 @@ vi.mock("../lib/content", () => ({
     stats: { reportsScored: 0, openCalls: 0, predictionsGraded: 0, hitRate: null, longestStreak: 0, currentStreak: 0 },
     open: [], scored: [], calibration: null,
   })),
+  // pure presentational helper reports-api uses (toSummary/listReports/getTrackRecordPayload) to derive
+  // a cadence from a report_id; the mock omitted it after it was added to reports-api, breaking 6 tests.
+  cadenceOf: (id: string) => (/W\d/.test(id) ? "weekly" : "daily"),
 }));
 vi.mock("../lib/r2", () => ({
   getObjectText: vi.fn(async () => null),
