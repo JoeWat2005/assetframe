@@ -11,9 +11,7 @@ Every Pro report registers falsifiable predictions for the next session. The nex
 
 This is **general market research and decision support — not investment advice, not a personal recommendation, and it places no trades.** See [Role, limits & disclaimer](#role-limits--disclaimer).
 
-> **Full engineering + product reference:** the [`documentation/` vault](documentation/README.md) (28 sections, ~120 files). This README is the concise human entry point; the vault is the depth. The operating manual for generating a report is [`.claude/skills/mvp/SKILL.md`](.claude/skills/mvp/SKILL.md). AI-instruction files (not human docs) live at `mvp/CLAUDE.md`, `mvp/web/CLAUDE.md`, and `mvp/web/AGENTS.md` — read those before driving the engine or touching the web code.
->
-> **Launch-readiness: GREEN (for MVP)** — see [`documentation/changelog/launch-audit.md`](documentation/changelog/launch-audit.md).
+> **Operating manual:** generating a report is driven by [`.claude/skills/mvp/SKILL.md`](.claude/skills/mvp/SKILL.md). AI-instruction files (not human docs) live at `CLAUDE.md`, `web/CLAUDE.md`, and `web/AGENTS.md` — read those before driving the engine or touching the web code. This README is the human entry point; the code is the source of truth.
 
 ---
 
@@ -22,7 +20,7 @@ This is **general market research and decision support — not investment advice
 1. [What it is](#what-it-is)
 2. [Architecture at a glance](#architecture-at-a-glance)
 3. [Quick start](#quick-start)
-4. [Full documentation](#full-documentation)
+4. [Repository layout](#repository-layout)
 5. [Role, limits & disclaimer](#role-limits--disclaimer)
 
 ---
@@ -41,7 +39,7 @@ The guiding principle of the engine (V2):
 
 The AI authors exactly **one** artifact per report — a research brief of prose, prediction *intent*, and sourced claims, **never prices**. Everything numerical and structural (levels, pivots, bands, R:R, ladder, predictions, the confidence score, every QA check) is compiled and validated by Python. A human reviews every edition before it ships.
 
-> **Day-one state:** the track record currently shows **0 scored results** (predictions are registered; the first results land as the earliest windows close) and `/reviews` is **"coming soon"** (no Google Business Profile connected yet). Docs describe the *mechanism*, never a populated record. → [product/methodology.md](documentation/product/methodology.md), [product/product-overview.md](documentation/product/product-overview.md).
+> **Day-one state:** the track record currently shows **0 scored results** (predictions are registered; the first results land as the earliest windows close) and `/reviews` is **"coming soon"** (no Google Business Profile connected yet). The product describes the *mechanism*, never a populated record.
 
 ---
 
@@ -69,11 +67,11 @@ DISTRIBUTION PLANE  (Next.js 16 app in web/, on Vercel)
   Clerk + Clerk Billing (auth/entitlements/subscriptions) · Neon Postgres · R2 · Vercel Analytics
 ```
 
-Engine artifacts under `data/` stay local/gitignored; only `web/content/*.json` and the ledger reach git/Neon. Full detail, the role-split table, and the 12-step pipeline are in the documentation vault → [architecture/system-overview.md](documentation/architecture/system-overview.md), [architecture/generation-pipeline.md](documentation/architecture/generation-pipeline.md), [architecture/distribution-pipeline.md](documentation/architecture/distribution-pipeline.md).
+Engine artifacts under `data/` stay local/gitignored; only `web/content/*.json` and the ledger reach git/Neon.
 
 ### Stack (web)
 
-Next.js 16 (App Router) on Vercel (root `web/`) · **Clerk** auth/entitlements + **Clerk Billing** subscriptions (Stripe under the hood) · **Neon Postgres** (JSON fallback) · **Cloudflare R2** report files (Pro behind 120s signed URLs) · Tailwind v4 + shadcn/ui + GSAP · **web-push** (VAPID) + **Resend** email · Vercel Analytics + Speed Insights · `node-pg-migrate`. → [website/](documentation/website/routes.md), [auth/](documentation/auth/overview.md), [billing/](documentation/billing/overview.md), [database/](documentation/database/schema.md), [storage/](documentation/storage/overview.md), [deployment/](documentation/deployment/overview.md).
+Next.js 16 (App Router) on Vercel (root `web/`) · **Clerk** auth/entitlements + **Clerk Billing** subscriptions (Stripe under the hood) · **Neon Postgres** (JSON fallback) · **Cloudflare R2** report files (Pro behind 120s signed URLs) · Tailwind v4 + shadcn/ui + GSAP · **web-push** (VAPID) + **Resend** email · Vercel Analytics + Speed Insights · `node-pg-migrate`.
 
 ---
 
@@ -98,7 +96,7 @@ python scripts/scaffold_payload.py XAUUSD --session-profile cme_futures --check
 python scripts/mvp_report.py data/payloads/XAUUSD_af_payload.json
 ```
 
-Output per run: `reports/YYYY-MM-DD/<INSTRUMENT>/` → `free.pdf`, `pro.pdf`, `free.html`, `pro.html`, `metadata.json`, `preview.png`. Full step-by-step: `.claude/skills/mvp/SKILL.md` and [report-engine/overview.md](documentation/report-engine/overview.md).
+Output per run: `reports/YYYY-MM-DD/<INSTRUMENT>/` → `free.pdf`, `pro.pdf`, `free.html`, `pro.html`, `metadata.json`, `preview.png`. Full step-by-step: `.claude/skills/mvp/SKILL.md`.
 
 ### Run the web app
 
@@ -112,7 +110,7 @@ npm run build                # production build
 npm run db:setup             # migrate, then sync — the usual publish step
 ```
 
-Public pages work with no keys; sign-in, Track record, Pro and Admin need the env keys. → [deployment/environment-variables.md](documentation/deployment/environment-variables.md).
+Public pages work with no keys; sign-in, Track record, Pro and Admin need the env keys — see `web/.env.example`.
 
 ### Publish an edition
 
@@ -124,27 +122,16 @@ python scripts/publish.py                  # push free + Pro files to R2
 git add -A && git commit -m "edition: <date>" && git push   # Vercel auto-redeploys
 ```
 
-`out_dir` MUST be `reports/<date>/<slug>`. → [operations/publication-workflow.md](documentation/operations/publication-workflow.md), [report-engine/publish.md](documentation/report-engine/publish.md).
+`out_dir` MUST be `reports/<date>/<slug>`.
 
 ---
 
-## Full documentation
-
-The [`documentation/` vault](documentation/README.md) is the complete reference. Start with its [index](documentation/README.md), or jump straight to a section:
-
-- **Product** — [product overview](documentation/product/product-overview.md) · [free vs Pro](documentation/product/free-vs-pro.md) · [methodology](documentation/product/methodology.md) · [report types](documentation/product/report-types.md) · [disclaimers](documentation/product/disclaimers.md)
-- **Architecture** — [system overview](documentation/architecture/system-overview.md) · [generation pipeline](documentation/architecture/generation-pipeline.md) · [distribution pipeline](documentation/architecture/distribution-pipeline.md) · [data flow](documentation/architecture/data-flow.md) · [trust boundaries](documentation/architecture/trust-boundaries.md)
-- **Engine** — [report-engine](documentation/report-engine/overview.md) · [predictions](documentation/predictions/overview.md) · [confidence](documentation/confidence/overview.md) · [ledger](documentation/ledger/overview.md) · [research](documentation/research/overview.md) · [social](documentation/social/overview.md)
-- **Web & platform** — [website](documentation/website/routes.md) · [frontend](documentation/frontend/components.md) · [backend](documentation/backend/backend-overview.md) · [api](documentation/api/overview.md) · [mcp](documentation/mcp/overview.md) · [auth](documentation/auth/overview.md) · [billing](documentation/billing/overview.md) · [database](documentation/database/schema.md) · [storage](documentation/storage/overview.md) · [security](documentation/security/threat-model.md)
-- **Ship & run** — [deployment](documentation/deployment/overview.md) · [operations](documentation/operations/daily-operations.md) · [admin](documentation/admin/admin-panel.md) · [testing](documentation/testing/strategy.md) · [analytics](documentation/analytics/overview.md) · [accessibility](documentation/accessibility/overview.md) · [seo](documentation/seo/overview.md) · [troubleshooting](documentation/troubleshooting/README.md) · [changelog / launch audit](documentation/changelog/launch-audit.md)
-
-### Repository layout
+## Repository layout
 
 ```
 mvp/
   README.md                  this file (the concise human entry point)
   CLAUDE.md                  AI project rules for the engine (KEEP)
-  documentation/             the full engineering + product vault (start at documentation/README.md)
   scripts/                   Python engine
   data/                      candles / analysis / research / social / briefs / payloads / predictions (gitignored)
   ledger/                    outcome_ledger.csv (append-only) + calibration_map.json + research_memory.json
@@ -169,4 +156,4 @@ No outcome is guaranteed; markets are uncertain and capital is at risk. Do your 
 
 **Copyright.** The reports, site, brand and code are © AssetFrame. Pro and Snapshot reports are licensed for the subscriber's personal, non-commercial use — redistribution, resale or public sharing is prohibited (Terms §8–9). Report files are served only through the auth-gated `/api/report` route as short-lived signed URLs, never as public objects.
 
-Full compliance posture, the verbatim language rules, and the regulatory caveat → [product/disclaimers.md](documentation/product/disclaimers.md).
+The verbatim disclaimer language is carried on every report and page; the compliance posture and regulatory caveat are summarised above.
