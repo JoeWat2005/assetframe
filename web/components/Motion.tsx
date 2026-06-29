@@ -1,6 +1,16 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
+
+const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+// Subscribe to RUNTIME changes of the OS reduced-motion setting so the effect re-runs the moment
+// the user toggles it (previously it was only read once on mount, despite the comment claiming
+// otherwise — caught by the F8 a11y audit).
+function subscribeMotion(cb: () => void) {
+  const mql = window.matchMedia(MOTION_QUERY);
+  mql.addEventListener("change", cb);
+  return () => mql.removeEventListener("change", cb);
+}
 
 // Isolated GSAP motion layer (no Framer in this tree). Reveals elements tagged
 // data-animate="hero" (load-in, staggered) and data-animate="up" (scroll reveal).
@@ -12,11 +22,13 @@ import { usePathname } from "next/navigation";
 //  - reduced-motion is respected (and re-checked on change).
 export default function Motion() {
   const pathname = usePathname();
+  // Live reduced-motion preference — re-renders (and re-runs the effect below) the moment the user
+  // flips the OS setting, so animations stop (or resume) without needing a navigation.
+  const reduced = useSyncExternalStore(subscribeMotion, () => window.matchMedia(MOTION_QUERY).matches, () => false);
 
   useEffect(() => {
     const root = document.documentElement;
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mql.matches) {
+    if (reduced) {
       root.classList.remove("gsap-on");
       return;
     }
@@ -76,7 +88,7 @@ export default function Motion() {
       mo?.disconnect();
       ctx?.revert();
     };
-  }, [pathname]);
+  }, [pathname, reduced]);
 
   return null;
 }

@@ -30,9 +30,17 @@ export default function AboutPage() {
             report with conditional setups, a price ladder, a calibrated confidence score and the outcome ledger.
           </p>
           <p>
-            Most market commentary is never checked. A call that&rsquo;s never measured can&rsquo;t be wrong, so it
-            can never really be right either. We do the opposite: every prediction is registered{" "}
-            <b>before</b> the session opens and graded against the tape afterwards, so the record speaks for itself.
+            The industry runs on unaccountable tips. Signal sellers, alert groups and finance influencers push
+            calls they never grade — survivorship bias does the marketing, and the subscription you keep paying is
+            the only thing being optimised. A call that&rsquo;s never measured can&rsquo;t be wrong, so it can never
+            really be right either.
+          </p>
+          <p>
+            <b>AssetFrame</b> (founded 2026) was built to do the opposite. The analysis is written by an AI research
+            desk with no book to talk, no position to defend and nothing to upsell mid-report — so the read is driven
+            by the evidence, not by someone&rsquo;s incentive. Every prediction is registered <b>before</b> the
+            session opens and graded against the tape afterwards, and the whole record stays public. The track
+            record, not the rhetoric, is what you judge us on.
           </p>
         </div>
 

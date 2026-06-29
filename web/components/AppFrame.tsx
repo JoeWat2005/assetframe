@@ -11,7 +11,7 @@ export default function AppFrame({
   const pathname = usePathname() ?? "";
   const bare = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
 
-  if (bare) return <main id="main-content" className="flex-1">{children}</main>;
+  if (bare) return <main id="main-content" aria-label="Main content" className="flex-1">{children}</main>;
 
   // The header is fixed, so every page reserves its height (pt-14) to keep content clear
   // of it. This is deterministic — no client-only pathname branch — so statically-rendered
@@ -30,7 +30,7 @@ export default function AppFrame({
         Skip to content
       </a>
       {header}
-      <main id="main-content" tabIndex={-1} className="flex-1 pt-14 outline-none scroll-mt-14">{children}</main>
+      <main id="main-content" aria-label="Main content" tabIndex={-1} className="flex-1 pt-14 outline-none scroll-mt-14">{children}</main>
       {footer}
     </>
   );
