@@ -1,3 +1,21 @@
+-- ###########################################################################
+-- ## STALE — NOT THE SOURCE OF TRUTH. DO NOT APPLY. DO NOT EDIT TO "FIX".   ##
+-- ##                                                                        ##
+-- ## The live schema is owned ENTIRELY by node-pg-migrate under            ##
+-- ## web/migrations/ (30+ files). This file is the ORIGINAL bootstrap      ##
+-- ## snapshot and is missing ~15 columns added by later migrations         ##
+-- ## (report_id, scored_cadence, chart_intervals, forecast_window,         ##
+-- ## asset_class_key/…/social_context, data_provider/data_license,         ##
+-- ## scored_results.{conf_version,confidence_components,scored_cadence,     ##
+-- ## asset_class,pred_type,market_regime}, the engine_* / backtest_*        ##
+-- ## tables, etc.). No tooling applies it (only the documentation/ vault    ##
+-- ## referenced it). The pending schema flush regenerates a clean baseline  ##
+-- ## from the migrations and SUPERSEDES this file — delete it then.         ##
+-- ##                                                                        ##
+-- ## To see the real current schema: `npm run migrate up` then introspect,  ##
+-- ## or read web/migrations/*.js in order.                                  ##
+-- ###########################################################################
+
 -- AssetFrame report database (Neon Postgres).
 -- Holds ONLY report data — users + subscriptions live in Clerk (Clerk Billing),
 -- and the report files (HTML/PDF) stay in R2 (referenced here by key).
