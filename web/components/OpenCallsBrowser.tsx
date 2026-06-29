@@ -11,9 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import PickList from "@/components/PickList";
 import { cn } from "@/lib/utils";
 
 const PAGE = 15; // rows before "Show more"
@@ -35,23 +33,6 @@ function VerdictBadge({ verdict }: { verdict?: string }) {
   if (!v) return null;
   const m = VERDICTS[v] ?? { label: v, cls: "bg-tile text-[#57606a]" };
   return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.cls}`}>{m.label}</span>;
-}
-
-function PickList({
-  label, value, onChange, options,
-}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger aria-label={label} className="w-full sm:w-auto sm:min-w-[150px]">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          {options.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
-  );
 }
 
 export default function OpenCallsBrowser({

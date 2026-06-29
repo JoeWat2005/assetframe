@@ -10,9 +10,7 @@ import {
 import ReportCard from "@/components/ReportCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import PickList from "@/components/PickList";
 
 const SORTS: [SortKey, string][] = [
   ["newest", "Newest first"], ["oldest", "Oldest first"],
@@ -26,23 +24,6 @@ function fmtDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return y && m && d ? `${d} ${months[m - 1]} ${y}` : iso;
-}
-
-function PickList({
-  label, value, onChange, options,
-}: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger aria-label={label} className="w-full sm:w-auto sm:min-w-[150px]">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          {options.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
-  );
 }
 
 export default function ReportsBrowser({ editions }: { editions: Edition[] }) {
