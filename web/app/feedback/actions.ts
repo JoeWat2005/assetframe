@@ -48,7 +48,10 @@ export async function submitFeedback(form: FormData): Promise<FeedbackResult> {
       [email || null, userId || null, category, message, ua]
     );
 
-    // Best-effort notify (ignored if email isn't configured / fails).
+    // Best-effort notify (ignored if email isn't configured / fails). Escape EVERY user-supplied
+    // field (email + category + message) before it lands in the admin's inbox HTML — `email` is only
+    // shape-checked (includes "@"), so a crafted value could otherwise inject markup.
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const adminTo = (process.env.ADMIN_EMAILS || "").split(",")[0].trim() || SITE.contactEmail;
     await sendEmail({
       to: adminTo,
@@ -57,10 +60,9 @@ export async function submitFeedback(form: FormData): Promise<FeedbackResult> {
       html: emailShell({
         heading: "New feedback",
         bodyHtml:
-          `<p style="margin:0 0 8px;font-size:14px;"><b>Category:</b> ${category}` +
-          `${email ? ` &middot; <b>From:</b> ${email}` : ""}</p>` +
-          `<p style="margin:0;white-space:pre-wrap;font-size:14px;color:#33415c;">${message
-            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`,
+          `<p style="margin:0 0 8px;font-size:14px;"><b>Category:</b> ${esc(category)}` +
+          `${email ? ` &middot; <b>From:</b> ${esc(email)}` : ""}</p>` +
+          `<p style="margin:0;white-space:pre-wrap;font-size:14px;color:#33415c;">${esc(message)}</p>`,
       }),
     }).catch(() => {});
 

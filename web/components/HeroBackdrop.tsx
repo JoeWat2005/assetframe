@@ -1,15 +1,16 @@
-// Decorative market-tape backdrop for the hero: a deterministic candlestick chart
-// (no Math.random, so it's SSR-safe) that drifts sideways. Domain-relevant, not a
-// fake screenshot — this is the kind of chart the product actually publishes.
-const CLOSES = [
-  3020, 3105, 2980, 2890, 2760, 2810, 2650, 2540, 2600, 2470, 2380, 2440, 2300, 2210,
-  2280, 2150, 2060, 2120, 1990, 1900, 1960, 1840, 1900, 1820, 1760, 1820, 1700, 1640,
-  1700, 1620, 1680, 1600, 1660, 1720, 1660, 1740, 1690, 1760, 1700, 1640, 1700, 1660,
-  1722, 1684, 1742, 1690, 1660, 1720,
-];
+// Decorative market-tape backdrop for the hero: a deterministic candlestick chart (no Math.random,
+// so SSR-safe) that drifts sideways FOREVER. The series is CYCLIC — one full market cycle that
+// returns to its start (cosine trend + integer-harmonic wobble) — so the two tiled panels join
+// seamlessly with no price "jump" at the drift seam. Domain-relevant, not a fake screenshot.
+const N = 48;
+const CLOSES = Array.from({ length: N }, (_, i) => {
+  const t = (i / N) * Math.PI * 2;                                  // one full cycle across a panel
+  const trend = Math.cos(t);                                        // 1 -> -1 -> 1 (returns to start)
+  const wobble = Math.sin(t * 3) * 0.16 + Math.sin(t * 7) * 0.07;   // integer harmonics -> also cyclic
+  return Math.round(2350 + trend * 470 + wobble * 470);
+});
 
 const W = 1200, H = 460, TOP = 40, BOT = 410;
-const N = CLOSES.length;
 const minP = Math.min(...CLOSES) * 0.985;
 const maxP = Math.max(...CLOSES) * 1.012;
 const y = (p: number) => TOP + (1 - (p - minP) / (maxP - minP)) * (BOT - TOP);
@@ -17,18 +18,19 @@ const slot = W / N;
 const bodyW = slot * 0.5;
 const wick = (maxP - minP) * 0.014;
 
-function sma(period: number): (number | null)[] {
+// Cyclic SMA (wraps around the series) so the moving-average lines stay CONTINUOUS across the seam —
+// no gap where a fresh panel's average would otherwise restart.
+function sma(period: number): number[] {
   return CLOSES.map((_, i) => {
-    if (i < period - 1) return null;
     let s = 0;
-    for (let k = 0; k < period; k++) s += CLOSES[i - k];
+    for (let k = 0; k < period; k++) s += CLOSES[(i - k + N) % N];
     return s / period;
   });
 }
 const sma8 = sma(8);
 const sma21 = sma(21);
-const linePts = (arr: (number | null)[]) =>
-  arr.map((v, i) => (v == null ? null : `${i * slot + slot / 2},${y(v).toFixed(1)}`)).filter(Boolean).join(" ");
+const linePts = (arr: number[]) =>
+  arr.map((v, i) => `${i * slot + slot / 2},${y(v).toFixed(1)}`).join(" ");
 
 function ChartPanel() {
   return (
@@ -40,7 +42,7 @@ function ChartPanel() {
       ))}
       {/* candles */}
       {CLOSES.map((c, i) => {
-        const o = i === 0 ? c : CLOSES[i - 1];
+        const o = CLOSES[(i - 1 + N) % N];   // cyclic open (wraps) so the seam candle is continuous
         const up = c >= o;
         const cx = i * slot + slot / 2;
         const top = Math.min(y(o), y(c));

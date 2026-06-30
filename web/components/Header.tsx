@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility, Bell, Code2, Star, Terminal, MessageSquare } from "lucide-react";
+import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility, Bell, Code2, Star, Terminal, MessageSquare, Activity } from "lucide-react";
 import HeaderAuth from "@/components/HeaderAuth";
 import { SITE } from "@/site.config";
 import {
@@ -16,37 +16,38 @@ import { cn } from "@/lib/utils";
 
 const HOME = process.env.NODE_ENV === "production" ? SITE.url : "/";
 
-// Items within each category are alphabetical by label (per request).
-const RESEARCH = [
-  { href: "/notifications", label: "Notifications", desc: "Manage push alerts and your email newsletter.", icon: Bell },
-  { href: "/reports", label: "Reports", desc: "Browse the latest published editions.", icon: FileText },
-  { href: "/reviews", label: "Reviews", desc: "What people say about AssetFrame.", icon: Star },
-  { href: "/track-record", label: "Track record", desc: "Every call, scored against the tape.", icon: LineChart },
-];
+// Categories ordered by what a first-time visitor wants; items ordered by importance (not alphabetical).
 const PRODUCT = [
-  { href: "/faq", label: "FAQ", desc: "Common questions, answered.", icon: HelpCircle },
   { href: "/how-it-works", label: "How it works", desc: "Published before the move, graded after.", icon: BookOpen },
   { href: "/pricing", label: "Pricing", desc: "Free Snapshots, and what Pro adds.", icon: CreditCard },
+  { href: "/faq", label: "FAQ", desc: "Common questions, answered.", icon: HelpCircle },
+];
+const RESEARCH = [
+  { href: "/reports", label: "Reports", desc: "Browse the latest published editions.", icon: FileText },
+  { href: "/track-record", label: "Track record", desc: "Every call, scored against the tape.", icon: LineChart },
+  { href: "/reviews", label: "Reviews", desc: "What members say about AssetFrame.", icon: Star },
+  { href: "/notifications", label: "Notifications", desc: "Manage push alerts and your newsletter.", icon: Bell },
 ];
 const DEVELOPERS = [
+  { href: "/developers", label: "Overview", desc: "The agent-facing API & MCP server.", icon: Code2 },
+  { href: "/developers/api", label: "REST API", desc: "Read-only JSON for the catalog & record.", icon: Code2 },
   { href: "/developers/mcp", label: "MCP server", desc: "Connect Claude, Cursor and other agents.", icon: Terminal },
-  { href: "/developers", label: "Overview", desc: "MCP server & API for agents.", icon: Code2 },
-  { href: "/developers/api", label: "REST API", desc: "Read-only JSON for catalog & record.", icon: Code2 },
 ];
 const COMPANY = [
   { href: "/about", label: "About", desc: "Who we are and what we stand for.", icon: Building2 },
-  { href: "/accessibility", label: "Accessibility", desc: "Our WCAG 2.2 AA commitment.", icon: Accessibility },
   { href: "/contact", label: "Contact", desc: "Reach us about anything.", icon: Mail },
   { href: "/feedback", label: "Feedback", desc: "Tell us what to build or cover next.", icon: MessageSquare },
+  { href: "/accessibility", label: "Accessibility", desc: "Our WCAG 2.2 AA commitment.", icon: Accessibility },
   { href: "/privacy", label: "Privacy", desc: "How we handle your data.", icon: ShieldCheck },
   { href: "/terms", label: "Terms", desc: "The terms of using AssetFrame.", icon: FileText },
 ];
-// Categories in alphabetical order — drives both desktop dropdowns and grouped mobile sections.
+// Categories drive both the desktop dropdowns and the grouped mobile sections. "Status" is a
+// standalone top-level link (rendered separately), not a category.
 const NAV = [
-  { title: "Company", items: COMPANY },
-  { title: "Developers", items: DEVELOPERS },
   { title: "Product", items: PRODUCT },
   { title: "Research", items: RESEARCH },
+  { title: "Developers", items: DEVELOPERS },
+  { title: "Company", items: COMPANY },
 ];
 
 function MenuGrid({ items }: { items: typeof RESEARCH }) {
@@ -134,6 +135,15 @@ export default function Header() {
               ))}
             </NavigationMenuList>
           </NavigationMenu>
+          <Link
+            href="/status"
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2 text-sm font-semibold transition-colors",
+              isActive("/status") ? "text-navy" : "text-ink hover:text-navy"
+            )}
+          >
+            <Activity className="size-4" /> Status
+          </Link>
           <div className="flex items-center gap-3 border-l border-line pl-3">
             <HeaderAuth />
           </div>
@@ -173,6 +183,17 @@ export default function Header() {
                     ))}
                   </div>
                 ))}
+                <SheetClose asChild>
+                  <Link
+                    href="/status"
+                    className={cn(
+                      "mt-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold",
+                      isActive("/status") ? "bg-tile text-navy" : "text-ink hover:bg-muted"
+                    )}
+                  >
+                    <Activity className="size-4 shrink-0 text-navy" /> Status
+                  </Link>
+                </SheetClose>
               </nav>
               <div className="mt-3 border-t border-line px-2 pt-3">
                 <HeaderAuth mobile onNavigate={() => setOpen(false)} />

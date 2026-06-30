@@ -16,12 +16,15 @@ const ROWS = [
 ];
 
 function TapeColumn() {
+  // mb-3 on EVERY row (not a parent `gap`) so the repeating unit is exactly row+gap — including the
+  // last row's trailing gap. Two stacked copies then loop seamlessly under translateY(-50%) (a parent
+  // `gap` would leave the last row gap-less, landing the loop half-a-gap short — the "weird end").
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       {ROWS.map((r) => (
         <div
           key={r.sym}
-          className="flex items-center justify-between gap-5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-sm"
+          className="mb-3 flex items-center justify-between gap-5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-sm"
         >
           <span className="font-semibold text-white/85">{r.sym}</span>
           <span className="text-white/65">{r.px}</span>
@@ -46,7 +49,7 @@ export default function AuthBackdrop() {
         }}
       />
       <div className="absolute inset-y-0 right-6 w-60 overflow-hidden opacity-70 [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]">
-        <div className="af-tape flex flex-col gap-3">
+        <div className="af-tape flex flex-col">
           <TapeColumn />
           <TapeColumn />
         </div>
