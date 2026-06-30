@@ -4,7 +4,7 @@ import { Users, CreditCard, Percent, FileText, Download, DollarSign } from "luci
 import { getAllEditions, getHiddenEditions } from "@/lib/content";
 import { getEntitlement } from "@/lib/entitlements";
 import { getAdminStats } from "@/lib/admin-stats";
-import { getEngineState, getGenerationRequests, getEngineRuns, getEngineCommands, getBacktestResults, getBacktestPredictions } from "@/lib/engine";
+import { getBacktestResults, getBacktestPredictions } from "@/lib/engine";
 import { getEngineAssets } from "@/lib/engine-assets";
 import { Hero } from "@/components/ui";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -17,8 +17,7 @@ import OperatorManual from "./OperatorManual";
 import CollapsibleSection from "./CollapsibleSection";
 import { RequestQueue, RunLog, CommandLog } from "./EnginePanels";
 import { ScheduleView } from "./ScheduleView";
-import { controlConfigured } from "@/lib/control-client";
-import { getEngineConsoleFromBox } from "@/lib/engine-box";
+import { getEngineConsole } from "@/lib/engine-box";
 import { getAuditLog } from "@/lib/audit";
 import { getFeedback } from "@/lib/feedback";
 import EngineStatusBar from "./EngineStatusBar";
@@ -39,19 +38,15 @@ export default async function AdminPage() {
   if (!ent.signedIn) redirect("/sign-in");
   if (!ent.admin) redirect("/account");
 
-  // Engine console: when the control plane is up, read state/runs/queue/commands/schedule from the
-  // box /status over the tunnel (so Neon can sleep when nobody's watching); otherwise fall back to the
-  // Neon readers. Non-engine admin data always comes from Neon.
-  const box = controlConfigured() ? await getEngineConsoleFromBox() : null;
+  // Engine console: ONE box round-trip over the tunnel for state/runs/queue/commands/schedule (so
+  // Neon can sleep when nobody's watching), with an explicit source + Neon fallback baked in — see
+  // getEngineConsole(). Non-engine admin data always comes from Neon.
+  const engineConsole = await getEngineConsole();
   const [stats, catalog, pending, auditLog, feedback, engineAssets, backtestResults, backtestPredictions] = await Promise.all([
     getAdminStats(), getAllEditions(), getHiddenEditions(), getAuditLog(), getFeedback(),
     getEngineAssets(), getBacktestResults(), getBacktestPredictions(),
   ]);
-  const engineState = box?.state ?? (await getEngineState());
-  const genRequests = box?.requests ?? (await getGenerationRequests());
-  const engineRuns = box?.runs ?? (await getEngineRuns());
-  const engineCommands = box?.commands ?? (await getEngineCommands());
-  const schedule = box?.schedule ?? [];
+  const { state: engineState, requests: genRequests, runs: engineRuns, commands: engineCommands, schedule } = engineConsole;
   const titleById = new Map(catalog.map((e) => [`${e.date}/${e.slug}`, e.instrument]));
 
   // The Generate picker uses the ASSET UNIVERSE (engine_assets, enabled), NOT the published
@@ -83,7 +78,7 @@ export default async function AdminPage() {
       <Hero title="Admin" tag="Engine control plane — visible to admins only." />
       <div className="mx-auto max-w-[1800px] px-4 py-8 sm:px-6 lg:px-8">
         {/* === Engine status bar (promoted to the top so it's the first thing you see) === */}
-        <EngineStatusBar engineState={engineState} />
+        <EngineStatusBar engineState={engineState} source={engineConsole.source} warnings={engineConsole.warnings} />
 
         {/* === Operator manual — the spine of the page (open by default on first visit) === */}
         <OperatorManual />

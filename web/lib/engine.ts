@@ -49,25 +49,11 @@ const DEFAULT_STATE: EngineState = {
   online: false,
 };
 
-// The engine_state singleton (id=1), plus a derived `online` boolean. `online` comes from the box's
-// OWN liveness (the control server's poller systemctl check) over the tunnel — so the engine writes
-// no Upstash heartbeat (Upstash = wake flag + rate-limiting only). When the control plane is
-// unconfigured or the box is unreachable it falls back to the Neon heartbeat window. paused +
-// current_run + last heartbeat are authoritative in Neon (read here on page load — not a hot path).
-export async function getEngineState(): Promise<EngineState> {
-  const box = controlConfigured() ? await boxStatus() : null;
-  const boxOnline = box ? Boolean(box.online) : null;
-  if (!sql) {
-    return box
-      ? {
-          automationPaused: Boolean(box.paused),
-          lastHeartbeatAt: box.last_heartbeat_at == null ? null : s(box.last_heartbeat_at),
-          currentRunId: box.current_run_id == null ? null : s(box.current_run_id),
-          updatedAt: box.now == null ? null : s(box.now),
-          online: boxOnline ?? false,
-        }
-      : DEFAULT_STATE;
-  }
+// Neon-only engine_state read (NO box): `online` = the Neon heartbeat window. This is the FALLBACK
+// source — the admin console reads it directly when the box control plane is unreachable, and
+// getEngineState() layers the box's poller-liveness on top for the public status page + watchdog.
+export async function neonEngineState(): Promise<EngineState> {
+  if (!sql) return DEFAULT_STATE;
   try {
     const rows = (await sql.query(
       `SELECT automation_paused,
@@ -80,18 +66,35 @@ export async function getEngineState(): Promise<EngineState> {
       [HEARTBEAT_WINDOW_SEC]
     )) as Record<string, unknown>[];
     const r = rows[0];
-    if (!r) return { ...DEFAULT_STATE, online: boxOnline ?? false };
+    if (!r) return DEFAULT_STATE;
     return {
       automationPaused: Boolean(r.automation_paused),
       lastHeartbeatAt: r.last_heartbeat_at == null ? null : s(r.last_heartbeat_at),
       currentRunId: r.current_run_id == null ? null : s(r.current_run_id),
       updatedAt: r.updated_at == null ? null : s(r.updated_at),
-      online: boxOnline ?? Boolean(r.online), // box liveness wins; Neon window only when box is down
+      online: Boolean(r.online),
     };
   } catch {
-    // Neon read failed — still report the box's liveness if we have it.
-    return { ...DEFAULT_STATE, online: boxOnline ?? false };
+    return DEFAULT_STATE;
   }
+}
+
+// engine_state plus a derived `online`. `online` comes from the box's OWN poller-liveness (the
+// control server's systemctl check) over the tunnel — the engine writes no Upstash heartbeat
+// (Upstash = wake flag + rate-limiting only). Falls back to neonEngineState()'s heartbeat window when
+// the control plane is unconfigured / the box is unreachable. Used by the public /status page + the
+// engine-health watchdog + the manual-generate pre-flight. (The admin console reads getEngineConsole().)
+export async function getEngineState(): Promise<EngineState> {
+  const box = controlConfigured() ? await boxStatus() : null;
+  const neon = await neonEngineState();
+  if (!box) return neon;
+  return {
+    automationPaused: neon.automationPaused || Boolean(box.paused),
+    lastHeartbeatAt: neon.lastHeartbeatAt ?? (box.last_heartbeat_at == null ? null : s(box.last_heartbeat_at)),
+    currentRunId: neon.currentRunId ?? (box.current_run_id == null ? null : s(box.current_run_id)),
+    updatedAt: neon.updatedAt ?? (box.now == null ? null : s(box.now)),
+    online: Boolean(box.online), // box liveness is authoritative when the box is reachable
+  };
 }
 
 // Recent generation requests (the queue + its history), newest first.
