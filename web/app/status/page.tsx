@@ -15,26 +15,19 @@ export const metadata: Metadata = {
   alternates: { canonical: "/status" },
 };
 
+// DaisyUI badge + status dot (on-brand via the custom theme): success when running, warning otherwise.
 function StatusPill({ online, paused }: { online: boolean; paused: boolean }) {
-  const [label, cls] = paused
-    ? ["Paused", "bg-[#fff7e6] text-[#9a6700]"]
+  const [label, badge, dot] = paused
+    ? ["Paused", "badge-warning", "status-warning"]
     : online
-      ? ["Operational", "bg-[#dafbe1] text-[#1a7f37]"]
-      : ["Catching up", "bg-[#fff7e6] text-[#9a6700]"];
+      ? ["Operational", "badge-success", "status-success"]
+      : ["Catching up", "badge-warning", "status-warning"];
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${cls}`}>
-      <span className="size-2 rounded-full bg-current" aria-hidden="true" />
+    <span className={`badge badge-soft ${badge} badge-lg gap-2 font-bold`}>
+      <span className={`status ${dot}`} aria-hidden="true" />
       {label}
     </span>
   );
-}
-
-// "2026-06-26 14:03 UTC" from an ISO string, or a dash. Computed server-side (this page is dynamic).
-function fmtUtc(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -53,6 +46,10 @@ export default async function StatusPage() {
   const latest = [...catalog].sort((a, b) => b.date.localeCompare(a.date))[0];
   const stats = track.stats;
   const rate = typeof stats.hitRate === "number" ? `${stats.hitRate.toFixed(1)}%` : "—";
+  // This page is force-dynamic and reads the engine's LIVE status on every load, so "last checked" is
+  // now (the old "last heartbeat" read stale once the poller stopped writing a heartbeat — online now
+  // comes from the engine's own liveness check, not a heartbeat timestamp).
+  const checkedAt = `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`;
 
   return (
     <>
@@ -64,17 +61,17 @@ export default async function StatusPage() {
             <div className="mt-1"><StatusPill online={state.online} paused={state.automationPaused} /></div>
           </div>
           <div className="text-right text-sm text-muted-foreground">
-            Last heartbeat<br />
-            <span className="font-mono text-foreground">{fmtUtc(state.lastHeartbeatAt)}</span>
+            Last checked<br />
+            <span className="font-mono text-foreground">{checkedAt}</span>
           </div>
         </div>
 
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground" data-animate="up">
           {state.automationPaused
-            ? "Automated publishing is paused. Editions resume when it's switched back on."
+            ? "Automatic publishing is paused. New editions resume when it's switched back on."
             : state.online
-              ? "The engine is reporting in and publishing on schedule. New editions are scored against the tape after their window closes."
-              : "The engine hasn't reported a heartbeat recently — it may be between runs or restarting. Published editions and the track record below are unaffected."}
+              ? "The engine is running and publishing on schedule. Each new edition is graded against the actual market move once its window closes."
+              : "The engine isn't running right now — it may be restarting. Already-published editions and the track record below are unaffected."}
         </p>
 
         <h2 className="mt-10 mb-4 text-xl font-bold text-navy" data-animate="up">Latest publication</h2>
@@ -91,8 +88,8 @@ export default async function StatusPage() {
         </div>
 
         <p className="mt-6 text-sm leading-relaxed text-muted-foreground" data-animate="up">
-          Every call is registered before the session and graded against the price tape afterwards,
-          into a public append-only ledger. The full record — every call, win and loss — is on the
+          Every call is recorded before the session and graded against the real market move afterwards
+          — a public record that is never edited. The full history, win and loss, is on the
           track-record page.
         </p>
 

@@ -1,10 +1,44 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/* DaisyUI: opt-in component classes (stats/badge/…) used alongside shadcn. It only styles elements
-   that carry daisy classes — its theme vars are namespaced apart from shadcn's, so the global look is
-   unchanged; we colour the few daisy components we use with the brand utilities directly. */
-@plugin "daisyui" { themes: light --default; }
+/* DaisyUI (used alongside shadcn): a custom theme in the AssetFrame palette so every daisy component
+   (badge/stat/alert/steps/timeline…) is on-brand via semantic colours — primary = navy, success =
+   green, etc. Only elements carrying daisy classes are affected; the global look is unchanged. */
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "assetframe";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f6f8fa;
+  --color-base-300: #eef2f8;
+  --color-base-content: #24292f;
+  --color-primary: #0b2545;
+  --color-primary-content: #ffffff;
+  --color-secondary: #143a64;
+  --color-secondary-content: #ffffff;
+  --color-accent: #2f6df6;
+  --color-accent-content: #ffffff;
+  --color-neutral: #24292f;
+  --color-neutral-content: #ffffff;
+  --color-info: #2f6df6;
+  --color-info-content: #ffffff;
+  --color-success: #1a7f37;
+  --color-success-content: #ffffff;
+  --color-warning: #9a6700;
+  --color-warning-content: #ffffff;
+  --color-error: #cf222e;
+  --color-error-content: #ffffff;
+  --radius-selector: 1rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
 
 @custom-variant dark (&:is(.dark *));
 

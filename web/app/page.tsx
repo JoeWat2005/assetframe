@@ -66,7 +66,7 @@ export default async function Home() {
       <div className="-mt-14 flex flex-col sm:min-h-[100dvh]">
       <section className="relative isolate flex flex-1 items-center overflow-hidden bg-navy text-white">
         <HeroBackdrop />
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-10 sm:px-5 sm:py-14" data-animate="hero">
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-10 sm:px-5 sm:py-14 xl:max-w-6xl 2xl:max-w-7xl" data-animate="hero">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur">
             <ShieldCheck className="size-3.5 text-[#7fb0ff]" />
             Agentic research desk · human oversight
@@ -119,7 +119,7 @@ export default async function Home() {
           bottom padding + the iOS safe-area inset so the timer tiles clear the browser's
           floating bottom toolbar (which was overlapping them); desktop is unchanged. */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-3 gap-y-4 px-4 pt-4 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] sm:px-5 sm:py-3">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-3 gap-y-4 px-4 pt-4 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))] sm:px-5 sm:py-3 xl:max-w-6xl 2xl:max-w-7xl">
           <div>
             <span className="text-sm font-semibold text-ink">Next edition publishes in</span>
             <span className="block text-xs text-muted-foreground">{SITE.publish.label}</span>

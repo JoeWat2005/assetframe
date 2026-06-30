@@ -2,13 +2,27 @@
 // so SSR-safe) that drifts sideways FOREVER. The series is CYCLIC — one full market cycle that
 // returns to its start (cosine trend + integer-harmonic wobble) — so the two tiled panels join
 // seamlessly with no price "jump" at the drift seam. Domain-relevant, not a fake screenshot.
-const N = 48;
-const CLOSES = Array.from({ length: N }, (_, i) => {
-  const t = (i / N) * Math.PI * 2;                                  // one full cycle across a panel
-  const trend = Math.cos(t);                                        // 1 -> -1 -> 1 (returns to start)
-  const wobble = Math.sin(t * 3) * 0.16 + Math.sin(t * 7) * 0.07;   // integer harmonics -> also cyclic
-  return Math.round(2350 + trend * 470 + wobble * 470);
-});
+// Seeded random WALK (fixed-seed PRNG -> deterministic + SSR-safe, but reads as an organic random
+// series, not an obvious sine wave), DETRENDED so the last close returns to the first -> the two
+// tiled panels join seamlessly.
+const N = 56;
+function mulberry32(seed: number): () => number {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const _rnd = mulberry32(20260701);
+const _raw: number[] = [0];
+for (let i = 1; i < N; i++) _raw.push(_raw[i - 1] + (_rnd() - 0.5) * 2.4);
+const _drift = _raw[N - 1] / (N - 1);
+const _walk = _raw.map((v, i) => v - _drift * i);          // close the loop: _walk[0] === _walk[N-1] === 0
+const _lo = Math.min(..._walk);
+const _hi = Math.max(..._walk);
+const CLOSES = _walk.map((v) => Math.round(1900 + ((v - _lo) / (_hi - _lo || 1)) * 1300));
 
 const W = 1200, H = 460, TOP = 40, BOT = 410;
 const minP = Math.min(...CLOSES) * 0.985;
