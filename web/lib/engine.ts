@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "./db";
-import { getEngineHeartbeat } from "./upstash";
+import { boxStatus, controlConfigured } from "./control-client";
 import type {
   EngineState,
   GenerationRequest,
@@ -28,9 +28,9 @@ export type {
 // every read guards for `sql` being null (DB not configured / tables not migrated yet) and
 // degrades to safe defaults, so the page renders before the migration is applied.
 
-// How fresh the VM's heartbeat must be for the instance to count as online. The engine
-// heartbeats into engine_state.last_heartbeat_at on a short loop; if it lapses past this
-// window the instance is treated as offline (scheduled + manual runs won't execute).
+// Fallback only: how fresh the Neon heartbeat must be to count as online when the box control
+// plane is unreachable. `online` now comes from the box's OWN poller-liveness check over the
+// tunnel (control_server `_poller_active`); this Neon window only matters when the box is down.
 const HEARTBEAT_WINDOW_SEC = 180;
 
 const s = (v: unknown): string => (v == null ? "" : String(v));
@@ -49,17 +49,25 @@ const DEFAULT_STATE: EngineState = {
   online: false,
 };
 
-// The engine_state singleton (id=1), plus a derived `online` boolean. Computes `online` in SQL
-// (now() - last_heartbeat_at) so it doesn't depend on web/VM clock skew beyond the DB's own clock.
+// The engine_state singleton (id=1), plus a derived `online` boolean. `online` comes from the box's
+// OWN liveness (the control server's poller systemctl check) over the tunnel — so the engine writes
+// no Upstash heartbeat (Upstash = wake flag + rate-limiting only). When the control plane is
+// unconfigured or the box is unreachable it falls back to the Neon heartbeat window. paused +
+// current_run + last heartbeat are authoritative in Neon (read here on page load — not a hot path).
 export async function getEngineState(): Promise<EngineState> {
-  if (!sql) return DEFAULT_STATE;
-  // The poller now heartbeats into Upstash (so the Neon compute can auto-suspend); read that for
-  // "online", keeping the Neon heartbeat as a fallback so the indicator still works during the
-  // transition or if Upstash is unset. paused + current_run still live in Neon (read here on the
-  // admin page load — not a hot path).
-  const upstashHb = await getEngineHeartbeat().catch(() => null);
-  const upstashOnline =
-    !!upstashHb && Date.now() - new Date(upstashHb).getTime() < HEARTBEAT_WINDOW_SEC * 1000;
+  const box = controlConfigured() ? await boxStatus() : null;
+  const boxOnline = box ? Boolean(box.online) : null;
+  if (!sql) {
+    return box
+      ? {
+          automationPaused: Boolean(box.paused),
+          lastHeartbeatAt: box.last_heartbeat_at == null ? null : s(box.last_heartbeat_at),
+          currentRunId: box.current_run_id == null ? null : s(box.current_run_id),
+          updatedAt: box.now == null ? null : s(box.now),
+          online: boxOnline ?? false,
+        }
+      : DEFAULT_STATE;
+  }
   try {
     const rows = (await sql.query(
       `SELECT automation_paused,
@@ -72,18 +80,17 @@ export async function getEngineState(): Promise<EngineState> {
       [HEARTBEAT_WINDOW_SEC]
     )) as Record<string, unknown>[];
     const r = rows[0];
-    if (!r) return { ...DEFAULT_STATE, online: upstashOnline, lastHeartbeatAt: upstashHb };
-    const neonHb = r.last_heartbeat_at == null ? null : s(r.last_heartbeat_at);
+    if (!r) return { ...DEFAULT_STATE, online: boxOnline ?? false };
     return {
       automationPaused: Boolean(r.automation_paused),
-      lastHeartbeatAt: upstashHb ?? neonHb, // prefer Upstash (the engine's primary source now)
+      lastHeartbeatAt: r.last_heartbeat_at == null ? null : s(r.last_heartbeat_at),
       currentRunId: r.current_run_id == null ? null : s(r.current_run_id),
       updatedAt: r.updated_at == null ? null : s(r.updated_at),
-      online: Boolean(r.online) || upstashOnline,
+      online: boxOnline ?? Boolean(r.online), // box liveness wins; Neon window only when box is down
     };
   } catch {
-    // Neon read failed — still report online from Upstash if its heartbeat is fresh.
-    return { ...DEFAULT_STATE, online: upstashOnline, lastHeartbeatAt: upstashHb };
+    // Neon read failed — still report the box's liveness if we have it.
+    return { ...DEFAULT_STATE, online: boxOnline ?? false };
   }
 }
 
