@@ -75,3 +75,18 @@ export async function boxJob(id: string): Promise<Record<string, unknown> | null
     return null;
   }
 }
+
+// Poll a box job until it reaches a terminal state (done/failed) or the timeout elapses, so the
+// dashboard can show the real result inline. Quick commands finish in <2s; long ones (run_backtest,
+// run_maintenance) hit the timeout and just report "running" — they keep going on the box.
+export async function waitForBoxJob(id: string, timeoutMs = 12_000): Promise<Record<string, unknown> | null> {
+  const deadline = Date.now() + timeoutMs;
+  let last: Record<string, unknown> | null = null;
+  while (Date.now() < deadline) {
+    last = await boxJob(id);
+    const st = last?.status;
+    if (st === "done" || st === "failed") return last;
+    await new Promise((r) => setTimeout(r, 1200));
+  }
+  return last;
+}

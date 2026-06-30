@@ -5,7 +5,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getEngineAssets } from "@/lib/engine-assets";
 import { signalEngineWake } from "@/lib/upstash";
 import { sql } from "@/lib/db";
-import { controlEligible, boxControl } from "@/lib/control-client";
+import { controlEligible, boxControl, waitForBoxJob } from "@/lib/control-client";
 import { requireAdmin } from "./admin-auth";
 import type { Result } from "@/lib/admin-types";
 
@@ -138,7 +138,15 @@ export async function sendEngineCommand(
     const r = await boxControl(command, cleanArgs);
     if (r.ok) {
       await logAudit({ actor: ent.email, action: `engine_cmd_${command}`, target: r.id ?? "control-api", detail: `${detail} (control API)` }).catch(() => {});
-      return { ok: true, message: `${ENGINE_COMMANDS[command]} — sent to the box.`, id: r.id };
+      // The box runs the command asynchronously; poll its job briefly so the operator sees the REAL
+      // result inline (quick commands finish in <2s; long ones return "running" and finish on the box).
+      const job = r.id ? await waitForBoxJob(r.id, 12_000) : null;
+      const st = job?.status;
+      if (st === "done" || st === "failed") {
+        const out = String(job?.result ?? (st === "done" ? "done" : "failed")).slice(0, 240);
+        return { ok: st === "done", message: `${ENGINE_COMMANDS[command]}: ${out}`, id: r.id };
+      }
+      return { ok: true, message: `${ENGINE_COMMANDS[command]} — started on the box (running)…`, id: r.id };
     }
     // box unreachable / rejected -> fall through to the durable Neon path (nothing queued yet, so no double-send)
   }

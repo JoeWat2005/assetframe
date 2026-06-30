@@ -185,7 +185,7 @@ export default function BoxControls({ hideScoreNow = false }: { hideScoreNow?: b
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Everything here runs on the box at its next ~30-second check-in — watch the <b>Box command log</b> below for each result.
+        Each command runs on the box <b>instantly</b> and shows its result inline; if the box is unreachable it falls back to the ~30-second queue (the <b>Box command log</b> below).
       </p>
 
       {/* Danger zone — irreversible deletes, visually separated + red so they're never a misclick. */}

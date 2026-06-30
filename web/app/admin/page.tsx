@@ -159,9 +159,9 @@ export default async function AdminPage() {
             {/* Left: command inputs (recover/deploy/set-config/danger + a manual-generate override). */}
             <div className="flex flex-col gap-4">
               <p className="text-xs text-muted-foreground">
-                Direct control of the cloud instance. Each command runs on the box&rsquo;s next ~30s poll; watch
-                the <b>Box command log</b> on the right for results. The red <b>Danger zone</b> holds
-                irreversible resets — see the manual before using them.
+                Direct control of the cloud instance. Each command runs on the box <b>instantly</b> and shows its
+                result inline; if the box is unreachable it falls back to the ~30s queue (the <b>Box command log</b>
+                on the right). The red <b>Danger zone</b> holds irreversible resets — see the manual before using them.
               </p>
               <details className="rounded-lg border border-line bg-tile/30 px-3 py-2.5">
                 <summary className="cursor-pointer text-xs font-semibold text-navy">
