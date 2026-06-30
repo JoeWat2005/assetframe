@@ -9,15 +9,18 @@
 //   POST /control {command,args}  -> 202 {job_id, command, status}   (async; progress over SSE)
 //                                    400 {error, allowed} | 403 {error}
 //   GET  /jobs/<id>               -> the job's {status,result,log,...}
-// restart_poller / pull_latest act on the poller PROCESS and are excluded from /control on the box
-// (control_server _RESTART_ONLY), so they always stay on the Neon path.
+// restart_poller / pull_latest now run ON the control server (it systemctl-restarts the poller as a
+// sibling unit), so they're servable over the tunnel and work even when the poller is DOWN. On any box
+// failure they fall back to the durable Neon queue (poller self-exit) below.
 
 const url = (process.env.ASSETFRAME_CONTROL_URL ?? "").replace(/\/+$/, "");
 const bearer = process.env.ASSETFRAME_CONTROL_TOKEN ?? "";
 const cfId = process.env.CF_ACCESS_CLIENT_ID ?? "";
 const cfSecret = process.env.CF_ACCESS_CLIENT_SECRET ?? "";
 
-const HTTP_INELIGIBLE = new Set(["restart_poller", "pull_latest"]);
+// Commands that must NOT go over the tunnel. Empty now — restart_poller/pull_latest run on the control
+// server itself — but kept as the hook for any future poller-only verb, and the box re-checks anyway.
+const HTTP_INELIGIBLE = new Set<string>();
 
 export function controlConfigured(): boolean {
   return Boolean(url && bearer && cfId && cfSecret);

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { upsertEngineAsset, setRequireApproval, sendEngineCommand } from "./actions";
+import { upsertEngineAsset, setRequireApproval } from "./actions";
 import type { EngineAsset } from "@/lib/engine-assets";
 import { Button } from "@/components/ui/button";
 import { BLANK, CLASS_DEFAULTS, type Form } from "@/lib/asset-constants";
@@ -43,7 +43,6 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
 
   const requireApproval = assets.some((a) => a.publishPolicy === "approval_required");
   const mixedApproval = new Set(assets.map((a) => a.publishPolicy)).size > 1;
-  const lastChecked = assets.map((a) => a.dueCheckedAt).filter(Boolean).sort().pop() || "";
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
   // New assets: derive the internal id from the ticker, and prefill session/timing from the asset
   // class so the Advanced block can stay closed. Editing an existing asset leaves its settings alone.
@@ -90,20 +89,12 @@ export default function AssetManager({ assets }: { assets: EngineAsset[] }) {
         >
           {requireApproval ? "Switch to auto-publish" : "Require approval"}
         </Button>
-        <Button
-          size="sm" variant="outline" className="ml-auto" disabled={pending}
-          onClick={() => run(() => sendEngineCommand("compute_due"))}
-          title="Ask the engine to compute which assets are due to generate now (a dry-run on the box)."
-        >
-          Check schedule
-        </Button>
-        <Button size="sm" disabled={pending} onClick={() => { setForm(BLANK); setEditingId(null); setShowAdd((s) => !s); }}>
+        <Button size="sm" className="ml-auto" disabled={pending} onClick={() => { setForm(BLANK); setEditingId(null); setShowAdd((s) => !s); }}>
           {showAdd ? "Close" : "+ Add asset"}
         </Button>
       </div>
       <p className="-mt-1 text-[11px] text-muted-foreground">
-        The <b>Scheduled</b> column shows what the engine will run on its next due check.{" "}
-        {lastChecked ? `Last checked ${lastChecked} UTC.` : "Not checked yet — click Check schedule."}
+        Each enabled asset and <b>when it next generates</b> is shown live in the <b>Generation queue</b> above.
       </p>
       {mixedApproval && (
         <p className="-mt-1 text-[11px] text-[#9a6700]">

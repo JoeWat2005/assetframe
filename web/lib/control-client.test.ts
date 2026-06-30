@@ -30,13 +30,13 @@ describe("control-client", () => {
     expect(m.controlEligible("run_scoring")).toBe(false);
   });
 
-  it("is eligible when configured, except for poller-process commands", async () => {
+  it("makes every command eligible when configured (restart/deploy run on the control server)", async () => {
     configure();
     const m = await import("./control-client");
     expect(m.controlConfigured()).toBe(true);
     expect(m.controlEligible("run_scoring")).toBe(true);
-    expect(m.controlEligible("restart_poller")).toBe(false);
-    expect(m.controlEligible("pull_latest")).toBe(false);
+    expect(m.controlEligible("restart_poller")).toBe(true);
+    expect(m.controlEligible("pull_latest")).toBe(true);
   });
 
   it("POSTs to /control with the access + bearer headers and returns the job id on 202", async () => {

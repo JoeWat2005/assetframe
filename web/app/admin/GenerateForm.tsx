@@ -79,11 +79,13 @@ export default function GenerateForm({ assets, mode = "queue" }: { assets: Asset
     btStart(async () => {
       try {
         const r = await sendEngineCommand("run_backtest", { assets: [...btSelected], as_of: btAsOf, days: btDays });
-        setBtMsg(r);
+        // A backtest is a long box command — it runs for minutes and surfaces as a BACKTEST row in
+        // "Recent engine runs"; the results table here fills in once it finishes. Make that explicit.
+        setBtMsg(r.ok
+          ? { ok: true, message: `${r.message} It runs on the box (a few minutes) — watch Recent engine runs above; results appear here when it finishes.` }
+          : r);
         if (r.ok) {
           setBtSelected(new Set());
-          setBtAsOf("");
-          setBtDays(1);
           router.refresh();
         }
       } catch {

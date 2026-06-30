@@ -150,8 +150,8 @@ export default function OperatorManual() {
               <B>1 · Confirm your asset universe.</B> In <Jump href="#sec-assets">1 · Asset universe</Jump>,
               make sure at least one instrument (e.g. <B>BTC</B>) is <B>Enabled</B>. If nothing is enabled,
               the 05:00 run generates nothing and &ldquo;All due&rdquo; silently does nothing. Leave{" "}
-              <B>Need approval</B> on while learning (recommended). Click <B>Check schedule</B> to fill the{" "}
-              <B>Scheduled</B> column.
+              <B>Need approval</B> on while learning (recommended). The <B>Generation queue</B> up top shows
+              each enabled asset and when it next generates.
             </li>
             <li>
               <B>2 · Generate your first report.</B> In{" "}
@@ -214,7 +214,7 @@ export default function OperatorManual() {
             </Ref>
             <Ref title="1 · Asset universe">
               <li><B>New reports: Need approval / Auto-publish / Mixed</B> + toggle — sets <B>every</B> asset&rsquo;s publish policy at once. &ldquo;Mixed&rdquo; means assets disagree; set a single asset&rsquo;s policy in its Add/Edit form.</li>
-              <li><B>Check schedule</B> — a safe dry-run that computes which assets are <B>Due now</B>.</li>
+              <li>When each enabled asset next generates is shown live in the <B>Generation queue</B> at the top of the page.</li>
               <li><B>+ Add asset / Edit</B> — define an instrument; validated before it syncs, so a bad entry can&rsquo;t break generation.</li>
               <li><B>Enabled / Disabled</B> — include/exclude from the daily run. At least one must be enabled.</li>
             </Ref>

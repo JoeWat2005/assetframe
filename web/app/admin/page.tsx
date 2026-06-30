@@ -121,7 +121,7 @@ export default async function AdminPage() {
               The instruments the engine writes reports for. <b>+ Add asset</b> to add one (fill the Basics —
               the rest defaults from its asset class), or <b>Edit</b> a row to change it. Make sure at least one
               is <b>Enabled</b>. Changes save straight to the engine — validated first, so a bad entry can&rsquo;t
-              break generation; <b>Check schedule</b> shows what will run next.
+              break generation. When each enabled asset next generates is shown live in the <b>Generation queue</b> above.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -167,15 +167,15 @@ export default async function AdminPage() {
         <CollapsibleSection
           id="sec-box"
           title="Operate the box (advanced)"
-          description="Hands-on controls for the cloud box — only needed when something's stuck or you're deploying. Grouped into Recover & inspect, Deploy & restart, and Change a setting, plus a red Danger zone and the box command log below."
+          description="Hands-on controls for the cloud box — only needed when something's stuck or you're deploying. Pick a command and Execute, change a setting, or use the red Danger zone; the box command log is on the right."
         >
           <div className="grid gap-5 lg:grid-cols-2">
-            {/* Left: command inputs (recover/deploy/set-config/danger + a manual-generate override). */}
+            {/* Left: command runner + set-config + danger (and a manual-generate override). */}
             <div className="flex flex-col gap-4">
               <p className="text-xs text-muted-foreground">
-                Direct control of the cloud instance. Each command runs on the box <b>instantly</b> and shows its
-                result inline; if the box is unreachable it falls back to the ~30s queue (the <b>Box command log</b>
-                on the right). The red <b>Danger zone</b> holds irreversible resets — see the manual before using them.
+                Direct control of the cloud instance. Commands run on the box <b>instantly</b> and show their result
+                inline; if the box is unreachable they fall back to the ~30s queue (the <b>Box command log</b> on the
+                right). The red <b>Danger zone</b> holds irreversible resets — see the manual before using them.
               </p>
               <details className="rounded-lg border border-line bg-tile/30 px-3 py-2.5">
                 <summary className="cursor-pointer text-xs font-semibold text-navy">

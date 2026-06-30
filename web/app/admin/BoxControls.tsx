@@ -3,16 +3,17 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { sendEngineCommand, clearCatalog } from "./actions";
 import { ConfirmType } from "@/components/ConfirmType";
+import CommandRunner from "./CommandRunner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-// Box-control panel for the OCI VM. Enqueues allow-listed commands the poller claims + runs
-// (engine_commands). Mirrors GenerateForm's useTransition + inline-message + router.refresh()
-// pattern. The web never contacts the box directly — it only writes a queued row; the box polls.
-// Destructive verbs (pull/restart) confirm first. Results show in the "Box command log" below.
+// Box-control panel for the OCI VM. The operational commands live in <CommandRunner/> (pick + Execute,
+// over the tunnel with a Neon-queue fallback). This wrapper keeps the two controls that don't fit a
+// generic dropdown: "Change a setting" (key + value) and the red Danger zone (irreversible deletes,
+// type-to-confirm). Mirrors GenerateForm's useTransition + inline-message + router.refresh() pattern.
 
 // Mirrors actions.ts SETTABLE_CONFIG_KEYS / engine_ops._SETTABLE_CONFIG_KEYS (no secrets).
 const SETTABLE_KEYS = [
@@ -52,9 +53,7 @@ function Action({ label, desc, onClick, disabled, danger }:
 
 type Result = { ok: boolean; message: string };
 
-// `hideScoreNow` drops the Score-now button when it's already surfaced in the daily-loop section
-// (Generate → Score), so it isn't shown twice.
-export default function BoxControls({ hideScoreNow = false }: { hideScoreNow?: boolean }) {
+export default function BoxControls() {
   const router = useRouter();
   const [msg, setMsg] = useState<Result | null>(null);
   const [pending, start] = useTransition();
@@ -124,38 +123,14 @@ export default function BoxControls({ hideScoreNow = false }: { hideScoreNow?: b
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Recover & inspect — safe, nothing is deleted. */}
+      {/* Run a command — pick one + Execute (the operational box commands). */}
       <div>
-        <div className="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-navy/70">Recover &amp; inspect</div>
-        <p className="mb-2 text-[11px] text-muted-foreground">Safe — nothing is deleted. Use these if a run got stuck, or just to check on the box.</p>
-        <div className="flex flex-wrap gap-3">
-          <Action label="Re-publish reports" disabled={pending} onClick={() => run("run_maintenance")}
-            desc="Re-upload the latest reports to R2 + database. Use if a run generated but failed to publish." />
-          {!hideScoreNow && (
-            <Action label="Score now" disabled={pending} onClick={() => run("run_scoring")}
-              desc="Grade any prediction windows that have closed into the ledger. Makes no new reports." />
-          )}
-          <Action label="Fetch recent logs" disabled={pending} onClick={() => run("tail_logs", { lines: 200 })}
-            desc="Pull the latest ~200 engine log lines into the command log below." />
-          <Action label="Check services" disabled={pending} onClick={() => run("service_check")}
-            desc="Verify the box can reach the database, R2 and Upstash." />
-          <Action label="Clear wake flag" disabled={pending} onClick={() => run("clear_wake")}
-            desc="Clear a stuck wake flag if a scheduled run won't start." />
-        </div>
-      </div>
-
-      {/* Deploy & restart — brief downtime, no data loss. */}
-      <div>
-        <div className="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-navy/70">Deploy &amp; restart</div>
-        <p className="mb-2 text-[11px] text-muted-foreground">A few seconds of downtime, no data loss.</p>
-        <div className="flex flex-wrap gap-3">
-          <Action label="Deploy latest code" disabled={pending}
-            onClick={() => run("pull_latest", undefined, "Deploy the latest code (git pull --ff-only), reinstall dependencies, and restart the engine onto it. Continue?")}
-            desc="Pull the newest code from GitHub, reinstall, and restart the engine onto it." />
-          <Action label="Restart engine" disabled={pending}
-            onClick={() => run("restart_poller", undefined, "Restart the engine poller now? It relaunches within a few seconds.")}
-            desc="Restart the poller — e.g. to pick up a setting you changed below." />
-        </div>
+        <div className="mb-0.5 text-[11px] font-bold uppercase tracking-wide text-navy/70">Run a command</div>
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Pick a box command and Execute. It runs on the box <b>instantly</b> and shows its result inline;
+          if the box is unreachable it falls back to the ~30s queue (the <b>Box command log</b> on the right).
+        </p>
+        <CommandRunner />
       </div>
 
       {/* Change a setting — write one allow-listed key to the engine .env (effective on next restart). */}
@@ -183,10 +158,6 @@ export default function BoxControls({ hideScoreNow = false }: { hideScoreNow?: b
           <p className="mt-1.5 text-[11px] text-muted-foreground"><b>{cfgKey}</b> — {CONFIG_KEY_HINTS[cfgKey]}</p>
         )}
       </div>
-
-      <p className="text-[11px] text-muted-foreground">
-        Each command runs on the box <b>instantly</b> and shows its result inline; if the box is unreachable it falls back to the ~30-second queue (the <b>Box command log</b> below).
-      </p>
 
       {/* Danger zone — irreversible deletes, visually separated + red so they're never a misclick. */}
       <div className="rounded-lg border border-[#cf222e]/30 bg-[#ffebe9]/40 p-3">
