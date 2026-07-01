@@ -1,49 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/* DaisyUI (used alongside shadcn), fully ISOLATED so it can't bleed into third-party inline-rendered
-   components (Clerk's SignIn/UserButton inherit global CSS): `exclude: base` skips DaisyUI's global
-   base reset, and `prefix: daisy-` namespaces EVERY daisy class (daisy-badge, daisy-stat…) so a bare
-   class name (.badge/.input/.card/.link…) can never collide with another library's markup. The
-   custom theme keeps daisy components on-brand (primary = navy, success = green, …). */
-@plugin "daisyui" {
-  exclude: base, rootscrollgutter;
-  prefix: daisy-;
-}
-@plugin "daisyui/theme" {
-  name: "assetframe";
-  default: true;
-  prefersdark: false;
-  color-scheme: light;
-  --color-base-100: #ffffff;
-  --color-base-200: #f6f8fa;
-  --color-base-300: #eef2f8;
-  --color-base-content: #24292f;
-  --color-primary: #0b2545;
-  --color-primary-content: #ffffff;
-  --color-secondary: #143a64;
-  --color-secondary-content: #ffffff;
-  --color-accent: #2f6df6;
-  --color-accent-content: #ffffff;
-  --color-neutral: #24292f;
-  --color-neutral-content: #ffffff;
-  --color-info: #2f6df6;
-  --color-info-content: #ffffff;
-  --color-success: #1a7f37;
-  --color-success-content: #ffffff;
-  --color-warning: #9a6700;
-  --color-warning-content: #ffffff;
-  --color-error: #cf222e;
-  --color-error-content: #ffffff;
-  --radius-selector: 1rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.75rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-  --border: 1px;
-  --depth: 1;
-  --noise: 0;
-}
 
 @custom-variant dark (&:is(.dark *));
 

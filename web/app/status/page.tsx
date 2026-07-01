@@ -15,16 +15,15 @@ export const metadata: Metadata = {
   alternates: { canonical: "/status" },
 };
 
-// DaisyUI badge + status dot (on-brand via the custom theme): success when running, warning otherwise.
 function StatusPill({ online, paused }: { online: boolean; paused: boolean }) {
-  const [label, badge, dot] = paused
-    ? ["Paused", "daisy-badge-warning", "daisy-status-warning"]
+  const [label, cls] = paused
+    ? ["Paused", "bg-[#fff7e6] text-[#9a6700]"]
     : online
-      ? ["Operational", "daisy-badge-success", "daisy-status-success"]
-      : ["Catching up", "daisy-badge-warning", "daisy-status-warning"];
+      ? ["Operational", "bg-[#dafbe1] text-[#1a7f37]"]
+      : ["Catching up", "bg-[#fff7e6] text-[#9a6700]"];
   return (
-    <span className={`daisy-badge daisy-badge-soft ${badge} daisy-badge-lg gap-2 font-bold`}>
-      <span className={`daisy-status ${dot}`} aria-hidden="true" />
+    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${cls}`}>
+      <span className="size-2 rounded-full bg-current" aria-hidden="true" />
       {label}
     </span>
   );

@@ -51,12 +51,11 @@ export default async function TrackRecordPage() {
     <>
       <Hero title="Track record" tag="The scored-after-the-fact promise, made mechanical." />
       <div className="mx-auto max-w-5xl px-5 py-8">
-        {/* DaisyUI stats block (used alongside shadcn) — brand-coloured: structure from daisy, colour from the palette. */}
-        <div className="daisy-stats daisy-stats-vertical w-full overflow-hidden rounded-xl border border-line bg-white shadow-sm sm:daisy-stats-horizontal">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {headline.map(([n, l]) => (
-            <div key={l} className="daisy-stat">
-              <div className="daisy-stat-value text-3xl font-extrabold text-navy">{n}</div>
-              <div className="daisy-stat-title mt-1 text-[13px] font-normal text-muted-foreground">{l}</div>
+            <div key={l} className="rounded-xl border border-line bg-white p-4 shadow-sm">
+              <div className="text-3xl font-extrabold text-navy">{n}</div>
+              <div className="mt-1 text-[13px] text-muted-foreground">{l}</div>
             </div>
           ))}
         </div>
