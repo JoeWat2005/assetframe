@@ -20,8 +20,9 @@ export default function HeroBackdrop() {
           backgroundSize: "48px 48px",
         }}
       />
-      {/* the live chart */}
-      <div className="absolute inset-0 opacity-[0.6]">
+      {/* the live chart — anchored to the RIGHT so the action sits in the open space beside the copy,
+          not buried behind the headline on the left */}
+      <div className="absolute inset-y-0 right-0 left-[26%] opacity-[0.65]">
         <LiveChart />
       </div>
       {/* subtle diagonal sheen sweeping across */}

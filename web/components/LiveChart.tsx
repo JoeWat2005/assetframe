@@ -9,13 +9,13 @@ import { useEffect, useRef, useState } from "react";
 // the live ticking starts after mount and uses Math.random (client only). Decorative, not real quotes.
 type C = { o: number; h: number; l: number; c: number };
 
-const VISIBLE = 42;          // candles across the width
+const VISIBLE = 34;          // fewer, WIDER candles -> bolder
 const BAR_MS = 6000;         // ~6s to form one candle — a calm, real-chart pace
-const TICK_MS = 260;         // order flow: the forming candle updates a few times a second as "orders" arrive
-const W = 1200, H = 460, TOP = 34, BOT = 426;
+const TICK_MS = 240;         // order flow: the forming candle updates a few times a second as "orders" arrive
+const W = 1200, H = 460, TOP = 30, BOT = 430;
 const slot = W / VISIBLE;
-const bodyW = slot * 0.56;
-const SPAN = 280;            // half of the price range shown (fixed -> candles keep a consistent size)
+const bodyW = slot * 0.6;
+const SPAN = 235;            // tighter range -> taller, more DRAMATIC candles filling the view
 
 function mulberry32(seed: number): () => number {
   return function () {
@@ -31,8 +31,8 @@ function seedCandles(): { candles: C[]; price: number } {
   let prev = 2400;
   const cs: C[] = [];
   for (let i = 0; i < VISIBLE; i++) {
-    const c = prev + (rnd() - 0.5) * 46;
-    cs.push({ o: prev, c, h: Math.max(prev, c) + rnd() * 14, l: Math.min(prev, c) - rnd() * 14 });
+    const c = prev + (rnd() - 0.5) * 66;
+    cs.push({ o: prev, c, h: Math.max(prev, c) + rnd() * 22, l: Math.min(prev, c) - rnd() * 22 });
     prev = c;
   }
   return { candles: cs, price: prev };
@@ -77,7 +77,7 @@ export default function LiveChart() {
       w.mid += (target - w.mid) * 0.02;
       if (t - lastTick >= TICK_MS) {
         lastTick = t;
-        w.price += (Math.random() - 0.5) * 9 + (target - w.price) * 0.01; // small organic steps
+        w.price += (Math.random() - 0.5) * 17 + (target - w.price) * 0.008; // bigger, more dramatic steps
         w.forming.c = w.price;
         if (w.price > w.forming.h) w.forming.h = w.price;
         if (w.price < w.forming.l) w.forming.l = w.price;
