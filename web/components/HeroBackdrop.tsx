@@ -20,9 +20,9 @@ export default function HeroBackdrop() {
           backgroundSize: "48px 48px",
         }}
       />
-      {/* the live chart — anchored to the RIGHT so the action sits in the open space beside the copy,
-          not buried behind the headline on the left */}
-      <div className="absolute inset-y-0 right-0 left-[26%] opacity-[0.65]">
+      {/* the live chart — its RIGHT edge (the forming candle + live price dot) sits just right of the
+          hero copy (~centre); history streams LEFT and runs off the left edge of the screen. */}
+      <div className="absolute inset-y-0 right-[44%] -left-[16%] opacity-[0.7]">
         <LiveChart />
       </div>
       {/* subtle diagonal sheen sweeping across */}
@@ -32,10 +32,10 @@ export default function HeroBackdrop() {
           style={{ background: "linear-gradient(100deg, transparent, rgba(173,200,255,0.10) 50%, transparent)" }}
         />
       </div>
-      {/* readability scrims — keep the left (copy) dark, let the chart breathe on the right */}
+      {/* readability scrim — keeps the copy (left) dark, lightens where the live candles sit (~centre) */}
       <div
         className="absolute inset-0"
-        style={{ background: "linear-gradient(90deg, rgba(11,37,69,0.94) 0%, rgba(11,37,69,0.66) 40%, rgba(11,37,69,0.18) 100%)" }}
+        style={{ background: "linear-gradient(90deg, rgba(11,37,69,0.95) 0%, rgba(11,37,69,0.82) 30%, rgba(11,37,69,0.5) 47%, rgba(11,37,69,0.32) 58%, rgba(11,37,69,0.3) 100%)" }}
       />
       <div className="absolute inset-x-0 bottom-0 h-28" style={{ background: "linear-gradient(to top, #0b2545, transparent)" }} />
     </div>
