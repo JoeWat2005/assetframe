@@ -237,8 +237,8 @@ export default function TrackRecordAnalytics({
         {byCadence.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">By cadence</CardTitle>
-              <CardDescription>Hit rate by the report&rsquo;s generation cadence (daily / weekly / monthly).</CardDescription>
+              <CardTitle className="text-base">By frequency</CardTitle>
+              <CardDescription>Hit rate by the report&rsquo;s publishing frequency (daily / weekly / monthly).</CardDescription>
             </CardHeader>
             <CardContent>
               <HitRateBars

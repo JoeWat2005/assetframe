@@ -22,7 +22,7 @@ const WHAT = [
   {
     icon: Layers,
     title: "We cover the instrument",
-    body: "Stocks, crypto, FX, commodities and indices — one focused edition per name.",
+    body: "Stocks, crypto, FX and commodities — one focused edition per name.",
   },
   {
     icon: Clock,
@@ -32,7 +32,7 @@ const WHAT = [
   {
     icon: BadgeCheck,
     title: "Scored after the fact",
-    body: "Every call is logged before its window and graded against the tape — a public, honest track record.",
+    body: "Every call is logged before its window and graded against the actual market — a public, honest track record.",
   },
 ];
 
@@ -41,14 +41,15 @@ export default async function Home() {
   const catalog = editions.slice(0, 6);
   const tr = await getTrackRecord();
 
-  // Hero proof strip — REAL platform numbers only, never invented. Directional accuracy
-  // ("—" until ≥1 window scores) and forecasts scored (0 today) fill in automatically as
-  // the open calls close, so the strip is a live audit trail, not a marketing stat block.
+  // Hero proof strip — REAL platform numbers only, never invented. Hit rate reads "—" until
+  // ≥1 window scores; the registered/graded counts fill in automatically as open calls close,
+  // so the strip is a live audit trail, not a marketing stat block.
+  const registered = tr.open.reduce((a, c) => a + (c.n || 0), 0);
   const proof: { value: React.ReactNode; label: string }[] = [
     { value: editions.length, label: "Reports published" },
-    { value: tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`, label: "Hit rate" },
-    { value: "100%", label: "Publicly archived" },
+    { value: registered, label: "Calls registered" },
     { value: tr.stats.predictionsGraded, label: "Calls graded" },
+    { value: tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`, label: "Hit rate" },
   ];
 
   // Social-proof inputs (real platform data only). The scored-calls teaser shows the most
@@ -80,7 +81,7 @@ export default async function Home() {
             against what actually happened.
           </p>
           <p className="mt-3 text-sm text-white/70">
-            Stocks, crypto, forex and commodities.
+            Stocks, crypto, FX and commodities.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild className="h-11 bg-white px-6 text-base text-navy shadow-sm hover:bg-white/90">
@@ -145,9 +146,9 @@ export default async function Home() {
           ))}
         </div>
         <p className="mt-6 text-sm text-muted-foreground" data-animate="up">
-          Every edition is produced by an <span className="font-semibold text-ink">agentic research team</span> —
-          specialist AI agents pull the market data, research the catalysts and draft the analysis — with
-          <span className="font-semibold text-ink"> human oversight</span> reviewing each edition before it is published.
+          Every edition is produced by a <span className="font-semibold text-ink">team of AI research agents</span> that
+          pull the market data, research the catalysts and draft the analysis — with{" "}
+          <span className="font-semibold text-ink">human oversight</span> before each edition is published.
         </p>
       </Section>
 
@@ -176,7 +177,7 @@ export default async function Home() {
           invented stat. */}
       <Section
         title="A public, scored track record"
-        lead="No cherry-picking. Every call is registered before its window and graded against the tape afterwards — the record is the product."
+        lead="No cherry-picking. Every call is registered before its window and graded against the actual market afterwards — the record is the product."
       >
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Card data-animate="up">
@@ -186,7 +187,7 @@ export default async function Home() {
                 {tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`}
               </div>
               <div className="mt-1 text-sm text-muted-foreground">
-                Overall hit rate across {tr.stats.predictionsGraded} scored forecast{tr.stats.predictionsGraded === 1 ? "" : "s"}.
+                Overall hit rate across {tr.stats.predictionsGraded} scored call{tr.stats.predictionsGraded === 1 ? "" : "s"}.
               </div>
             </CardContent>
           </Card>

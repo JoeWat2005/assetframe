@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: { default: `${SITE.brand} — ${SITE.tagline}`, template: `%s — ${SITE.brand}` },
   description:
     "Pre-session market research and decision support: a free Snapshot and a full Pro report " +
-    "for each instrument, with every call scored against the tape afterwards. Not personal advice.",
+    "for each instrument, with every call scored against the actual market afterwards. Not personal advice.",
   metadataBase: new URL(SITE.url),
   alternates: { canonical: "/" },
   applicationName: SITE.brand,
@@ -93,8 +93,8 @@ const orgJsonLd = {
       operatingSystem: "Web, MCP, REST API",
       description:
         "AssetFrame publishes a free Snapshot and a paid Pro report for each instrument (stocks, crypto, FX, commodities). " +
-        "Every call registers falsifiable price predictions before the session and is graded Hit / Miss / No-trigger against " +
-        "the tape afterwards in an append-only ledger. Confidence is a calibrated, after-the-fact score — not a guarantee or a " +
+        "Every call registers falsifiable price predictions before the session and is graded Hit / Miss / Not triggered against " +
+        "the actual market afterwards in a public, append-only record. Confidence is a calibrated, after-the-fact score — not a guarantee or a " +
         "trade signal. Reports are accessible to AI agents over an MCP server and a read-only REST API. " +
         "This is general market research and decision support, not regulated financial advice, and it never places trades.",
       publisher: { "@id": `${SITE.url}/#organization` },
@@ -125,8 +125,8 @@ const orgJsonLd = {
       name: "AssetFrame public track record",
       url: `${SITE.url}/track-record`,
       description:
-        "Append-only record of every AssetFrame call: registered before its prediction window and graded Hit / Miss / No-trigger " +
-        "against the price tape afterwards, with overall hit rate, streaks and per-confidence calibration. Rows are never edited.",
+        "Append-only record of every AssetFrame call: registered before its prediction window and graded Hit / Miss / Not triggered " +
+        "against the actual market afterwards, with overall hit rate, streaks and per-confidence calibration. Rows are never edited.",
       license: `${SITE.url}/terms`,
       isAccessibleForFree: true,
       creator: { "@id": `${SITE.url}/#organization` },

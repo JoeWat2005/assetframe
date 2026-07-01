@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "About AssetFrame — falsifiable, scored, transparent market research. Every call is published before the session and graded against the tape in an append-only ledger. Decision-support, not regulated financial advice.",
+    "About AssetFrame — falsifiable, scored, transparent market research. Every call is published before the session and graded against the actual market afterwards, in a public record that is never edited. Decision-support, not regulated financial advice.",
   alternates: { canonical: "/about" },
 };
 
 const PRINCIPLES = [
   { icon: Crosshair, title: "Falsifiable", body: "Every Pro report logs exact levels and an exact window before the session. A vague take can't be graded; ours can be proven right or wrong." },
-  { icon: Scale, title: "Scored", body: "After the window closes we grade each call against the price tape — Hit, Miss or No-trigger. A deterministic engine decides; no human nudges the result." },
+  { icon: Scale, title: "Scored", body: "After the window closes we grade each call against the actual market — Hit, Miss or Not triggered. A deterministic engine decides; no human nudges the result." },
   { icon: ListChecks, title: "Transparent", body: "Results land in an append-only ledger. Nothing is edited, re-tuned or cherry-picked, and the whole record is public. The record is the product." },
 ];
 
@@ -36,11 +36,11 @@ export default function AboutPage() {
             really be right either.
           </p>
           <p>
-            <b>AssetFrame</b> (founded 2026) was built to do the opposite. The analysis is written by an AI research
+            <b>AssetFrame</b>{" "}(founded 2026) was built to do the opposite. The analysis is written by an AI research
             desk with no book to talk, no position to defend and nothing to upsell mid-report — so the read is driven
-            by the evidence, not by someone&rsquo;s incentive. Every prediction is registered <b>before</b> the
-            session opens and graded against the tape afterwards, and the whole record stays public. The track
-            record, not the rhetoric, is what you judge us on.
+            by the evidence, not by someone&rsquo;s incentive. Every prediction is registered <b>before</b>{" "}the
+            session opens and graded against the actual market afterwards, and the whole record stays public — so
+            what you&rsquo;re judging is the results, not the sales pitch.
           </p>
         </div>
 

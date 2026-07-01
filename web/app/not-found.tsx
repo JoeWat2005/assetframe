@@ -9,7 +9,7 @@ export const metadata = { title: "Page not found" };
 
 const LINKS = [
   { href: "/reports", label: "Reports", desc: "Browse the latest editions." },
-  { href: "/track-record", label: "Track record", desc: "Every call, scored against the tape." },
+  { href: "/track-record", label: "Track record", desc: "Every call, scored against the market." },
   { href: "/how-it-works", label: "How it works", desc: "The publish-then-grade method." },
   { href: "/pricing", label: "Pricing", desc: "Free Snapshot vs Pro." },
 ];
@@ -18,7 +18,7 @@ export default function NotFound() {
   return (
     <>
       <Hero
-        title="This page is off the tape."
+        title="This page is off the map."
         tag="Error 404 — the link is broken, or the edition may have been unpublished. We'll take you home automatically."
       >
         <RedirectCountdown seconds={5} to="/" />

@@ -34,7 +34,7 @@ function Bars({ data }: { data: Row[] }) {
 type View = "class" | "cadence" | "asset";
 const VIEWS: { key: View; label: string }[] = [
   { key: "class", label: "By asset class" },
-  { key: "cadence", label: "By cadence" },
+  { key: "cadence", label: "By frequency" },
   { key: "asset", label: "By instrument" },
 ];
 
@@ -99,7 +99,7 @@ export default function TrackRecordSummary({
           )}
           {best && (
             <span className="rounded-lg border border-[#1a7f37]/30 bg-[#dafbe1] px-3 py-1.5 text-sm text-[#1a7f37]">
-              Best: <b>{titleCase(best.label)}</b> {pct(best.hitRate)} over {best.reportsScored}
+              Best: <b>{titleCase(best.label)}</b> {pct(best.hitRate)} over {best.reportsScored} scored
             </span>
           )}
         </div>

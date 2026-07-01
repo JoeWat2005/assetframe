@@ -44,7 +44,7 @@ export default function Countdown({ tone = "dark", showLabel = true }: { tone?: 
             )}
           >
             <span className="font-mono text-2xl font-bold tabular-nums sm:text-3xl">
-              {parts === null ? "––" : String(parts[label]).padStart(2, "0")}
+              {parts === null ? "00" : String(parts[label]).padStart(2, "0")}
             </span>
             <span className={cn("mt-0.5 text-[11px] uppercase tracking-wide", light ? "text-muted-foreground" : "text-white/60")}>
               {label}

@@ -25,7 +25,7 @@ const SORTS: [string, string][] = [
 const VERDICTS: Record<string, { label: string; cls: string }> = {
   Y: { label: "Hit", cls: "bg-[#dafbe1] text-[#1a7f37]" },
   N: { label: "Miss", cls: "bg-[#ffebe9] text-[#cf222e]" },
-  NT: { label: "No-trigger", cls: "bg-tile text-[#57606a]" },
+  NT: { label: "Not triggered", cls: "bg-tile text-[#57606a]" },
   MANUAL: { label: "Awaiting", cls: "bg-[#fff7e6] text-[#9a6700]" },
 };
 function VerdictBadge({ verdict }: { verdict?: string }) {
@@ -217,7 +217,7 @@ export default function OpenCallsBrowser({
                       </ul>
                     )}
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Graded Hit / Miss / No-trigger against the tape after {c.windowEnd} UTC.
+                      Graded Hit, Miss or Not triggered against the actual market after {c.windowEnd} UTC.
                     </p>
                     {url && (
                       <Link

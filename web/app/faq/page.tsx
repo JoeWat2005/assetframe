@@ -47,8 +47,8 @@ function buildFaqs(scoredCount: number): { q: string; a: React.ReactNode; text: 
   },
   {
     q: "How are calls scored?",
-    a: <>Every Pro report registers falsifiable predictions — exact levels and an exact window — before the session. After the window closes the engine grades each one Hit / Miss / No-trigger against the price tape and appends a row that&rsquo;s never edited. The public <Link className="text-navy underline" href="/track-record">track record</Link> breaks performance down by instrument, asset class, prediction type and market regime, with a stated-vs-realised calibration curve and hit rate over time. {scoredNote}</>,
-    text: `Every Pro report registers falsifiable predictions — exact levels and an exact window — before the session. After the window closes the engine grades each one Hit, Miss or No-trigger against the price tape and appends a row that is never edited. The public track record breaks performance down by instrument, asset class, prediction type and market regime, with a stated-vs-realised calibration curve and hit rate over time. ${scoredNote}`,
+    a: <>Every Pro report registers falsifiable predictions — exact levels and an exact window — before the session. After the window closes the engine grades each one Hit, Miss or Not triggered against the actual market and appends a row that&rsquo;s never edited. The public <Link className="text-navy underline" href="/track-record">track record</Link> breaks performance down by instrument, asset class, prediction type and market regime, with a stated-vs-realised calibration curve and hit rate over time. {scoredNote}</>,
+    text: `Every Pro report registers falsifiable predictions — exact levels and an exact window — before the session. After the window closes the engine grades each one Hit, Miss or Not triggered against the actual market and appends a row that is never edited. The public track record breaks performance down by instrument, asset class, prediction type and market regime, with a stated-vs-realised calibration curve and hit rate over time. ${scoredNote}`,
   },
   {
     q: "How do I get alerts and follow instruments?",
@@ -77,8 +77,8 @@ function buildFaqs(scoredCount: number): { q: string; a: React.ReactNode; text: 
   },
   {
     q: "Which instruments do you cover?",
-    a: <>Futures, FX, crypto and US single stocks. The published menu grows over time — browse the latest editions on the <Link className="text-navy underline" href="/reports">reports page</Link>.</>,
-    text: "Futures, FX, cryptocurrency and US single stocks. The published menu grows over time; browse the latest editions on the reports page.",
+    a: <>Stocks, crypto, FX and commodities. The published menu grows over time — browse the latest editions on the <Link className="text-navy underline" href="/reports">reports page</Link>.</>,
+    text: "Stocks, crypto, FX and commodities. The published menu grows over time; browse the latest editions on the reports page.",
   },
   ];
 }

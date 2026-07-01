@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility, Bell, Code2, Star, Terminal, MessageSquare, Activity } from "lucide-react";
+import { Menu, FileText, LineChart, BookOpen, HelpCircle, Building2, Mail, ShieldCheck, CreditCard, Accessibility, Bell, Code2, Terminal, MessageSquare, Activity } from "lucide-react";
 import HeaderAuth from "@/components/HeaderAuth";
 import { SITE } from "@/site.config";
 import {
@@ -14,8 +14,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/com
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const HOME = process.env.NODE_ENV === "production" ? SITE.url : "/";
-
 // Categories ordered by what a first-time visitor wants; items ordered by importance (not alphabetical).
 const PRODUCT = [
   { href: "/how-it-works", label: "How it works", desc: "Published before the move, graded after.", icon: BookOpen },
@@ -24,8 +22,7 @@ const PRODUCT = [
 ];
 const RESEARCH = [
   { href: "/reports", label: "Reports", desc: "Browse the latest published editions.", icon: FileText },
-  { href: "/track-record", label: "Track record", desc: "Every call, scored against the tape.", icon: LineChart },
-  { href: "/reviews", label: "Reviews", desc: "What members say about AssetFrame.", icon: Star },
+  { href: "/track-record", label: "Track record", desc: "Every call, scored against the market.", icon: LineChart },
 ];
 const DEVELOPERS = [
   { href: "/developers", label: "Overview", desc: "The agent-facing API & MCP server.", icon: Code2 },
@@ -118,9 +115,9 @@ export default function Header() {
       )}
     >
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-5">
-        <a href={HOME} className="flex items-center" aria-label={SITE.brand}>
+        <Link href="/" className="flex items-center" aria-label={SITE.brand}>
           <Image src="/logo.png" alt={SITE.brand} width={124} height={25} priority className="h-6 w-auto" />
-        </a>
+        </Link>
 
         {/* desktop — only at lg+; below that the mega-menu cramps/overflows, so use the sheet */}
         <div className="hidden items-center gap-3 lg:flex">

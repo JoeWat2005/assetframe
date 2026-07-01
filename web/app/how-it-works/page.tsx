@@ -8,23 +8,23 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "How AssetFrame works: an AI analyst writes the thesis, a deterministic engine compiles levels, a calibrated confidence score and falsifiable predictions, every report is published before the session, then graded Hit / Miss / No-trigger against the tape in an append-only ledger.",
+    "How AssetFrame works: an AI analyst writes the thesis, a deterministic engine compiles levels, a calibrated confidence score and falsifiable predictions, every report is published before the session, then graded Hit, Miss or Not triggered against the actual market in a public record that is never edited.",
   alternates: { canonical: "/how-it-works" },
 };
 
 const STEPS = [
   { icon: Lightbulb, title: "Research", body: "An AI analyst studies the instrument and writes the thesis, the scenarios and the catalysts that could move it — the qualitative view, in plain English." },
-  { icon: Cpu, title: "Compile", body: "A deterministic Python engine (Engine V2) turns that view into numbers: pivots and price levels, conditional long/short setups with risk:reward, and a calibrated confidence score. Same inputs, same output — every figure is reproducible." },
+  { icon: Cpu, title: "Compile", body: "A deterministic Python engine turns that view into numbers: the key price levels, conditional long/short setups with risk:reward, and a calibrated confidence score. Same inputs, same output — every figure is reproducible." },
   { icon: Crosshair, title: "Register", body: "Before the session opens, the engine logs falsifiable predictions — exact levels and an exact window. Each one can be proven right or wrong; nothing is left vague." },
   { icon: Send, title: "Publish", body: "The free Snapshot opens for everyone and the Pro report unlocks with a subscription, served from a CDN so it stays fast at any traffic. Both render from one canonical payload behind a strict QA gate." },
-  { icon: Scale, title: "Score", body: "After the window closes, the engine grades each prediction against the actual price tape — Hit, Miss or No-trigger — with no human nudging the result." },
+  { icon: Scale, title: "Score", body: "After the window closes, the engine grades each prediction against the actual market — Hit, Miss or Not triggered — with no human nudging the result." },
   { icon: ListChecks, title: "Append & learn", body: "Results land in an append-only ledger that's never edited or re-tuned. The ledger is also an input: the engine learns which setups and regimes have worked — with no look-ahead, since a call is only ever scored after its window." },
 ];
 
 export default function HowItWorksPage() {
   return (
     <>
-      <Hero title="How it works" tag="An analyst writes the thesis. An engine makes it falsifiable. The tape grades it. Nothing gets rewritten." />
+      <Hero title="How it works" tag="An analyst writes the thesis. An engine makes it falsifiable. The market grades it. Nothing gets rewritten." />
       <div className="mx-auto max-w-3xl px-5 py-10">
         <p className="mb-6 text-[15px] leading-relaxed text-ink" data-animate="up">
           Every AssetFrame edition runs through the same pipeline — research, compile, register, publish, score, append.
@@ -55,7 +55,7 @@ export default function HowItWorksPage() {
           Each Pro report carries a confidence score from 0 to 100. It isn&rsquo;t a hand-waved number: the engine
           blends three things — the <b>market structure</b> the setup is built on, the ledger&rsquo;s own <b>track
           record</b> for similar calls, and how well the <b>catalysts</b>{" "}are sourced. Because it&rsquo;s graded against
-          the tape after every window, it&rsquo;s <b>calibrated</b> — the goal is that calls rated, say, 70 actually
+          the actual market after every window, it&rsquo;s <b>calibrated</b> — the goal is that calls rated, say, 70 actually
           come true about 70% of the time. It is a calibrated estimate of how a setup may resolve, <b>not</b> a
           guarantee, a probability of profit, or a signal to trade. Always read it next to the risk rating and the
           prediction window.

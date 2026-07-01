@@ -37,7 +37,7 @@ function Social() {
 }
 
 export default function Footer() {
-  const year = "2026";
+  const year = new Date().getFullYear();
   return (
     <footer className="mt-14 bg-navy text-[#aebfd6]">
       <div className="mx-auto max-w-5xl px-5 py-10">
@@ -61,7 +61,6 @@ export default function Footer() {
             <Link href="/pricing" className="hover:text-white">Pricing</Link>
             <Link href="/privacy" className="hover:text-white">Privacy</Link>
             <Link href="/reports" className="hover:text-white">Reports</Link>
-            <Link href="/reviews" className="hover:text-white">Reviews</Link>
             <Link href="/status" className="hover:text-white">Status</Link>
             <Link href="/terms" className="hover:text-white">Terms</Link>
             <Link href="/track-record" className="hover:text-white">Track record</Link>

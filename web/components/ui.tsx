@@ -51,7 +51,7 @@ export function Btn({
 
 export function Section({ title, lead, children }: { title: string; lead?: string; children: ReactNode }) {
   return (
-    <section className="mx-auto max-w-5xl xl:max-w-6xl px-4 sm:px-5">
+    <section className="mx-auto max-w-5xl xl:max-w-6xl 2xl:max-w-7xl px-4 sm:px-5">
       <div data-animate="up">
         <h2 className="mt-10 mb-1 text-2xl font-bold text-navy">{title}</h2>
         {lead && <p className="mb-4 text-sm text-muted-foreground">{lead}</p>}
@@ -72,7 +72,7 @@ export function Note({ children }: { children: ReactNode }) {
 export function Hero({ title, tag, children }: { title: string; tag: string; children?: ReactNode }) {
   return (
     <section className="bg-navy text-white">
-      <div className="mx-auto max-w-5xl xl:max-w-6xl px-4 py-10 sm:px-5 sm:py-14" data-animate="hero">
+      <div className="mx-auto max-w-5xl xl:max-w-6xl 2xl:max-w-7xl px-4 py-10 sm:px-5 sm:py-14" data-animate="hero">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
         <p className="mt-2 text-base text-[#c9d6e8] sm:text-lg">{tag}</p>
         {children}

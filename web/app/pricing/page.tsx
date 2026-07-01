@@ -22,7 +22,6 @@ const FREE = [
   "Public track record + REST API & MCP (free tools)",
 ];
 const PRO = [
-  "Everything in the Snapshot, plus:",
   "Plain-English 30-second read + verdict",
   "Conditional long & short setups with R:R",
   "Price ladder with distances and key-level cards",
@@ -84,7 +83,8 @@ export default async function PricingPage() {
           <div className="rounded-xl border-2 border-[#9a6700] bg-white p-6">
             <div className="text-lg font-bold">AssetFrame Pro</div>
             <div className="mt-0.5 text-sm font-semibold text-[#9a6700]">Pro tier</div>
-            <ul className="mt-4 space-y-2 text-sm">
+            <div className="mt-4 text-sm font-semibold text-ink">Everything in the Snapshot, plus:</div>
+            <ul className="mt-2 space-y-2 text-sm">
               {PRO.map((f) => (
                 <li key={f} className="flex gap-2"><span className="text-[#9a6700]">✓</span>{f}</li>
               ))}

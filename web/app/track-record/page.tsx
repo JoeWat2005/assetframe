@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Track record",
   description:
-    "AssetFrame's public track record — every call registered before its window and graded against the tape: hit rate, streaks and calibration.",
+    "AssetFrame's public track record — every call registered before its window and graded against the actual market: hit rate, streaks and calibration.",
   alternates: { canonical: "/track-record" },
 };
 
@@ -29,9 +29,9 @@ export default async function TrackRecordPage() {
   // the registered/scored breakdown + tables below as the deeper detail this page carries.
   const headline: [React.ReactNode, string][] = [
     [editions.length, "Reports published"],
-    [tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`, "Directional accuracy"],
-    ["100%", "Public archive"],
-    [tr.stats.predictionsGraded, "Forecasts scored"],
+    [registered, "Calls registered"],
+    [tr.stats.predictionsGraded, "Calls graded"],
+    [tr.stats.hitRate === null ? "—" : `${tr.stats.hitRate}%`, "Hit rate"],
   ];
 
   // The PROOF is public — the headline accuracy, the registered open calls, a sample of recent
@@ -49,7 +49,7 @@ export default async function TrackRecordPage() {
 
   return (
     <>
-      <Hero title="Track record" tag="The scored-after-the-fact promise, made mechanical." />
+      <Hero title="Track record" tag="Every call recorded before its deadline, then graded on what the market actually did." />
       <div className="mx-auto max-w-5xl px-5 py-8">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {headline.map(([n, l]) => (
@@ -60,7 +60,7 @@ export default async function TrackRecordPage() {
           ))}
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
-          {editions.length} reports published · {registered} forecasts registered before their window
+          {editions.length} reports published · {registered} calls registered before their window
           {tr.stats.predictionsGraded > 0
             ? ` · ${tr.stats.predictionsGraded} scored (${tr.stats.hitRate}% hit)`
             : " · scoring begins as the first windows close"}
@@ -68,7 +68,7 @@ export default async function TrackRecordPage() {
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-[#cdd9ea] bg-tile px-4 py-3 text-sm text-[#33415c]">
-          <span>Predictions are registered <b>before</b> each window, then graded Hit / Miss / No-trigger against the tape — append-only, never re-tuned.</span>
+          <span>Every call is registered <b>before</b> its window, then graded Hit, Miss or <b>Not triggered</b> against what the market actually did — once recorded, a result is never edited or removed. (<b>Not triggered</b> = the entry level was never reached, so the call is void and doesn&rsquo;t count for or against the hit rate.)</span>
           <Link href="/how-it-works" className="font-semibold text-navy underline underline-offset-2">How it works →</Link>
         </div>
 

@@ -30,7 +30,7 @@ export async function generateMetadata(
   const title = `${e.instrument} — ${e.reportDate}`;
   const description =
     `${e.instrument} (${e.ticker}) — next-session market research for ${e.reportDate}: status, risk, ` +
-    `the expected range and the thesis, with every call scored against the tape afterwards.`;
+    `the expected range and the thesis, with every call scored against the actual market afterwards.`;
   // `e.preview` is a relative app route ("/api/report/<date>/<slug>/preview.png"), so make it
   // absolute for OpenGraph/Twitter (they require absolute image URLs).
   const image = e.preview ? (e.preview.startsWith("http") ? e.preview : `${base}${e.preview}`) : undefined;
@@ -119,7 +119,7 @@ export default async function ReaderPage(
       {e.dataProvider && (
         <p className="mt-1 text-xs text-muted-foreground">
           Data: {e.dataProvider}
-          {e.dataLicense === "commercial" && (e.dataLicenseDegraded ? " — ⚠ non-commercial fallback" : " — licensed")}
+          {e.dataLicense === "commercial" && !e.dataLicenseDegraded ? " — licensed" : ""}
         </p>
       )}
 
@@ -173,12 +173,11 @@ export default async function ReaderPage(
         </>
       )}
 
-      <Note>{SITE.disclaimer}</Note>
-      <p className="mt-3 text-center text-xs text-muted-foreground">
-        © {SITE.brand}. This report is protected by copyright and licensed for your personal,
-        non-commercial use — redistributing, reselling or publicly sharing it is prohibited.{" "}
+      <Note>
+        {SITE.disclaimer}{" "}© {SITE.brand} — licensed for your personal, non-commercial use;
+        redistributing, reselling or publicly sharing it is prohibited.{" "}
         <Link href="/terms" className="underline underline-offset-2 hover:text-navy">Terms</Link>.
-      </p>
+      </Note>
     </div>
   );
 }

@@ -51,8 +51,11 @@ export default function HeaderAuth({
     );
   }
   return (
-    <Button asChild size="sm">
-      <Link href="/sign-in">Sign in</Link>
-    </Button>
+    <div className="flex items-center gap-3">
+      <Link href="/sign-in" className="text-sm font-semibold text-ink hover:text-navy">Sign in</Link>
+      <Button asChild size="sm">
+        <Link href="/sign-up">Get started</Link>
+      </Button>
+    </div>
   );
 }
