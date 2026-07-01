@@ -70,10 +70,18 @@ body { background: var(--color-bg); color: var(--color-ink); }
   .gsap-on [data-animate="hero"] > * { opacity: 1; animation: none; }
 }
 
-/* Hero market-tape backdrop: a seamless sideways drift of the candlestick chart. */
+/* Hero market-tape backdrop: a seamless sideways drift of the candlestick chart, plus a slower
+   parallax layer, a gently breathing glow, and a subtle diagonal sheen sweep for depth + life. */
 @keyframes af-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.af-drift { animation: af-drift 48s linear infinite; will-change: transform; }
-@media (prefers-reduced-motion: reduce) { .af-drift { animation: none; } }
+.af-drift { animation: af-drift 52s linear infinite; will-change: transform; }
+.af-drift-slow { animation: af-drift 96s linear infinite; will-change: transform; }
+@keyframes af-breathe { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+.af-breathe { animation: af-breathe 8s ease-in-out infinite; will-change: opacity, transform; }
+@keyframes af-sheen { 0% { transform: translateX(-60%) skewX(-14deg); opacity: 0; } 14% { opacity: 0.5; } 40% { opacity: 0; } 100% { transform: translateX(240%) skewX(-14deg); opacity: 0; } }
+.af-sheen { animation: af-sheen 12s ease-in-out infinite; will-change: transform, opacity; }
+@media (prefers-reduced-motion: reduce) {
+  .af-drift, .af-drift-slow, .af-breathe, .af-sheen { animation: none; }
+}
 
 /* Auth backdrop: a vertical market-ticker tape drifting upward. */
 @keyframes af-tape { from { transform: translateY(0); } to { transform: translateY(-50%); } }
